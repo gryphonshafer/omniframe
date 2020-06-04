@@ -1,0 +1,271 @@
+/* remove margin, padding, and other attribs on all tags */
+
+* {
+    margin         : 0;
+    padding        : 0;
+    outline        : 0;
+    font-size      : 100%;
+    font           : inherit;
+    vertical-align : baseline;
+}
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video
+{
+    border     : 0;
+    background : transparent;
+}
+
+/* HTML5 elements render as blocks */
+
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+    display : block;
+}
+
+body {
+    line-height : 1rem;
+}
+
+ol, ul {
+    list-style : none;
+}
+
+blockquote, q {
+    quotes : none;
+}
+
+blockquote:before, blockquote:after, q:before, q:after {
+    content : '';
+    content : none;
+}
+
+table,
+table th,
+table td {
+    border-collapse : collapse;
+    border-spacing  : 0;
+    padding         : 0;
+}
+
+input, select {
+    vertical-align : middle;
+}
+
+input[type=search]::-webkit-search-cancel-button,
+input[type=search]::-webkit-search-decoration,
+input[type=search]::-webkit-search-results-button,
+input[type=search]::-webkit-search-results-decoration {
+    -webkit-appearance : none;
+    -moz-appearance    : none;
+}
+
+input[type=search] {
+    -webkit-appearance : none;
+    -moz-appearance    : none;
+    -webkit-box-sizing : content-box;
+    -moz-box-sizing    : content-box;
+    box-sizing         : content-box;
+}
+
+audio, canvas, video {
+    display   : inline-block;
+    max-width : 100%;
+}
+
+/*
+    prevent modern browsers from displaying `audio` without controls
+    remove excess height in iOS 5 devices
+*/
+
+audio:not([controls]) {
+    display : none;
+    height  : 0;
+}
+
+/* address styling not present in IE 7/8/9, Firefox 3, and Safari 4 */
+
+[hidden] {
+    display : none;
+}
+
+/* correct text resizing oddly in IE 6/7 when body `font-size` is set using `em` units */
+
+html {
+    font-size : 100%;
+}
+
+/* prevent iOS text size adjust after orientation change, without disabling user zoom */
+
+html {
+    -ms-text-size-adjust : 100%;
+}
+
+/* address `outline` inconsistency between Chrome and other browsers */
+
+a:focus {
+    outline : thin dotted;
+}
+
+/* improve readability when focused and also mouse hovered in all browsers */
+
+a:active,
+a:hover {
+    outline : 0;
+}
+
+/* remove border when inside `a` element in IE 6/7/8/9 and Firefox 3 */
+
+img {
+    border : 0;
+}
+
+/* improve image quality when scaled in IE 7 */
+
+img {
+    -ms-interpolation-mode : bicubic;
+}
+
+/* address margin not present in IE 6/7/8/9, Safari 5, and Opera 11 */
+
+figure {
+    margin : 0;
+}
+
+/* correct margin displayed oddly in IE 6/7 */
+
+form {
+    margin : 0;
+}
+
+/* define consistent border, margin, and padding */
+
+fieldset {
+    border  : 1px solid #c0c0c0;
+    margin  : 0 2px;
+    padding : 0.35rem 0.625rem 0.75rem;
+}
+
+legend {
+    border       : 0;
+    padding      : 0;
+    white-space  : normal;
+}
+
+button, input, select {
+    font-size      : 100%;
+    margin         : 0;
+    vertical-align : baseline;
+}
+
+button, input {
+    line-height : 1rem;
+}
+
+button, select {
+    text-transform : none;
+}
+
+textarea {
+    font-size : 100%;
+    margin    : 0;
+    overflow  : auto;
+}
+
+button,
+html input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance : button;
+    cursor             : pointer;
+}
+
+button[disabled],
+html input[disabled] {
+    cursor : default;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    box-sizing         : border-box;
+    padding            : 0;
+    outline            : none;
+    -webkit-appearance : none;
+    -moz-appearance    : none;
+    appearance         : none;
+}
+
+/*
+    address `appearance` set to `searchfield` in Safari 5 and Chrome
+    address `box-sizing` set to `border-box` in Safari 5 and Chrome (include `-moz` to future-proof)
+*/
+
+input[type="search"] {
+    -webkit-appearance : textfield;
+    -moz-box-sizing    : content-box;
+    -webkit-box-sizing : content-box;
+    box-sizing         : content-box;
+}
+
+/* remove inner padding and search cancel button in Safari 5 and Chrome on OS X */
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance : none;
+}
+
+/* remove inner padding and border in Firefox 3+ */
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+    border  : 0;
+    padding : 0;
+}
+
+/* remove most spacing between table cells */
+
+table {
+    border-collapse : collapse;
+    border-spacing  : 0;
+}
+
+html, button, input, select, textarea {
+    color : #222;
+}
+
+::-moz-selection {
+    background  : #b3d4fc;
+    text-shadow : none;
+}
+
+::selection {
+    background  : #b3d4fc;
+    text-shadow : none;
+}
+
+img {
+    vertical-align : middle;
+}
+
+fieldset {
+    border  : 0;
+    margin  : 0;
+    padding : 0;
+}
+
+.chromeframe {
+    margin     : 0.2rem 0;
+    background : #ccc;
+    color      : black;
+    padding    : 0.2rem 0;
+}

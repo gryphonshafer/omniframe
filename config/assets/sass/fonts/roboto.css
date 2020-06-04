@@ -1,0 +1,28 @@
+@font-face {
+    font-family : normal;
+    src         : url(fonts/Roboto/Roboto-Regular.ttf?version=1) format('truetype');
+}
+
+@font-face {
+    font-family : medium;
+    src         : url(fonts/Roboto/Roboto-Medium.ttf?version=1) format('truetype');
+}
+
+@font-face {
+    font-family : bold;
+    src         : url(fonts/Roboto/Roboto-Bold.ttf?version=1) format('truetype');
+}
+
+* {
+    font-family : normal, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, b {
+    font-family : bold;
+    font-weight : normal;
+}
+
+dl dt {
+    font-family : bold;
+    font-weight : normal;
+}

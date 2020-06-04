@@ -1,0 +1,58 @@
+$table_borders: 1px solid silver;
+
+table,
+table th,
+table td {
+    border : $table_borders;
+}
+
+table {
+    th, td {
+        padding : 1px 3px;
+    }
+
+    td {
+        background-color : white;
+    }
+
+    th.right, td.right, tr.right td {
+        text-align : right;
+    }
+
+    th.center, td.center, tr.center td {
+        text-align : center;
+    }
+
+    tr.red td {
+        background-color : red;
+    }
+
+    tr.green td {
+        background-color : green;
+    }
+
+    tr.blue td {
+        background-color : blue;
+    }
+
+    tr.even td {
+        background-color : #eee;
+    }
+
+    tr.bold td {
+        font-weight : bold;
+    }
+
+    caption {
+        font-style : italic;
+    }
+
+    th, thead td {
+        background-color : lightgray;
+        text-align       : left;
+    }
+
+    tfoot td {
+        background-color : #ddd;
+    }
+}
