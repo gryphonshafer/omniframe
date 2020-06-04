@@ -1,0 +1,23 @@
+[% page.title = 'Example Index Page' %]
+
+<h1>[% page.title %]</h1>
+
+<p>This is an example index page.</p>
+
+<ul>
+    <li>Package: <b>[% package %]</b></li>
+    <li>Now: <b>[% now %]</b></li>
+    <li>HTML code test: <b><span class="copy">&copy;</span></b></li>
+    <li>Embedded UTF8 test: <b><span class="copy">©</span></b></li>
+    <li>Stash UTF8 test: <b><span class="copy">[% copy %]</span></b></li>
+</ul>
+
+<form method="post" action="[% c.url.for('/') %]">
+    <fieldset>
+        <legend>Form Test</legend>
+        <label>Input: <input type="text" name="input" title="Input text..." placeholder="Type Input"></label>
+        <input type="submit" value="Send">
+    </fieldset>
+</form>
+
+[% IF input %]<p>[% input | html %]</p>[% END %]

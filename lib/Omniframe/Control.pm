@@ -1,0 +1,323 @@
+package Omniframe::Control;
+
+use exact 'Omniframe', 'Mojolicious';
+use Omniframe::Util::Sass;
+use Omniframe::Util::Time;
+use File::Basename 'dirname';
+use File::Path 'make_path';
+use Mojo::Loader qw( find_modules load_class );
+use MojoX::Log::Dispatch::Simple;
+
+with qw( Omniframe::Role::Conf Omniframe::Role::Logging Omniframe::Role::Template );
+
+my $time = Omniframe::Util::Time->new;
+
+has sass => sub { Omniframe::Util::Sass->new };
+
+sub startup ($self) {
+    $self->setup;
+
+    my $r = $self->routes;
+
+    $r->any( '/test.js' => sub ($c) {
+        return $c->document('/static/js/util/browser_test.js')
+    } );
+
+    $r->any( '/api' => sub ($c) {
+        $c->render( json => { request => $c->req->json } );
+    } );
+
+    $r->websocket( '/ws' => sub ($c) {
+        $c->socket( setup => 'example_ws' );
+    } );
+
+    $r->any( '/*null' => { null => undef } => sub ($c) {
+        $c->socket( message => 'example_ws', { time => time() } );
+        $c->stash(
+            package => __PACKAGE__,
+            now     => scalar(localtime),
+            copy    => "\xa9",
+            input   => $c->param('input'),
+        );
+        $c->render( template => 'example/index' );
+    } );
+
+    return;
+}
+
+sub setup ($self) {
+    $self->plugin('RequestBase');
+    $self->sass->build;
+
+    $self->setup_access_log;
+    $self->setup_mojo_logging;
+    $self->setup_templating;
+    $self->setup_static_paths;
+    $self->setup_config;
+    $self->setup_sockets;
+    $self->setup_document;
+
+    $self->preload_controllers;
+    return;
+}
+
+sub setup_access_log ($self) {
+    my $access_log = join( '/',
+        $self->conf->get( qw( config_app root_dir ) ),
+        $self->conf->get( qw( mojolicious access_log ) ),
+    );
+
+    my $access_dir = dirname($access_log);
+    make_path($access_dir) unless ( -d $access_dir );
+
+    my $log_level = $self->log->level;
+    $self->log->level('error'); # temporarily raise log level to skip AccessLog "warn" status
+    $self->plugin( 'AccessLog', { log => $access_log } );
+    $self->log->level($log_level);
+
+    return;
+}
+
+sub setup_mojo_logging ($self) {
+    $self->log(
+        MojoX::Log::Dispatch::Simple->new(
+            dispatch  => $self->log_dispatch,
+            level     => $self->log_level,
+            format_cb => sub ( $timestamp, $level, @messages ) { join( '',
+                $time->datetime( 'log', $timestamp ),
+                ' [' . uc($level) . '] ',
+                join( "\n", $self->dp( [ @messages, '' ], colored => 0 ) ),
+            ) },
+        )
+    );
+
+    for my $level ( @{ $self->log_levels } ) {
+        $self->helper( $level => sub ( $c, @messages ) {
+            $self->log->$level($_) for ( $self->dp(\@messages) );
+            return;
+        } );
+    }
+
+    return;
+}
+
+sub setup_templating ($self) {
+    push( @INC, $self->conf->get( 'config_app', 'root_dir' ) );
+    $self->plugin( 'ToolkitRenderer', $self->tt_settings );
+    $self->renderer->default_handler('tt');
+    return;
+}
+
+sub setup_static_paths ($self) {
+    my $root_dir = $self->conf->get( qw( config_app root_dir ) );
+    my $paths    = [ map {
+        join( '/', $root_dir, $_ )
+    } @{ $self->conf->get( qw( mojolicious static_paths ) ) } ];
+
+    if ( my $omniframe = $self->conf->get('omniframe') ) {
+        push(
+            @$paths,
+            map {
+                join( '/', $root_dir, $omniframe, $_ )
+            } @{ $self->conf->get( qw( mojolicious static_paths ) ) }
+        );
+    }
+
+    $self->static->paths($paths);
+    return;
+}
+
+sub setup_config ($self) {
+    my $config  = $self->conf->get( 'mojolicious', 'config' );
+    my $pid_dir = dirname( $config->{hypnotoad}{pid_file} );
+
+    make_path($pid_dir) unless ( -d $pid_dir );
+
+    $self->config($config);
+
+    my $secrets = $self->conf->get( 'mojolicious', 'secrets' );
+    $self->secrets($secrets) if ($secrets);
+
+    $self->sessions->cookie_name( $self->conf->get( qw( mojolicious session cookie_name ) ) );
+    $self->sessions->default_expiration( $self->conf->get( qw( mojolicious session default_expiration ) ) );
+
+    return;
+}
+
+sub setup_sockets ($self) {
+    require Omniframe::Mojo::Socket;
+    $self->helper( socket => Omniframe::Mojo::Socket->new->setup->event_handler );
+    return;
+}
+
+sub setup_document ($self) {
+    require Omniframe::Mojo::Document;
+    $self->helper( document => Omniframe::Mojo::Document->new->helper );
+    return;
+}
+
+sub preload_controllers ($self) {
+    load_class($_) for ( map { find_modules($_) } 'Omniframe::Control', ref($self) );
+    return;
+}
+
+1;
+
+=head1 NAME
+
+Omniframe::Control
+
+=head1 SYNOPSIS
+
+=for test_synopsis BEGIN { $SIG{__WARN__} = sub {} }
+
+    package Project::Control;
+
+    use exact 'Omniframe::Control';
+
+    sub startup ($self) {
+        # $self->setup; ## <-- this does all of the following code block:
+
+        $self->plugin('RequestBase');
+        $self->sass->build;
+        $self->setup_access_log;
+        $self->setup_mojo_logging;
+        $self->setup_templating;
+        $self->setup_static_paths;
+        $self->setup_config;
+        $self->setup_sockets;
+        $self->setup_document;
+        $self->preload_controllers;
+
+        $self->routes->any( '/*null' => { null => undef } => sub ($c) {
+            $c->render( text => __PACKAGE__ . '::startup() -- ' . scalar(localtime) );
+        } );
+
+        return;
+    }
+
+=head1 DESCRIPTION
+
+This class is a base class for application project controller base classes. It's
+it not meant to be used directly as-is, although it can be. As the super-class,
+it provides to the application project controller a series of methods for
+web application enviornment setup.
+
+=head1 ATTRIBUTES
+
+=head2 sass
+
+This attribute will on first access be set with an instantiated object of
+L<Omniframe::Util::Sass>. The following 2 lines are equivalent:
+
+        Omniframe::Util::Sass->new->build;
+        $self->sass->build;
+
+=head1 METHODS
+
+=head2 startup
+
+This is a basic, thin startup method for L<Mojolicious>; however, the
+expectation is that this method will be overwritten by the subclass, an
+application's project controller. This superclass method calls C<setup> and
+sets a universal route that renders a basic text message.
+
+=head2 setup
+
+This method is a simple wrapper around other setup methods.
+
+    $self->setup;
+
+The above line is equivalent to the following block:
+
+    $self->plugin('RequestBase');
+    $self->sass->build;
+    $self->setup_access_log;
+    $self->setup_mojo_logging;
+    $self->setup_templating;
+    $self->setup_static_paths;
+    $self->setup_config;
+    $self->setup_sockets;
+    $self->setup_document;
+    $self->preload_controllers;
+
+=head2 setup_access_log
+
+This method establishes an access log via L<Mojolicious::Plugin::AccessLog>
+using the C<mojolicious>, C<access_log> configuration key. See
+L</"CONFIGURATION"> below.
+
+=head2 setup_mojo_logging
+
+This method connects L<Mojolicious> logging with the
+L<Omniframe::Role::Logging> role via L<MojoX::Log::Dispatch::Simple>.
+
+=head2 setup_templating
+
+This method establishes L<Template> as the default viewer for the application
+using L<Mojolicious::Plugin::ToolkitRenderer> and L<Omniframe::Role::Template>.
+
+=head2 setup_static_paths
+
+This method sets the static paths for the application. The static paths with be
+C<~/static> both from the project application's root directory and the omniframe
+root directory. The project's C<~/static> will come first, meaning files are
+search for there first, then in the omniframe root directory next.
+
+=head2 setup_config
+
+This method sets the various configurations for a L<Mojolicious> application
+using on the C<mojolicious>, C<config> and C<mojolicious>, C<session>
+configuration keys. See L</"CONFIGURATION"> below.
+
+=head2 setup_sockets
+
+This method will setup the C<sockets> Mojolicious helper via a lazy use of
+L<Omniframe::Mojo::Socket> and a call to its C<setup> and C<event_handler>
+methods.
+
+=head2 setup_document
+
+This method will setup the C<document> Mojolicious helper via a lazy use of
+L<Omniframe::Mojo::Document> and a call to its C<helper> method.
+
+=head2 preload_controllers
+
+This method will attempt to find all project controller subclasses and omniframe
+controller subclasses and load them using L<Mojo::Loader>.
+
+=head1 CONFIGURATION
+
+The following is the default configuration, which can be overridden in the
+application's configuration file. See L<Omniframe::Role::Conf>.
+
+    mojolicious:
+        access_log: local/access.log
+        static_paths:
+            - static
+        config:
+            hypnotoad:
+                proxy: 1
+                pid_file: local/hypnotoad.pid
+                listen:
+                    - http://*:8080
+        session:
+            cookie_name: omniframe_session
+            default_expiration: 31557600 # 365.25 days
+
+Note however that in the application's configuration file, secrets should be
+found (although not directly if the YAML will be made public).
+
+    mojolicious:
+        secrets:
+            - current_secret
+            - old_secret
+
+=head1 WITH ROLES
+
+L<Omniframe::Role::Conf>, L<Omniframe::Role::Logging>,
+L<Omniframe::Role::Template>.
+
+=head1 INHERITANCE
+
+L<Omniframe>, L<Mojolicious>.

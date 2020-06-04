@@ -1,0 +1,107 @@
+[%-
+    page = {};
+
+    DEFAULT
+        page.title        = '',
+        page.charset      = 'utf-8',
+        page.viewport     = '1.0',
+        page.favicon      = '/favicon.ico',
+        page.line_awesome = 0,
+        page.css          = ['/app.css'],
+        page.vue          = 0,
+        page.vuex         = 0,
+        page.vue_router   = 0,
+        page.links        = [],
+        page.js           = [],
+        page.inline_js    = [];
+
+    content = BLOCK;
+        PROCESS $template;
+    END;
+-%]
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        [% IF page.title %]
+            <title>[% page.title %]</title>
+        [% END %]
+
+        [% IF page.charset %]
+            <meta charset="utf-8">
+        [% END %]
+
+        [% IF page.viewport %]
+            <meta name="viewport" content="width=device-width, initial-scale=[% page.viewport %]">
+        [% END %]
+
+        [% IF page.favicon %]
+            <link rel="shortcut icon" type="image/x-icon"
+                href="[% c.url_for( page.favicon ).query( version => constants.version ) %]">
+        [% END %]
+
+        [% IF page.line_awesome %]
+            <link rel="stylesheet" type="text/css" href="[%
+                c.url_for(
+                    '/line-awesome/css/line-awesome' _ (
+                        ( c.app.mode == 'production' ) ? '.min' : ''
+                    ) _ '.css'
+                )
+            %]">
+        [% END %]
+
+        [% FOR css IN page.css %]
+            <link rel="stylesheet" type="text/css"
+                href="[% c.url_for(css).query( version => constants.version ) %]">
+        [% END %]
+    </head>
+    <body>
+        [% TRY %]
+            [% PROCESS page_layout.html.tt %]
+        [% CATCH %]
+            [% content %]
+        [% END %]
+
+        [% IF page.vue %]
+            <script type="text/javascript" src="[%
+                c.url_for( '/js/vue/vue.' _ c.app.mode _ '.js' ).query( version => constants.version )
+            %]" async></script>
+        [% END %]
+
+        [% IF page.vuex %]
+            <script type="text/javascript" src="[%
+                c.url_for( '/js/vue/vuex.js' ).query( version => constants.version )
+            %]" async></script>
+        [% END %]
+
+        [% IF page.vue_router %]
+            <script type="text/javascript" src="[%
+                c.url_for( '/js/vue/vue-router.js' ).query( version => constants.version )
+            %]" async></script>
+        [% END %]
+
+        [% FOR file IN page.links %]
+            [% UNLESS link_seen.$file %]
+                <link rel="import" href="[%
+                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
+                %]">
+                [% link_seen.$file = ( link_seen.$file || 0 ) + 1 %]
+            [% END %]
+            [% IF loop.last %]
+                [% page.js.unshift('/js/util/import_links.js') %]
+            [% END %]
+        [% END %]
+
+        [% FOR file IN page.js %]
+            [% UNLESS js_seen.$file %]
+                <script type="text/javascript" src="[%
+                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
+                %]"></script>
+                [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
+            [% END %]
+        [% END %]
+
+        [% FOREACH code IN page.inline_js %]
+            <script type="text/javascript">[% code %]</script>
+        [% END %]
+    </body>
+</html>

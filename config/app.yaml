@@ -1,0 +1,51 @@
+---
+default:
+    mojo_app_lib: Omniframe::Control
+    database:
+        file: local/app.sqlite
+        settings:
+            sqlite_see_if_its_a_number: 1
+            sqlite_defensive: 1
+            RaiseError: 1
+            PrintError: 0
+    logging:
+        log_file: local/app.log
+        log_level:
+            production: info
+            development: debug
+        alert_email:
+            - example@example.com
+        alert_email_subject: Alert Log Message
+        filter:
+            - email
+    template:
+        compile_ext: .ttc
+        compile_dir: local/ttc
+        web:
+            wrapper: wrapper.html.tt
+            include_path:
+                - templates/pages
+                - templates/components
+        email:
+            include_path:
+                - templates/emails
+    sass:
+        scss_src: config/assets/sass/app.scss
+        compile_to: static/app.css
+    mojolicious:
+        access_log: local/access.log
+        static_paths:
+            - static
+        config:
+            hypnotoad:
+                proxy: 1
+                pid_file: local/hypnotoad.pid
+                listen:
+                    - http://*:8080
+        session:
+            cookie_name: omniframe_session
+            default_expiration: 31557600 # 365.25 days
+        ws_inactivity_timeout: 14400 # 4 hours
+    email:
+        from: Example <example@example.com>
+        active: 1

@@ -1,0 +1,11 @@
+<title>Example email message</title>
+
+<p>Greetings,</p>
+
+<p>This is an example email message.</p>
+
+<ul>
+    <li>HTML code test: <b><span class="copy">&copy;</span></b></li>
+    <li>Embedded UTF8 test: <b><span class="copy">©</span></b></li>
+    <li>Stash UTF8 test: <b><span class="copy">[% copy %]</span></b></li>
+</ul>
