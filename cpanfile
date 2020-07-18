@@ -1,4 +1,4 @@
-requires 'exact', '1.12';
+requires 'exact', '1.13';
 requires 'exact::class', '1.08';
 requires 'exact::cli', '1.03';
 requires 'exact::conf', '1.03';
