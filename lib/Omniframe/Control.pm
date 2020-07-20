@@ -1,12 +1,11 @@
 package Omniframe::Control;
 
 use exact 'Omniframe', 'Mojolicious';
-use Omniframe::Util::Sass;
-use Omniframe::Util::Time;
-use File::Basename 'dirname';
-use File::Path 'make_path';
+use Mojo::File 'path';
 use Mojo::Loader qw( find_modules load_class );
 use MojoX::Log::Dispatch::Simple;
+use Omniframe::Util::Sass;
+use Omniframe::Util::Time;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Logging Omniframe::Role::Template );
 
@@ -67,8 +66,7 @@ sub setup_access_log ($self) {
         $self->conf->get( qw( mojolicious access_log ) ),
     );
 
-    my $access_dir = dirname($access_log);
-    make_path($access_dir) unless ( -d $access_dir );
+    path($access_log)->dirname->make_path;
 
     my $log_level = $self->log->level;
     $self->log->level('error'); # temporarily raise log level to skip AccessLog "warn" status
@@ -128,10 +126,9 @@ sub setup_static_paths ($self) {
 }
 
 sub setup_config ($self) {
-    my $config  = $self->conf->get( 'mojolicious', 'config' );
-    my $pid_dir = dirname( $config->{hypnotoad}{pid_file} );
+    my $config = $self->conf->get( 'mojolicious', 'config' );
 
-    make_path($pid_dir) unless ( -d $pid_dir );
+    path( $config->{hypnotoad}{pid_file} )->dirname->make_path;
 
     $self->config($config);
 

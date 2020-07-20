@@ -2,9 +2,7 @@ package Omniframe::Util::Sass;
 
 use exact 'Omniframe';
 use CSS::Sass;
-use File::Basename 'dirname';
-use File::Path 'make_path';
-use Mojo::File;
+use Mojo::File 'path';
 
 with 'Omniframe::Role::Conf';
 
@@ -31,8 +29,7 @@ has compile_to => sub ($self) {
         $self->conf->get( 'sass', 'compile_to' ),
     );
 
-    my $compile_to_dir = dirname($compile_to);
-    make_path($compile_to_dir) unless ( -d $compile_to_dir );
+    path($compile_to)->dirname->make_path;
 
     return $compile_to;
 };
@@ -60,7 +57,7 @@ sub build (
             )->compile_file( $self->scss_src )
         )[0];
 
-        Mojo::File->new( $self->compile_to )->spurt($css);
+        path( $self->compile_to )->spurt($css);
 
         $report_cb->();
     }

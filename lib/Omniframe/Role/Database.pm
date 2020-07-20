@@ -3,8 +3,7 @@ package Omniframe::Role::Database;
 use exact -role;
 use App::Dest;
 use DBIx::Query;
-use File::Basename 'dirname';
-use File::Path 'make_path';
+use Mojo::File 'path';
 
 with 'Omniframe::Role::Conf';
 
@@ -12,9 +11,8 @@ class_has dq => sub ($self) {
     my $conf     = $self->conf->get('database');
     my $root_dir = $self->conf->get( qw( config_app root_dir ) );
     my $file     = join( '/', $root_dir, $conf->{file} );
-    my $dir      = dirname($file);
 
-    make_path($dir) unless ( -d $dir );
+    path($file)->dirname->make_path;
 
     unless ( -f $file ) {
         chdir $root_dir;

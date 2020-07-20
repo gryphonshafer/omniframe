@@ -3,8 +3,8 @@ package Omniframe::Util::Time;
 use exact 'Omniframe';
 use Date::Format 'time2str';
 use Date::Parse 'str2time';
-use DateTime;
 use DateTime::TimeZone;
+use DateTime;
 
 has formats => {
     ansi   => '%Y-%m-%d %X',

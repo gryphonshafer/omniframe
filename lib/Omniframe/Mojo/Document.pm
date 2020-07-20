@@ -1,7 +1,7 @@
 package Omniframe::Mojo::Document;
 
 use exact 'Omniframe';
-use Encode 'decode_utf8';
+use Mojo::Util 'decode';
 use Text::CSV_XS 'csv';
 use Text::MultiMarkdown 'markdown';
 
@@ -43,7 +43,7 @@ sub helper ($self) {
         my $asset = Mojo::Asset::File->new( path => $pathfile );
 
         if ( not $c->param('download') and ( $type eq 'md' or $type eq 'csv' ) ) {
-            my $payload = decode_utf8( $asset->slurp );
+            my $payload = decode( 'UTF-8', $asset->slurp );
 
             ( my $name = $file ) =~ s/\.[^\.\/]+$//;
             $name =~ s|/_|/|g;
