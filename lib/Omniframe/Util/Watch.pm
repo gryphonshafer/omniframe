@@ -1,9 +1,8 @@
 package Omniframe::Util::Watch;
 
 use exact 'Omniframe';
-use File::Basename 'dirname';
-use File::Find 'find';
 use Linux::Inotify2;
+use Mojo::File 'path';
 
 sub watch ( $self, $cb, $watches, $break = undef ) {
     $cb    //= sub {};
@@ -35,7 +34,15 @@ sub watch ( $self, $cb, $watches, $break = undef ) {
     };
 
     for ( ( ref $watches eq 'ARRAY' ) ? @$watches : $watches ) {
-        find( sub { $watch->( $File::Find::name ) if ( -d $File::Find::name ) }, dirname($_) );
+        my $base = path($_);
+
+        $watch->($_) for (
+            grep { -d }
+            map { $_->to_string } (
+                $base,
+                @{ $base->list_tree({ dir => 1, hidden => 1 })->to_array },
+            )
+        );
     }
 
     $inotify->poll while $$break;

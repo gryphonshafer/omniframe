@@ -1,10 +1,7 @@
 #!/usr/bin/env perl
 use exact -cli, -conf;
 use File::Copy 'cp';
-use File::Find 'find';
-use File::Path 'make_path';
-use File::Spec;
-use Mojo::File;
+use Mojo::File 'path';
 use YAML::XS 'DumpFile';
 
 my $opt = options( qw{ name|n=s dir|d=s } );
@@ -13,9 +10,9 @@ $opt->{name} //= 'Project';
 $opt->{dir}  //= '.';
 
 my $root_dir = conf->get( qw( config_app root_dir ) );
-my $proj_dir = File::Spec->rel2abs( $opt->{dir} );
+my $proj_dir = path( $opt->{dir} )->to_rel->to_string;
 
-make_path( $proj_dir . '/' . $_ ) for (
+path( $proj_dir . '/' . $_ )->make_path for (
     'config/db',
     'lib/' . $opt->{name},
 );
@@ -32,9 +29,9 @@ cp(
 
 my $config = {};
 
-$config->{preinclude}            = File::Spec->abs2rel( $root_dir . '/config/app.yaml', $opt->{dir} );
-$config->{default}{omniframe}    = File::Spec->abs2rel( $root_dir, $opt->{dir} );
-$config->{default}{libs}         = File::Spec->abs2rel( $root_dir . '/lib', $opt->{dir} );
+$config->{preinclude}            = path( $root_dir . '/config/app.yaml', $opt->{dir} )->to_rel->to_string;
+$config->{default}{omniframe}    = path( $root_dir,                      $opt->{dir} )->to_rel->to_string;
+$config->{default}{libs}         = path( $root_dir . '/lib',             $opt->{dir} )->to_rel->to_string;
 $config->{default}{mojo_app_lib} = "$opt->{name}::Control";
 
 $config->{default}{mojolicious}{secrets} = [
@@ -46,24 +43,20 @@ $config->{default}{mojolicious}{session}{cookie_name} = lc( $opt->{name} ) . '_s
 local $YAML::XS::Indent = 4;
 DumpFile( $proj_dir . '/config/app.yaml', $config );
 
-find(
-    sub {
-        my $src = $File::Find::name;
+path( $root_dir . '/lib/Project' )
+    ->list_tree({ hidden => 1 })
+    ->each( sub {
+        my $src = $_->to_string;
         ( my $dest = $src ) =~ s!^$root_dir/lib/Project!$proj_dir/lib/$opt->{name}!;
 
-        if ( $_ eq '.' ) {
-            make_path($dest);
-        }
-        else {
-            cp( $src, $dest );
+        my $file = path($dest);
+        $file->dirname->make_path;
 
-            my $file = Mojo::File->new($dest);
-            ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
-            $file->spurt($content);
-        }
-    },
-    $root_dir . '/lib/Project',
-);
+        cp( $src, $dest );
+
+        ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
+        $file->spurt($content);
+    } );
 
 =head1 NAME
 

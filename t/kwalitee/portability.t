@@ -1,7 +1,6 @@
 use Test::Portability::Files;
 use Cwd 'getcwd';
-use File::Find 'find';
-use Mojo::File;
+use Mojo::File 'path';
 use Text::Gitignore 'build_gitignore_matcher';
 use exact -conf;
 
@@ -10,25 +9,17 @@ my $cwd = getcwd();
 chdir($root_dir);
 
 my $matcher = build_gitignore_matcher( [
-    '.git', map { s|^/|./|; $_ } split( "\n", Mojo::File->new('.gitignore')->slurp )
+    '.git', map { s|^/|./|; $_ } split( "\n", path('.gitignore')->slurp )
 ] );
 
 exact->monkey_patch( 'Test::Portability::Files', maniread => sub {
-    my @files;
-
-    find(
-        {
-            no_chdir => 1,
-            wanted   => sub {
-                if ( -f $_ and -T $_ and not $matcher->($_) ) {
-                    push( @files, $File::Find::name );
-                }
-            },
-        },
-        '.',
-    );
-
-    return { map { $_ => 1 } @files };
+    return { map { $_ => 1 } @{
+        path('.')
+            ->list_tree({ hidden => 1 })
+            ->map( sub { './' . $_->to_rel } )
+            ->grep( sub { -f $_ and -T $_ and not $matcher->($_) } )
+            ->to_array
+    } };
 } );
 
 options(

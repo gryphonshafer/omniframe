@@ -1,8 +1,7 @@
 use Test::Most;
 use Test::Synopsis;
 use Cwd 'getcwd';
-use File::Find 'find';
-use Mojo::File;
+use Mojo::File 'path';
 use Text::Gitignore 'build_gitignore_matcher';
 use exact -conf;
 
@@ -11,20 +10,16 @@ my $cwd = getcwd();
 chdir($root_dir);
 
 my $matcher = build_gitignore_matcher( [
-    '.git', map { s|^/|./|; $_ } split( "\n", Mojo::File->new('.gitignore')->slurp )
+    '.git', map { s|^/|./|; $_ } split( "\n", path('.gitignore')->slurp )
 ] );
 
-find(
-    {
-        no_chdir => 1,
-        wanted   => sub {
-            if ( -f $_ and -T $_ and not $matcher->($_) ) {
-                synopsis_ok($_);
-            }
-        },
-    },
-    'lib',
-);
+path('lib')
+    ->list_tree({ hidden => 1 })
+    ->map( sub { './' . $_->to_rel } )
+    ->grep( sub { -f $_ and -T $_ and not $matcher->($_) } )
+    ->each( sub {
+        synopsis_ok($_);
+    } );
 
 chdir($cwd);
 done_testing();

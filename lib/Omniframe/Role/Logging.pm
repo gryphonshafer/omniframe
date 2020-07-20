@@ -1,12 +1,11 @@
 package Omniframe::Role::Logging;
 
 use exact -role;
-use Omniframe::Util::Time;
 use Data::Printer return_value => 'dump', colored => 1;
-use File::Basename 'dirname';
-use File::Path 'make_path';
 use Log::Dispatch;
+use Mojo::File 'path';
 use Term::ANSIColor;
+use Omniframe::Util::Time;
 
 with 'Omniframe::Role::Conf';
 
@@ -62,9 +61,7 @@ class_has log_file => sub ($self) {
         $self->conf->get( qw( logging log_file ) ),
     );
 
-    my $log_dir = dirname($log_file);
-    make_path($log_dir) unless ( -d $log_dir );
-
+    path($log_file)->dirname->make_path;
     return $log_file;
 };
 

@@ -1,8 +1,7 @@
 package Omniframe::Role::Template;
 
 use exact -role;
-use File::Path 'make_path';
-use File::Spec;
+use Mojo::File 'path';
 use Template;
 
 with 'Omniframe::Role::Conf';
@@ -24,13 +23,13 @@ sub tt_settings ( $self, $type = 'web' ) {
     my $tt_conf  = $self->conf->get('template');
 
     my $compile_dir = $root_dir . '/' . $tt_conf->{compile_dir};
-    make_path($compile_dir) unless ( -d $compile_dir );
+    path($compile_dir)->dirname->make_path;
 
     my $include_path = [ map { $root_dir . '/' . $_ } @{ $tt_conf->{$type}{include_path} } ];
 
     my $omniframe = $self->conf->get('omniframe');
     if ($omniframe) {
-        $omniframe = File::Spec->rel2abs($omniframe);
+        $omniframe = path($omniframe)->to_abs;
         push( @$include_path, map { $omniframe . '/' . $_ } @{ $tt_conf->{$type}{include_path} } );
     }
 
