@@ -11,22 +11,27 @@ has mode => sub ($self) {
 };
 
 has scss_src => sub ($self) {
-    my $scss_src = join( '/',
-        $self->conf->get( qw( config_app root_dir ) ),
-        $self->conf->get( 'sass', 'scss_src' ),
-    );
+    my $scss_src  = $self->conf->get( qw( sass scss_src ) );
+    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
+    my $omniframe = $self->conf->get('omniframe') || '';
 
-    my $omniframe = $self->conf->get('omniframe');
-    return ( -f $scss_src or not $omniframe ) ? $scss_src : join( '/',
-        $omniframe,
-        $self->conf->get( 'sass', 'scss_src' ),
+    return join( "\n",
+        map { "\@import '$_';" }
+        grep { defined }
+        map {
+            my $app_file  = "$root_dir/$_";
+            my $omni_file = "$root_dir/$omniframe/$_";
+
+            ( -f $app_file or not $omniframe ) ? $app_file  :
+            ( -f $omni_file )                  ? $omni_file : undef;
+        } ( ref $scss_src eq 'ARRAY' ) ? @$scss_src : $scss_src
     );
 };
 
 has compile_to => sub ($self) {
     my $compile_to = join( '/',
         $self->conf->get( qw( config_app root_dir ) ),
-        $self->conf->get( 'sass', 'compile_to' ),
+        $self->conf->get( qw( sass compile_to ) ),
     );
 
     path($compile_to)->dirname->make_path;
@@ -42,6 +47,11 @@ sub build (
     $report_cb = $self->report_cb,
     $error_cb  = $self->error_cb,
 ) {
+    unless ( $self->scss_src ) {
+        $error_cb->('scss_src is empty');
+        return;
+    }
+
     try {
         my $css = (
             CSS::Sass->new(
@@ -54,7 +64,7 @@ sub build (
                         source_comments => 0,
                         output_style    => SASS_STYLE_COMPRESSED,
                     )
-            )->compile_file( $self->scss_src )
+            )->compile( $self->scss_src )
         )[0];
 
         path( $self->compile_to )->spurt($css);
@@ -111,7 +121,14 @@ comments or tightly formed for production purposes.
 
 =head2 scss_src
 
-This represents the source location for SASS input.
+This represents the source SASS input. Typically this will be a series of
+imports:
+
+    @import '/path/to/file.cscc';
+    @import '/path/to/other_file.cscc';
+
+If not defined, it's created based on the applications configuration. See
+L</"CONFIGURATION"> below.
 
 =head2 compile_to
 
@@ -162,6 +179,9 @@ application's configuration file. See L<Omniframe::Role::Conf>.
 
 Configuration is pulled from the application's configuration and stored in the
 object on first call to C<build> or on first call to any of the attributes.
+
+Note that C<scss_src> can be either a scalar string or an arrayref of scalar
+strings. Each will be assumed to be the relative location of a file to import.
 
 =head1 WITH ROLES
 
