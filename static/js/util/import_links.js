@@ -1,9 +1,23 @@
 'use strict';
+if ( ! window.js ) window.js = {};
+
+window.js.import_links = {
+    status        : 'start',
+    link_elements : [],
+    oncomplete    : []
+};
+
 ( () => {
     var node_blocks   = {};
     var link_elements = [].slice.call( document.getElementsByTagName('link') ).filter( function (this_link) {
         return this_link.rel == 'import';
     } );
+
+    for ( var i = 0; i < link_elements.length; i++ ) {
+        window.js.import_links.link_elements[ link_elements[i].href ] = 'initiate';
+    }
+
+    window.js.import_links.status = 'initiate';
 
     for ( var i = 0; i < link_elements.length; i++ ) {
         initiate( link_elements[i].href );
@@ -56,6 +70,22 @@
                 }
             }
         }
+
+        window.js.import_links.link_elements[url] = 'complete';
+
+        var found_incomplete = false;
+        for ( var i in window.js.import_links.link_elements ) {
+            if ( window.js.import_links.link_elements[i] != 'complete' ) found_incomplete = true;
+        }
+        if ( ! found_incomplete ) {
+            window.js.import_links.status = 'complete';
+
+            for ( var i = 0; i < window.js.import_links.oncomplete.length; i++ ) {
+                window.js.import_links.oncomplete[i]();
+            }
+
+            window.dispatchEvent( new CustomEvent('import_links_status_complete') );
+        }
     }
 } )();
 
@@ -88,6 +118,28 @@ import if HTML can look something like:
             background-color: ghostwhite;
         }
     </style>
+
+=head2 Loading Status
+
+Loading this library will cause C<window.js.import_links> to be filled with an
+object. This object will contain a C<status> string, a C<link_elements> array,
+and an C<oncomplete> array.
+
+The C<status> will be either "start" (for when the library is just
+loaded), "initiate" (for when the library is just about to start loading links),
+or "complete" (for when all links are loaded and pushed into the page).
+
+After reaching the "complete" state, the library will assume anything pushed to
+the C<oncomplete> array is a function, and it will execute these in series.
+Then it will dispatch a "import_links_status_complete" event.
+
+Thus, you can:
+
+    window.js.import_links.oncomplete.push( () => {
+        new Vue({
+            el: "#app"
+        });
+    } );
 
 =cut
 */
