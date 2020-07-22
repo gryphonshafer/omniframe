@@ -66,7 +66,7 @@ import_links
 
 =head1 SYNOPSIS
 
-    <link rel="import" href="/js/components/file_to_import.html">
+    <link rel="import" href="/vuec/file_to_import.html">
     <script type="text/javascript" src="/js/util/import_links.js"></script>
 
 =head1 DESCRIPTION
