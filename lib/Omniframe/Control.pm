@@ -1,6 +1,8 @@
 package Omniframe::Control;
 
 use exact 'Omniframe', 'Mojolicious';
+use HTML::Packer;
+use JavaScript::Packer;
 use Mojo::File 'path';
 use Mojo::Loader qw( find_modules load_class );
 use MojoX::Log::Dispatch::Simple;
@@ -53,6 +55,8 @@ sub setup ($self) {
     $self->setup_templating;
     $self->setup_static_paths;
     $self->setup_config;
+    $self->setup_packer;
+    $self->setup_compressor;
     $self->setup_sockets;
     $self->setup_document;
 
@@ -141,6 +145,25 @@ sub setup_config ($self) {
     return;
 }
 
+sub setup_packer ($self) {
+    my $packer = HTML::Packer->init;
+    $self->hook( after_render => sub ( $c, $output, $format ) {
+        $packer->minify( $output, {
+            remove_comments => 1,
+            remove_newlines => 0,
+            do_javascript   => 'shrink',
+            html5           => 1,
+        } ) if ( $format eq 'html' );
+
+        return;
+    } );
+    return;
+}
+
+sub setup_compressor ($self) {
+    $self->renderer->compress(1) unless ( $self->mode eq 'development' );
+}
+
 sub setup_sockets ($self) {
     require Omniframe::Mojo::Socket;
     $self->helper( socket => Omniframe::Mojo::Socket->new->setup->event_handler );
@@ -182,6 +205,8 @@ Omniframe::Control
         $self->setup_templating;
         $self->setup_static_paths;
         $self->setup_config;
+        $self->setup_packer;
+        $self->setup_compressor;
         $self->setup_sockets;
         $self->setup_document;
         $self->preload_controllers;
@@ -234,6 +259,8 @@ The above line is equivalent to the following block:
     $self->setup_templating;
     $self->setup_static_paths;
     $self->setup_config;
+    $self->setup_packer;
+    $self->setup_compressor;
     $self->setup_sockets;
     $self->setup_document;
     $self->preload_controllers;
@@ -266,6 +293,16 @@ search for there first, then in the omniframe root directory next.
 This method sets the various configurations for a L<Mojolicious> application
 using on the C<mojolicious>, C<config> and C<mojolicious>, C<session>
 configuration keys. See L</"CONFIGURATION"> below.
+
+=head2 setup_packer
+
+This method sets up dynamic HTML content output packing via use of
+L<HTML::Packer> and L<JavaScript::Packer>.
+
+=head2 setup_compressor
+
+This method turns on Mojolicious GZip compression of dynamic output provided the
+current mode is not development.
 
 =head2 setup_sockets
 
