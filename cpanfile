@@ -19,6 +19,8 @@ requires 'DateTime', '1.52';
 requires 'DateTime::TimeZone', '2.39';
 requires 'Email::Mailer', '1.09';
 requires 'File::Copy', '2.34';
+requires 'HTML::Packer', '1.004001';
+requires 'JavaScript::Packer', '2.06';
 requires 'Linux::Inotify2', '2.2';
 requires 'Log::Dispatch', '2.69';
 requires 'Log::Dispatch::Email::Mailer', '1.05';
