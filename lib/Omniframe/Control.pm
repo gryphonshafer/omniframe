@@ -145,18 +145,14 @@ sub setup_config ($self) {
     return;
 }
 
-sub setup_packer ($self) {
+sub setup_packer ( $self, $opts = {} ) {
     my $packer = HTML::Packer->init;
-    $self->hook( after_render => sub ( $c, $output, $format ) {
-        $packer->minify( $output, {
-            remove_comments => 1,
-            remove_newlines => 0,
-            do_javascript   => 'shrink',
-            html5           => 1,
-        } ) if ( $format eq 'html' );
 
+    $self->hook( after_render => sub ( $c, $output, $format ) {
+        $packer->minify( $output, $opts ) if ( $format eq 'html' );
         return;
     } );
+
     return;
 }
 
@@ -297,7 +293,8 @@ configuration keys. See L</"CONFIGURATION"> below.
 =head2 setup_packer
 
 This method sets up dynamic HTML content output packing via use of
-L<HTML::Packer> and L<JavaScript::Packer>.
+L<HTML::Packer> and L<JavaScript::Packer>. The method will accept an optional
+hashref containing options for L<HTML::Packer>.
 
 =head2 setup_compressor
 
