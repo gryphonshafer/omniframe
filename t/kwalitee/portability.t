@@ -32,7 +32,7 @@ options(
     test_space            => 1,
     test_special_chars    => 1,
     test_symlink          => 1,
-    test_vms_length       => 1,
+    test_vms_length       => 0,
     test_windows_reserved => 1,
 );
 
