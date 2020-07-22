@@ -62,6 +62,18 @@
             <link rel="stylesheet" type="text/css"
                 href="[% c.url_for(css).query( version => constants.version ) %]">
         [% END %]
+
+        [% FOR file IN page.links %]
+            [% UNLESS link_seen.$file %]
+                <link rel="import" href="[%
+                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
+                %]">
+                [% link_seen.$file = ( link_seen.$file || 0 ) + 1 %]
+            [% END %]
+            [% IF loop.last %]
+                [% page.js.unshift('/js/util/import_links.js') %]
+            [% END %]
+        [% END %]
     </head>
     <body>
         [% content %]
@@ -82,18 +94,6 @@
             <script type="text/javascript" src="[%
                 c.url_for( '/js/vue/vue-router.js' ).query( version => constants.version )
             %]" async></script>
-        [% END %]
-
-        [% FOR file IN page.links %]
-            [% UNLESS link_seen.$file %]
-                <link rel="import" href="[%
-                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
-                %]">
-                [% link_seen.$file = ( link_seen.$file || 0 ) + 1 %]
-            [% END %]
-            [% IF loop.last %]
-                [% page.js.unshift('/js/util/import_links.js') %]
-            [% END %]
         [% END %]
 
         [% FOR file IN page.js %]
