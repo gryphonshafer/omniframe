@@ -14,9 +14,18 @@
         page.links        = [],
         page.js           = [],
         page.inline_js    = [];
+        page.layout       = 'page_layout.html.tt';
 
     content = BLOCK;
         PROCESS $template;
+    END;
+
+    content = BLOCK;
+        TRY;
+            PROCESS $page.layout;
+        CATCH;
+            content;
+        END;
     END;
 -%]
 <!DOCTYPE html>
@@ -55,11 +64,7 @@
         [% END %]
     </head>
     <body>
-        [% TRY %]
-            [% PROCESS page_layout.html.tt %]
-        [% CATCH %]
-            [% content %]
-        [% END %]
+        [% content %]
 
         [% IF page.vue %]
             <script type="text/javascript" src="[%
