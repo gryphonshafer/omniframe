@@ -18,7 +18,7 @@ class_has 'id_name' => sub ($self) { $self->name . '_id' };
 
 has 'id';
 has 'data';
-has '_saved_data';
+has '_saved_data' => {};
 
 sub _data_merge ( $self, $data ) {
     if ( not $data and $self->data ) {
@@ -40,6 +40,7 @@ sub create ( $self, $data ) {
     $data = $self->_data_merge($data);
     croak('create() data hashref contains no data') unless ( keys %$data );
 
+    $data = $self->freeze($data) if ( $self->can('freeze') );
     $self->load( $self->dq->add( $self->name, $data ) );
 
     return $self;
@@ -53,14 +54,17 @@ sub load ( $self, $search ) {
     my $data = $self->dq->get( $self->name )->where($search)->run->next;
     croak('Failed to load ' . $self->name ) unless ($data);
 
-    $self->data( $data->data );
+    $data = $data->data;
+    $data = $self->thaw($data) if ( $self->can('thaw') );
+
+    $self->data($data);
     $self->_saved_data( { %{ $self->data } } );
     $self->id( $self->data->{ $self->id_name } );
 
     return $self;
 }
 
-sub save ( $self, $data ) {
+sub save ( $self, $data = undef ) {
     $data = $self->_data_merge($data);
 
     unless ( $self->id ) {
@@ -71,7 +75,8 @@ sub save ( $self, $data ) {
             delete $data->{$_} if ( $data->{$_} eq $self->_saved_data->{$_} );
         }
 
-        $self->dq->update($data);
+        $data = $self->freeze($data) if ( $self->can('freeze') );
+        $self->dq->update( $self->name, $data );
         $self->load( $self->id );
     }
 
@@ -247,6 +252,32 @@ representing one database record.
 
     my @hhgttg_rows = Model->new->every_data({ answer => 42 });
     my $hhgttg_rows = Model->new->every_data({ answer => 42 });
+
+=head1 DATA SERIALIZATION
+
+In class with this role, you can optionally provide C<freeze> and C<thaw>
+methods that will be called by C<create>, C<save>, and C<load> in appropriate
+ways such that you can serialize and deserialize data.
+
+    package Model;
+
+    use exact -class;
+    use Mojo::JSON qw( encode_json decode_json );
+
+    with 'Omniframe::Role::Model';
+
+    sub freeze ( $self, $data ) {
+        $data->{data} = encode_json $data->{data};
+        return $data;
+    }
+
+    sub thaw ( $self, $data ) {
+        $data->{data} = decode_json $data->{data};
+        return $data;
+    }
+
+Note that you probably shouldn't serialize and deserialize the entire C<$data>
+because that will likely cause database commands to fail.
 
 =head1 WITH ROLES
 
