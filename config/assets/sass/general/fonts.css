@@ -21,14 +21,18 @@ dl dt {
     font-weight : bold;
 }
 
-.blue {
+a:link {
     color : blue;
 }
 
-.red {
-    color : red;
+a:visited {
+    color : darkslateblue;
 }
 
-.green {
-    color : green;
+a:hover {
+    color : slateblue;
+}
+
+a:active {
+    color : darkblue;
 }

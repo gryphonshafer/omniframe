@@ -6,12 +6,36 @@ form {
         display : inline-block;
 
         legend {
-            border  : $form_borders;
-            padding : 0px 3px;
+            border           : $form_borders;
+            padding          : 0px 3px;
+            background-color : white;
         }
 
-        &.right label {
+        label {
+            display: block;
+        }
+
+        &.right,
+        &.right > * {
             text-align : right;
+        }
+
+        &.right > legend {
+            text-align : left;
+        }
+
+        &.right > input {
+            display     : block;
+            margin-left : auto;
+        }
+
+        .left {
+            text-align : left;
+        }
+
+        &.right > input.left {
+            display     : inherit;
+            margin-left : inherit;
         }
 
         select,
@@ -23,6 +47,12 @@ form {
         input[type=url] {
             margin-top    : 1px;
             margin-bottom : 1px;
+        }
+
+        input[type=checkbox],
+        input[type=radio] {
+            margin-top    : 2px;
+            margin-bottom : -2px;
         }
     }
 }
@@ -37,31 +67,78 @@ input[type=text],
 input[type=password],
 input[type=email],
 input[type=search],
+input[type=checkbox],
+input[type=radio],
 input[type=url] {
     border  : 1px solid lightgray;
     padding : 1px 3px 1px 3px;
 
     &:hover {
-        border-color: gray;
+        border-color : gray;
     }
 }
 
+select:focus,
+textarea:focus,
+button:focus,
+input[type=submit]:focus,
+input[type=reset]:focus,
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=checkbox]:focus,
+input[type=radio]:focus,
+input[type=email]:focus,
+input[type=search]:focus,
+input[type=url]:focus {
+    border-style : dotted;
+    border-color : black;
+}
+
+select:focus,
+textarea:focus,
+button:focus,
+input[type=submit]:focus,
+input[type=reset]:focus,
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=email]:focus,
+input[type=search]:focus,
+input[type=url]:focus {
+    background-color : lightyellow;
+}
+
+input[type=checkbox],
+input[type=radio] {
+    background-color : white;
+}
+
+input[type=checkbox]:checked,
+input[type=radio]:checked {
+    background-color : black;
+}
+
 button,
-input[type="submit"],
-input[type="reset"] {
+input[type=submit],
+input[type=reset] {
     border           : $form_borders;
-    background-color : #ddd;
+    background-color : gainsboro;
     padding          : 1px 10px 1px 10px;
     margin           : 3px 0px 0px 0px;
 
     &:hover:enabled {
         border-color     : gray;
-        background-color : #eee;
+        background-color : silver;
+    }
+
+    &:active:enabled {
+        border-color     : dimgray;
+        background-color : darkgray;
     }
 
     &:disabled {
-        border-color     : gray;
-        background-color : #999;
+        border-color     : silver;
+        background-color : silver;
+        color            : gray;
     }
 }
 

@@ -23,20 +23,8 @@ table {
         text-align : center;
     }
 
-    tr.red td {
-        background-color : red;
-    }
-
-    tr.green td {
-        background-color : green;
-    }
-
-    tr.blue td {
-        background-color : blue;
-    }
-
     tr.even td {
-        background-color : #eee;
+        background-color : gainsboro;
     }
 
     tr.bold td {
@@ -53,6 +41,6 @@ table {
     }
 
     tfoot td {
-        background-color : #ddd;
+        background-color : lightgray;
     }
 }

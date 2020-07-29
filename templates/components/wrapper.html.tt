@@ -100,13 +100,13 @@
             [% UNLESS js_seen.$file %]
                 <script type="text/javascript" src="[%
                     ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
-                %]"></script>
+                %]" async></script>
                 [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
             [% END %]
         [% END %]
 
         [% FOREACH code IN page.inline_js %]
-            <script type="text/javascript">[% code %]</script>
+            <script type="text/javascript" async>[% code %]</script>
         [% END %]
     </body>
 </html>
