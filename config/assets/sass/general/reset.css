@@ -151,7 +151,7 @@ form {
 /* define consistent border, margin, and padding */
 
 fieldset {
-    border  : 1px solid #c0c0c0;
+    border  : 1px solid silver;
     margin  : 0 2px;
     padding : 0.35rem 0.625rem 0.75rem;
 }
@@ -240,16 +240,16 @@ table {
 }
 
 html, button, input, select, textarea {
-    color : #222;
+    color : darkslategray;
 }
 
 ::-moz-selection {
-    background  : #b3d4fc;
+    background  : paleturquoise;
     text-shadow : none;
 }
 
 ::selection {
-    background  : #b3d4fc;
+    background  : paleturquoise;
     text-shadow : none;
 }
 
@@ -265,7 +265,7 @@ fieldset {
 
 .chromeframe {
     margin     : 0.2rem 0;
-    background : #ccc;
+    background : silver;
     color      : black;
     padding    : 0.2rem 0;
 }
