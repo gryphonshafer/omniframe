@@ -20,19 +20,3 @@ th {
 dl dt {
     font-weight : bold;
 }
-
-a:link {
-    color : blue;
-}
-
-a:visited {
-    color : darkslateblue;
-}
-
-a:hover {
-    color : slateblue;
-}
-
-a:active {
-    color : darkblue;
-}

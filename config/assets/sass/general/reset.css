@@ -239,9 +239,29 @@ table {
     border-spacing  : 0;
 }
 
+/* default colors */
+
 html, button, input, select, textarea {
-    color : darkslategray;
+    color : black;
 }
+
+a:link {
+    color : blue;
+}
+
+a:visited {
+    color : darkslateblue;
+}
+
+a:hover {
+    color : slateblue;
+}
+
+a:active {
+    color : darkblue;
+}
+
+/* extra */
 
 ::-moz-selection {
     background  : paleturquoise;

@@ -76,8 +76,11 @@ sub save ( $self, $data = undef ) {
         }
 
         $data = $self->freeze($data) if ( $self->can('freeze') );
-        $self->dq->update( $self->name, $data );
-        $self->load( $self->id );
+
+        if (%$data) {
+            $self->dq->update( $self->name, $data );
+            $self->load( $self->id );
+        }
     }
 
     return $self;

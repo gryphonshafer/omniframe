@@ -49,3 +49,6 @@ default:
     email:
         from: Example <example@example.com>
         active: 1
+    bcrypt:
+        cost: 1
+        salt: 0123456789abcdef
