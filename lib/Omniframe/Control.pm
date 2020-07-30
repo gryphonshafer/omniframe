@@ -47,11 +47,12 @@ sub startup ($self) {
 }
 
 sub setup ($self) {
+    $self->setup_mojo_logging;
+
     $self->plugin('RequestBase');
     $self->sass->build;
 
     $self->setup_access_log;
-    $self->setup_mojo_logging;
     $self->setup_templating;
     $self->setup_static_paths;
     $self->setup_config;
@@ -61,22 +62,6 @@ sub setup ($self) {
     $self->setup_document;
 
     $self->preload_controllers;
-    return;
-}
-
-sub setup_access_log ($self) {
-    my $access_log = join( '/',
-        $self->conf->get( qw( config_app root_dir ) ),
-        $self->conf->get( qw( mojolicious access_log ) ),
-    );
-
-    path($access_log)->dirname->make_path;
-
-    my $log_level = $self->log->level;
-    $self->log->level('error'); # temporarily raise log level to skip AccessLog "warn" status
-    $self->plugin( 'AccessLog', { log => $access_log } );
-    $self->log->level($log_level);
-
     return;
 }
 
@@ -100,6 +85,24 @@ sub setup_mojo_logging ($self) {
         } );
     }
 
+    $self->info('Setup mojo logging');
+    return;
+}
+
+sub setup_access_log ($self) {
+    my $access_log = join( '/',
+        $self->conf->get( qw( config_app root_dir ) ),
+        $self->conf->get( qw( mojolicious access_log ) ),
+    );
+
+    path($access_log)->dirname->make_path;
+
+    my $log_level = $self->log->level;
+    $self->log->level('error'); # temporarily raise log level to skip AccessLog "warn" status
+    $self->plugin( 'AccessLog', { log => $access_log } );
+    $self->log->level($log_level);
+
+    $self->info('Setup access log');
     return;
 }
 
@@ -107,6 +110,8 @@ sub setup_templating ($self) {
     push( @INC, $self->conf->get( 'config_app', 'root_dir' ) );
     $self->plugin( 'ToolkitRenderer', $self->tt_settings );
     $self->renderer->default_handler('tt');
+
+    $self->info('Setup templating');
     return;
 }
 
@@ -126,6 +131,8 @@ sub setup_static_paths ($self) {
     }
 
     $self->static->paths($paths);
+
+    $self->info('Setup static paths');
     return;
 }
 
@@ -142,6 +149,7 @@ sub setup_config ($self) {
     $self->sessions->cookie_name( $self->conf->get( qw( mojolicious session cookie_name ) ) );
     $self->sessions->default_expiration( $self->conf->get( qw( mojolicious session default_expiration ) ) );
 
+    $self->info('Setup config');
     return;
 }
 
@@ -153,27 +161,40 @@ sub setup_packer ( $self, $opts = {} ) {
         return;
     } );
 
+    $self->info('Setup packer');
     return;
 }
 
 sub setup_compressor ($self) {
     $self->renderer->compress(1) unless ( $self->mode eq 'development' );
+    $self->info('Setup compressor');
+    return;
 }
 
 sub setup_sockets ($self) {
     require Omniframe::Mojo::Socket;
     $self->helper( socket => Omniframe::Mojo::Socket->new->setup->event_handler );
+    $self->info('Setup sockets');
     return;
 }
 
 sub setup_document ($self) {
     require Omniframe::Mojo::Document;
     $self->helper( document => Omniframe::Mojo::Document->new->helper );
+    $self->info('Setup documents');
     return;
 }
 
 sub preload_controllers ($self) {
-    load_class($_) for ( map { find_modules($_) } 'Omniframe::Control', ref($self) );
+    for ( map { find_modules($_) } 'Omniframe::Control', ref($self) ) {
+        if ( my $error = load_class($_) ) {
+            $self->error("Error loading: $_ -- $error");
+        }
+        else {
+            $self->info("Preload controller $_");
+        }
+    }
+
     return;
 }
 
@@ -194,10 +215,10 @@ Omniframe::Control
     sub startup ($self) {
         # $self->setup; ## <-- this does all of the following code block:
 
+        $self->setup_mojo_logging;
         $self->plugin('RequestBase');
         $self->sass->build;
         $self->setup_access_log;
-        $self->setup_mojo_logging;
         $self->setup_templating;
         $self->setup_static_paths;
         $self->setup_config;
@@ -248,10 +269,10 @@ This method is a simple wrapper around other setup methods.
 
 The above line is equivalent to the following block:
 
+    $self->setup_mojo_logging;
     $self->plugin('RequestBase');
     $self->sass->build;
     $self->setup_access_log;
-    $self->setup_mojo_logging;
     $self->setup_templating;
     $self->setup_static_paths;
     $self->setup_config;
