@@ -72,7 +72,11 @@ sub save ( $self, $data = undef ) {
     }
     else {
         for ( grep { exists $self->_saved_data->{$_} } keys %$data ) {
-            delete $data->{$_} if ( $data->{$_} eq $self->_saved_data->{$_} );
+            delete $data->{$_} if (
+                defined $data->{$_} and
+                defined $self->_saved_data->{$_} and
+                $data->{$_} eq $self->_saved_data->{$_}
+            );
         }
 
         $data = $self->freeze($data) if ( $self->can('freeze') );
