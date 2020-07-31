@@ -1,4 +1,19 @@
+.center-text {
+    text-align: center;
+}
+
 .center-block {
     margin: 0 auto;
+}
+
+.max-content {
     width: max-content;
+}
+
+.top {
+    vertical-align: top;
+}
+
+.margin {
+    margin: 10px;
 }
