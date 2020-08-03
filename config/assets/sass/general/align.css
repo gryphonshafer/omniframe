@@ -10,10 +10,30 @@
     width: max-content;
 }
 
+.min-content {
+    width: min-content;
+}
+
 .top {
     vertical-align: top;
 }
 
+.bottom {
+    vertical-align: bottom;
+}
+
+.left {
+    text-align: left;
+}
+
+.right {
+    text-align: right;
+}
+
 .margin {
     margin: 10px;
+}
+
+.inline-block {
+    display: inline-block;
 }
