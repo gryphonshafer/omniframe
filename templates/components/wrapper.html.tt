@@ -81,32 +81,32 @@
         [% IF page.vue %]
             <script type="text/javascript" src="[%
                 c.url_for( '/js/vue/vue.' _ c.app.mode _ '.js' ).query( version => constants.version )
-            %]" async></script>
+            %]"></script>
         [% END %]
 
         [% IF page.vuex %]
             <script type="text/javascript" src="[%
                 c.url_for( '/js/vue/vuex.js' ).query( version => constants.version )
-            %]" async></script>
+            %]"></script>
         [% END %]
 
         [% IF page.vue_router %]
             <script type="text/javascript" src="[%
                 c.url_for( '/js/vue/vue-router.js' ).query( version => constants.version )
-            %]" async></script>
+            %]"></script>
         [% END %]
 
         [% FOR file IN page.js %]
             [% UNLESS js_seen.$file %]
                 <script type="text/javascript" src="[%
                     ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
-                %]" async></script>
+                %]"></script>
                 [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
             [% END %]
         [% END %]
 
         [% FOREACH code IN page.inline_js %]
-            <script type="text/javascript" async>[% code %]</script>
+            <script type="text/javascript">[% code %]</script>
         [% END %]
     </body>
 </html>
