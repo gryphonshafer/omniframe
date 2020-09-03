@@ -4,7 +4,8 @@ use Test::MockModule;
 use exact -conf;
 
 $ENV{MOJO_LOG_LEVEL} = 'error';
-Test::MockModule->new('Omniframe::Control')->redefine( 'setup_access_log', 1 );
+my $mock = Test::MockModule->new('Omniframe::Control');
+$mock->redefine( $_, 1 ) for ( qw( setup_access_log debug info notice warning warn ) );
 
 my $t = Test::Mojo->new('Omniframe::Control');
 
