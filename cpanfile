@@ -13,7 +13,6 @@ requires 'Mojolicious::Plugin::ToolkitRenderer', '>= 1.09';
 requires 'DBIx::Query', '1.10';
 requires 'App::Dest', '1.27';
 
-requires 'CSS::Sass', '3.6.0';
 requires 'Data::Printer', '0.40';
 requires 'DateTime', '1.52';
 requires 'DateTime::TimeZone', '2.39';
@@ -21,6 +20,7 @@ requires 'Digest::Bcrypt', '>= 1.209';
 requires 'Email::Mailer', '1.09';
 requires 'File::Copy', '2.34';
 requires 'HTML::Packer', '1.004001';
+requires 'IPC::Run3', '0.048';
 requires 'JavaScript::Packer', '2.06';
 requires 'Linux::Inotify2', '2.2';
 requires 'Log::Dispatch', '2.69';
