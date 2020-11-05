@@ -35,7 +35,7 @@ throws_ok(
             sub ($error) { die $error . "\n" },
         )
     },
-    qr/Error: Invalid CSS/,
+    qr/^Error: expected "\{"/,
     'build fails on non-SASS',
 );
 

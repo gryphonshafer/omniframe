@@ -1,7 +1,7 @@
 package Omniframe::Util::Sass;
 
 use exact 'Omniframe';
-use CSS::Sass;
+use IPC::Run3 'run3';
 use Mojo::File 'path';
 
 with 'Omniframe::Role::Conf';
@@ -52,29 +52,35 @@ sub build (
         return;
     }
 
+    my ( $output, $error );
     try {
-        my $css = (
-            CSS::Sass->new(
-                ( $self->mode ne 'production' )
-                    ? (
-                        source_comments => 1,
-                        output_style    => SASS_STYLE_NESTED,
-                    )
-                    : (
-                        source_comments => 0,
-                        output_style    => SASS_STYLE_COMPRESSED,
-                    )
-            )->compile( $self->scss_src )
-        )[0];
+        run3(
+            [
+                'sass',
+                '--stdin',
+                '--no-source-map',
+                '--no-error-css',
+                '--color',
+                '--style=' . ( ( $self->mode ne 'production' ) ? 'expanded' : 'compressed' ),
+            ],
+            \$self->scss_src,
+            \$output,
+            \$error,
+        );
 
-        path( $self->compile_to )->spurt($css);
-
-        $report_cb->();
+        unless ($error) {
+            path( $self->compile_to )->spurt($output);
+            $report_cb->();
+        }
     }
     catch {
         s/\s*at .+? line \d+\.\s*//;
         $error_cb->($_);
     };
+
+    $error_cb->($error) if $error;
+
+    return;
 };
 
 1;
@@ -105,7 +111,9 @@ Omniframe::Util::Sass
 
 =head1 DESCRIPTION
 
-This class will build CSS output based on SASS input using L<CSS::Sass>.
+This class will build CSS output based on SASS input using C<sass>. This module
+assumes this is provided by the Dart-Sass command-line tool, installed prior to
+use.
 
 =head1 ATTRIBUTES
 

@@ -13,7 +13,17 @@ to ensure the following prerequisites are installed:
 - Perl
 - CPANminus (`cpanm`)
 - SQLite
-- `libsass`
+
+### Development or Build Environments
+
+For a development or build environment, you will likely also want:
+
+- Dart Sass (`sass`)
+
+*(If you don't install Dart Sass, the build of sass code will be silently
+skipped.)*
+
+### Project Clone and Module Dependencies
 
 Clone this project to a desired location. Then perform the following from
 within this project's root directory:
