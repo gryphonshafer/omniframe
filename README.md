@@ -1,5 +1,8 @@
 # Omniframe
 
+[![Build Status](https://travis-ci.org/gryphonshafer/omniframe.svg)](https://travis-ci.org/gryphonshafer/omniframe)
+[![Coverage Status](https://coveralls.io/repos/gryphonshafer/omniframe/badge.png)](https://coveralls.io/r/gryphonshafer/omniframe)
+
 This is a multi-purpose base framework for projects. It's intended to be used
 in parallel with projects that depend upon it. By itself, it does little. The
 point of this project is to deduplicate frequently duplicated components between
