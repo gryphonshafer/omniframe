@@ -1,23 +1,146 @@
-[% page.title = 'Example Index Page' %]
+[% page.title = 'Example Page' %]
 
 <h1>[% page.title %]</h1>
 
-<p>This is an example index page.</p>
+<p>
+    This is an example page that displays elements styled with the foundational
+    sass/css.
+</p>
 
 <ul>
     <li>Package: <b>[% package %]</b></li>
     <li>Now: <b>[% now %]</b></li>
-    <li>HTML code test: <b><span class="copy">&copy;</span></b></li>
-    <li>Embedded UTF8 test: <b><span class="copy">©</span></b></li>
-    <li>Stash UTF8 test: <b><span class="copy">[% copy %]</span></b></li>
+    <li>HTML code test: <b>&copy;</b></li>
+    <li>Embedded UTF8 test: <b>©</b></li>
+    <li>Stash UTF8 test: <b>[% copy %]</b></li>
 </ul>
+
+<hr>
+
+<h2>Page Elements</h2>
+
+<p>This is a paragraph.</p>
+
+<blockquote>This is a blockquote.</blockquote>
+
+<pre>This is a
+    "pre" block.</pre>
+
+<section>This is a section block.</section>
+
+<p>This is another paragraph.</p>
+
+<hr>
+
+<h2>Text Elements</h2>
+
+<p>
+    This is a paragraph with <strong>strong</strong> and <b>bold</b> text.
+    It also contains <em>em text</em>, <i>i text</i>, and <var>var text</var>.
+    It also contains
+    <small>small text</small>,
+    <big>big text</big>,
+    <sub>sub text</sub>,
+    <sup>sup text</sup>,
+    <del>del text</del>,
+    <abbr>abbr text</abbr>, and
+    <acronym>acronym text</acronym>.
+</p>
+
+<address>This is an address block.</address>
+
+<h1>Header 1</h1>
+<h2>Header 2</h2>
+<h3>Header 3</h3>
+<h4>Header 4</h4>
+<h5>Header 5</h5>
+<h6>Header 6</h6>
+
+<hr>
+
+<h2>List Elements</h2>
+
+<ul>
+    <li>Item</li>
+    <li>Item</li>
+    <li>Item</li>
+</ul>
+
+<ol>
+    <li>Item 1</li>
+    <li>Item 2</li>
+    <li>Item 3</li>
+</ol>
+
+<dl>
+    <dt>Term</dt>
+    <dd>Definition</dd>
+</dl>
+
+<hr>
+
+<h2>Form Elements</h2>
 
 <form method="post" action="[% c.url.for('/') %]">
     <fieldset>
         <legend>Form Test</legend>
+
         <label>Input: <input type="text" name="input" title="Input text..." placeholder="Type Input"></label>
-        <input type="submit" value="Send">
+        <label>URL: <input type="url" name="url" title="Input URL..." placeholder="Type URL"></label>
+
+        <label>
+            Select:
+            <select>
+                <option>Alpha</option>
+                <option>Beta</option>
+                <option>Delta</option>
+                <option>Gamma</option>
+            </select>
+        <label>
+
+        <label>
+            Select:
+            <select size="3">
+                <option>Alpha</option>
+                <option>Beta</option>
+                <option>Delta</option>
+                <option>Gamma</option>
+            </select>
+        <label>
+
+        <textarea>This is a textarea.</textarea>
+
+        <label>Checkbox: <input type="checkbox" name="checkbox"></label>
+        <label>Radio: <input type="radio" name="radio"></label>
+
+        <button>Button</button>
+        <input type="reset" value="Reset">
+        <input type="submit" value="Submit">
     </fieldset>
 </form>
 
 [% IF input %]<p>[% input | html %]</p>[% END %]
+
+<hr>
+
+<h2>Table Elements</h2>
+
+<table>
+    <caption>Caption</caption>
+    <thead>
+        <tr>
+            <th colspan="2">Header</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Cell</td>
+            <td>Cell</td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="2">Footer</td>
+        </tr>
+    </tfoot>
+</table>

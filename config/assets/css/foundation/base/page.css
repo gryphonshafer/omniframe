@@ -1,0 +1,16 @@
+html {
+    margin : 0.5rem;
+}
+
+blockquote {
+    margin : 1rem 2rem;
+}
+
+p, fieldset, table, pre, section, ol, ul, dl {
+    margin-top    : 1rem;
+    margin-bottom : 1rem;
+}
+
+hr {
+    border : 1px solid dimgray;
+}
