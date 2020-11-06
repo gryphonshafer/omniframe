@@ -1,0 +1,15 @@
+ol, ul {
+    margin-left : 2rem;
+}
+
+ol li {
+    list-style : decimal outside;
+}
+
+ul li {
+    list-style : disc outside;
+}
+
+dl dd {
+    margin-left : 2rem;
+}

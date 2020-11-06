@@ -30,7 +30,7 @@ default:
             include_path:
                 - templates/emails
     sass:
-        scss_src: config/assets/sass/app.scss
+        scss_src: config/assets/sass/app
         compile_to: static/app.css
     mojolicious:
         access_log: local/access.log

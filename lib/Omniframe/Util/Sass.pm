@@ -11,21 +11,8 @@ has mode => sub ($self) {
 };
 
 has scss_src => sub ($self) {
-    my $scss_src  = $self->conf->get( qw( sass scss_src ) );
-    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
-    my $omniframe = $self->conf->get('omniframe') || '';
-
-    return join( "\n",
-        map { "\@import '$_';" }
-        grep { defined }
-        map {
-            my $app_file  = "$root_dir/$_";
-            my $omni_file = "$root_dir/$omniframe/$_";
-
-            ( -f $app_file or not $omniframe ) ? $app_file  :
-            ( -f $omni_file )                  ? $omni_file : undef;
-        } ( ref $scss_src eq 'ARRAY' ) ? @$scss_src : $scss_src
-    );
+    my $scss_src = $self->conf->get( qw( sass scss_src ) );
+    return join( "\n", map { "\@use '$_';" } ( ref $scss_src eq 'ARRAY' ) ? @$scss_src : $scss_src );
 };
 
 has compile_to => sub ($self) {
@@ -132,8 +119,8 @@ comments or tightly formed for production purposes.
 This represents the source SASS input. Typically this will be a series of
 imports:
 
-    @import '/path/to/file.cscc';
-    @import '/path/to/other_file.cscc';
+    @use '/path/to/file';
+    @use '/path/to/directory/with/index/file/in/it';
 
 If not defined, it's created based on the applications configuration. See
 L</"CONFIGURATION"> below.
@@ -182,7 +169,7 @@ The following is the default configuration, which can be overridden in the
 application's configuration file. See L<Omniframe::Role::Conf>.
 
     sass:
-        scss_src: config/assets/sass/app.scss
+        scss_src: config/assets/sass/app
         compile_to: static/app.css
 
 Configuration is pulled from the application's configuration and stored in the
