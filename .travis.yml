@@ -17,6 +17,7 @@ install:
       curl -s https://api.github.com/repos/sass/dart-sass/releases/latest | \
       grep browser_download_url | grep linux-x64 | perl -ne '/:\s+"([^"]+)"/; print "$1\n"'
     ) | tar -xvpz --strip-components=1
+  - export PATH="$PATH:."
   - export RELEASE_TESTING=1 AUTOMATED_TESTING=1 AUTHOR_TESTING=1 HARNESS_OPTIONS=c HARNESS_TIMER=1
   - cpanm -v -n --installdeps .
   - dest init
