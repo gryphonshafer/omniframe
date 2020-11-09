@@ -2,7 +2,7 @@
 language: perl
 perl:
   - 5.30
-  - 5.20
+  - 5.28
 env: PERL_CPANM_OPT="--quiet --notest --force --skip-satisfied"
 before_install:
   - git clone git://github.com/haarg/perl-travis-helper
@@ -11,12 +11,12 @@ before_install:
   - perl -V
   - cpanm -v -n -f Test::Pod Test::Pod::Coverage Test::CheckManifest Devel::Cover::Report::Coveralls
   - git config --global github.user gryphonshafer
+install:
   - |-
     curl -s -L -o - $(
       curl -s https://api.github.com/repos/sass/dart-sass/releases/latest | \
       grep browser_download_url | grep linux-x64 | perl -ne '/:\s+"([^"]+)"/; print "$1\n"'
     ) | tar -xvpz --strip-components=1
-install:
   - export RELEASE_TESTING=1 AUTOMATED_TESTING=1 AUTHOR_TESTING=1 HARNESS_OPTIONS=c HARNESS_TIMER=1
   - cpanm -v -n --installdeps .
   - dest init
