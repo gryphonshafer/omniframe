@@ -18,7 +18,7 @@ requires 'DateTime', '1.52';
 requires 'DateTime::TimeZone', '2.39';
 requires 'Digest::Bcrypt', '>= 1.209';
 requires 'Email::Mailer', '1.09';
-requires 'File::Copy', '2.34';
+requires 'File::Copy';
 requires 'HTML::Packer', '1.004001';
 requires 'IPC::Run3', '0.048';
 requires 'JavaScript::Packer', '2.06';
