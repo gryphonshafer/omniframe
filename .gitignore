@@ -3,3 +3,5 @@ cover_db
 /.dest
 /local
 /static/app.css
+perl-travis-helper
+/src
