@@ -1,7 +1,7 @@
 # Omniframe
 
-[![Build Status](https://travis-ci.org/gryphonshafer/omniframe.svg)](https://travis-ci.org/gryphonshafer/omniframe)
-[![Coverage Status](https://coveralls.io/repos/gryphonshafer/omniframe/badge.png)](https://coveralls.io/r/gryphonshafer/omniframe)
+[![build](https://github.com/gryphonshafer/omniframe/workflows/build/badge.svg)](https://github.com/gryphonshafer/omniframe/actions?query=workflow%3Abuild)
+[![codecov](https://codecov.io/gh/gryphonshafer/omniframe/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/omniframe)
 
 This is a multi-purpose base framework for projects. It's intended to be used
 in parallel with projects that depend upon it. By itself, it does little. The
