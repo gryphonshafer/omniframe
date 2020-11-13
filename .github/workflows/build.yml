@@ -12,14 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |-
-        curl -s -L -o - $(
-          curl -s https://api.github.com/repos/sass/dart-sass/releases/latest | \
-          grep browser_download_url | grep linux-x64 | perl -ne '/:\s+"([^"]+)"/; print "$1\n"'
-        ) | tar -xvpz --strip-components=1
-      - run: export PATH="$PATH:."
+          curl -s -L -o - $(
+            curl -s https://api.github.com/repos/sass/dart-sass/releases/latest | \
+            grep browser_download_url | grep linux-x64 | perl -ne '/:\s+"([^"]+)"/; print "$1\n"'
+          ) | tar -xvpz --strip-components=1
       - uses: perl-actions/install-with-cpanm@v1
         env:
-          PERL_CPANM_OPT: --from https://cpan.metacpan.org/ --quiet --notest --force --skip-satisfied
+          PERL_CPANM_OPT: --from https://cpan.metacpan.org/ --notest --force --skip-satisfied
         with:
           sudo: false
           args: --with-develop --with-all-features --installdeps .
@@ -27,8 +26,9 @@ jobs:
             Devel::Cover::Report::Codecov
       - run: dest init
       - run: dest update
-      - run: HARNESS_PERL_SWITCHES=-MDevel::Cover prove --recurse --lib --failures --jobs 4 --timer t
-      - run: cover -test -report codecov
+      - run: |-
+          PATH="$PATH:." \
+          HARNESS_PERL_SWITCHES=-MDevel::Cover \
+          prove --recurse --lib --failures --jobs 4 --timer t
+      - run: CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }} cover -report codecov
         if: ${{ matrix.perl-version >= 26 }}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
