@@ -1,6 +1,6 @@
 # Omniframe
 
-[![build](https://github.com/gryphonshafer/omniframe/workflows/build/badge.svg)](https://github.com/gryphonshafer/omniframe/actions?query=workflow%3Abuild)
+[![test](https://github.com/gryphonshafer/omniframe/workflows/test/badge.svg)](https://github.com/gryphonshafer/omniframe/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/gryphonshafer/omniframe/graph/badge.svg)](https://codecov.io/gh/gryphonshafer/omniframe)
 
 This is a multi-purpose base framework for projects. It's intended to be used
