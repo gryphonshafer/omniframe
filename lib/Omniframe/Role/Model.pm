@@ -91,7 +91,7 @@ sub save ( $self, $data = undef ) {
 }
 
 sub delete ( $self, @search ) {
-    croak('Cannot delete() an object without loaded data') unless ( $self->id );
+    croak('Cannot delete() an object without loaded data') unless ( $self->id or @search );
 
     my $search = ( @search > 1 ) ? \@search : ( @search == 1 ) ? $search[0] : undef;
     $search = { $self->id_name => $search // $self->id } unless ( ref $search );
@@ -105,7 +105,7 @@ sub _search ( $self, $search ) {
     return $self->dq->get( $self->name )->where($search)->run->all({});
 }
 
-sub every ( $self, $search ) {
+sub every ( $self, $search = {} ) {
     my @objects = map {
         $self->new(
             id          => $_->{ $self->id_name },
@@ -117,7 +117,7 @@ sub every ( $self, $search ) {
     return (wantarray) ? @objects : \@objects;
 }
 
-sub every_data ( $self, $search ) {
+sub every_data ( $self, $search = {} ) {
     my $objects = $self->_search($search);
     return (wantarray) ? @$objects : $objects;
 }

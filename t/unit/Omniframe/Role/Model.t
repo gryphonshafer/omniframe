@@ -17,7 +17,7 @@ can_ok( $obj, $_ ) for ( qw( name id_name id data create load save delete every 
 throws_ok( sub { $obj->create(undef) }, qr/create\(\) data hashref contains no data/, 'create() sans data' );
 throws_ok( sub { $obj->load(undef) }, qr/load\(\) called without input/, 'load() sans data' );
 throws_ok(
-    sub { $obj->delete(undef) },
+    sub { $obj->delete },
     qr/Cannot delete\(\) an object without loaded data/,
     'delete() sans data',
 );
