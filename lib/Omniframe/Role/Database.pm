@@ -3,6 +3,7 @@ package Omniframe::Role::Database;
 use exact -role;
 use App::Dest;
 use DBIx::Query;
+use DBD::SQLite;
 use Mojo::File 'path';
 
 with 'Omniframe::Role::Conf';
@@ -30,7 +31,16 @@ class_has dq => sub ($self) {
         $conf->{settings},
     );
 
-    $dq->do( 'PRAGMA ' . $_ . ' = ' . $conf->{pragmas}{$_} ) for ( keys %{ $conf->{pragmas} } } );
+    exact->monkey_patch(
+        'DBIx::Query',
+        quote => sub ( $self, @values ) {
+            return DBD::SQLite::db->quote(@values);
+        },
+    );
+
+    $dq->do("PRAGMA $_->[0] = $_->[1]")
+        for ( map { [ $_, $dq->quote( $conf->{pragmas}{$_} ) ] } keys %{ $conf->{pragmas} } );
+
     return $dq;
 };
 

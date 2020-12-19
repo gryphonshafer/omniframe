@@ -11,6 +11,7 @@ requires 'Mojolicious::Plugin::RequestBase', '>= 0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '>= 1.09';
 
 requires 'DBIx::Query', '1.10';
+requires 'DBD::SQLite', '1.66';
 requires 'App::Dest', '1.27';
 
 requires 'Data::Printer', '0.40';
