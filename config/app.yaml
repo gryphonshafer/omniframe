@@ -8,6 +8,10 @@ default:
             sqlite_defensive: 1
             RaiseError: 1
             PrintError: 0
+        pragmas:
+            encoding: UTF-8
+            foreign_keys: ON
+            temp_store: MEMORY
     logging:
         log_file: local/app.log
         log_level:

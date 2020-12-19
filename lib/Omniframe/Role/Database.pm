@@ -30,9 +30,7 @@ class_has dq => sub ($self) {
         $conf->{settings},
     );
 
-    $dq->do('PRAGMA foreign_keys = ON');
-    $dq->do('PRAGMA encoding="UTF-8"');
-
+    $dq->do( 'PRAGMA ' . $_ . ' = ' . $conf->{pragmas}{$_} ) for ( keys %{ $conf->{pragmas} } } );
     return $dq;
 };
 
@@ -91,6 +89,11 @@ application's configuration file. See L<Omniframe::Role::Conf>.
             sqlite_defensive: 1
             RaiseError: 1
             PrintError: 0
+        pragmas:
+            auto_vacuum: FULL
+            encoding: UTF-8
+            foreign_keys: ON
+            temp_store: MEMORY
 
 =head1 WITH ROLES
 
