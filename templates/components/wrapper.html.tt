@@ -2,16 +2,20 @@
     page = {};
 
     DEFAULT
+        page.lang         = 'en',
+        page.html_classes = [],
         page.title        = '',
         page.charset      = 'utf-8',
+        page.noindex      = 0,
         page.viewport     = '1.0',
         page.favicon      = '/favicon.ico',
         page.line_awesome = 0,
         page.css          = ['/app.css'],
+        page.links        = [],
+        page.body_classes = [],
         page.vue          = 0,
         page.vuex         = 0,
         page.vue_router   = 0,
-        page.links        = [],
         page.js           = [],
         page.inline_js    = [];
         page.layout       = 'page_layout.html.tt';
@@ -29,7 +33,7 @@
     END;
 -%]
 <!DOCTYPE html>
-<html lang="en">
+<html lang="[% page.lang %]" class="[% page.html_classes.join(' ') %]">
     <head>
         [% IF page.title %]
             <title>[% page.title %]</title>
@@ -37,6 +41,10 @@
 
         [% IF page.charset %]
             <meta charset="utf-8">
+        [% END %]
+
+        [% IF page.noindex %]
+            <meta name="robots" content="noindex">
         [% END %]
 
         [% IF page.viewport %]
@@ -75,7 +83,7 @@
             [% END %]
         [% END %]
     </head>
-    <body>
+    <body class="[% page.body_classes.join(' ') %]">
         [% content %]
 
         [% IF page.vue %]
