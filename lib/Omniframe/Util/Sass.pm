@@ -11,8 +11,26 @@ has mode => sub ($self) {
 };
 
 has scss_src => sub ($self) {
-    my $scss_src = $self->conf->get( qw( sass scss_src ) );
-    return join( "\n", map { "\@use '$_';" } ( ref $scss_src eq 'ARRAY' ) ? @$scss_src : $scss_src );
+    my $omniframe = $self->conf->get('omniframe');
+    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
+    my $scss_src  = $self->conf->get( qw( sass scss_src ) );
+
+    $scss_src = [$scss_src] unless ( ref $scss_src eq 'ARRAY' );
+
+    return join( "\n",
+        map { "\@use '$_';" }
+        map {
+            my $scss_file = join( '/', $root_dir, $_ );
+
+            if ($omniframe) {
+                $scss_file = join( '/', $root_dir, $omniframe, $_ ) if ( not $self->exists($scss_file) );
+            }
+
+            croak( 'Unable to locate SCSS file: ' . $scss_file ) if ( not $self->exists($scss_file) );
+            $scss_file;
+        }
+        @$scss_src
+    );
 };
 
 has compile_to => sub ($self) {
@@ -68,7 +86,18 @@ sub build (
     $error_cb->($error) if $error;
 
     return;
-};
+}
+
+sub exists ( $self, $scss ) {
+    return
+        grep { -r $_ }
+        map {
+            $scss . '.' . $_,
+            '_' . $scss . '.' . $_,
+            $scss . '/index.' . $_,
+            $scss . '/_index.' . $_;
+        } qw( css scss cass );
+}
 
 1;
 
@@ -162,6 +191,14 @@ on specific calls to C<build>:
         sub {},
         sub ($error) { die $error . "\n" } },
     );
+
+=head2 exists
+
+Given a name, this method will check for a valid Sass reference (file or
+directory with an index file inside) first within a project's scope and then
+within Omniframe's scope.
+
+    $sass->exists('name');
 
 =head1 CONFIGURATION
 
