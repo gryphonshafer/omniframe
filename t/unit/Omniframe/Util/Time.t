@@ -35,7 +35,11 @@ like(
     q{datetime( time, 'access' )},
 );
 
-like( $obj->zulu, qr/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, 'zulu' );
-is( $obj->zulu(1588813351), '2020-05-07T01:02:31Z', 'zulu(time)' );
+like( $obj->zulu, qr/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z/, 'zulu' );
+is( $obj->zulu(1588813351.100764), '2020-05-07T01:02:31.100764Z', 'zulu(time)' );
+
+$obj->hires(0);
+like( $obj->zulu, qr/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, 'zulu no hires' );
+is( $obj->zulu(1588813351.100764), '2020-05-07T01:02:31Z', 'zulu(time) no hires' );
 
 done_testing();

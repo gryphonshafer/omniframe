@@ -30,6 +30,7 @@ requires 'Log::Dispatch::Email::Mailer', '1.05';
 requires 'Term::ANSIColor', '5.01';
 requires 'Text::CSV_XS', '1.43';
 requires 'Text::MultiMarkdown', '1.000035';
+requires 'Time::HiRes', '1.9764';
 requires 'YAML::XS', '0.81';
 
 on 'test' => sub {
