@@ -1,5 +1,5 @@
 use Test::Most;
-use exact;
+use exact -conf;
 
 my $obj;
 use_ok('Project::Control');

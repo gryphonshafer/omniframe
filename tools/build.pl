@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use exact -cli, -conf;
 use File::Copy 'cp';
+use File::Copy::Recursive 'dircopy';
 use Mojo::File 'path';
 use YAML::XS 'DumpFile';
 
@@ -12,51 +13,83 @@ $opt->{dir}  //= '.';
 my $root_dir = conf->get( qw( config_app root_dir ) );
 my $proj_dir = path( $opt->{dir} )->to_rel->to_string;
 
-path( $proj_dir . '/' . $_ )->make_path for (
-    'config/db',
-    'lib/' . $opt->{name},
-);
-
 cp(
     $root_dir . '/' . $_,
     $proj_dir . '/' . $_,
 ) for ( qw(
-    config/db/dest.wrap
     app.psgi
     dest.watch
     .gitignore
 ) );
 
-my $config = {};
+dircopy(
+    $root_dir . '/' . $_,
+    $proj_dir . '/' . $_,
+) for ( qw(
+    config/db
+    t/kwalitee
+) );
 
-$config->{preinclude}            = path( $root_dir . '/config/app.yaml', $opt->{dir} )->to_rel->to_string;
-$config->{default}{omniframe}    = path( $root_dir,                      $opt->{dir} )->to_rel->to_string;
-$config->{default}{libs}         = path( $root_dir . '/lib',             $opt->{dir} )->to_rel->to_string;
-$config->{default}{mojo_app_lib} = "$opt->{name}::Control";
-
-$config->{default}{mojolicious}{secrets} = [
-    substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 32 )
-];
-
-$config->{default}{mojolicious}{session}{cookie_name} = lc( $opt->{name} ) . '_session';
+path( $proj_dir . '/t/app' )->make_path;
+( my $content = path( $root_dir . '/t/app/home_page.t' )->slurp ) =~ s/\bProject::/$opt->{name}::/g;
+path( $proj_dir . '/t/app/home_page.t' )->spurt($content);
 
 local $YAML::XS::Indent = 4;
-DumpFile( $proj_dir . '/config/app.yaml', $config );
 
-path( $root_dir . '/lib/Project' )
-    ->list_tree({ hidden => 1 })
-    ->each( sub {
-        my $src = $_->to_string;
-        ( my $dest = $src ) =~ s!^$root_dir/lib/Project!$proj_dir/lib/$opt->{name}!;
+DumpFile( $proj_dir . '/config/app.yaml', {
+    preinclude => path( $root_dir . '/config/app.yaml', $opt->{dir} )->to_rel->to_string,
+    default    => {
+        omniframe    => path( $root_dir,          $opt->{dir} )->to_rel->to_string,
+        libs         => path( $root_dir . '/lib', $opt->{dir} )->to_rel->to_string,
+        mojo_app_lib => "$opt->{name}::Control",
+        mojolicious  => {
+            secrets => [
+                substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 32 ),
+            ],
+            session => {
+                cookie_name => lc( $opt->{name} ) . '_session',
+            },
+        },
+        bcrypt => {
+            salt => substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 16 ),
+        },
+    },
+    optional_include => 'local/config.yaml',
+} );
 
-        my $file = path($dest);
-        $file->dirname->make_path;
+path( $proj_dir . '/local' )->make_path;
+DumpFile( $proj_dir . '/local/config.yaml', {
+    default    => {
+        mojolicious  => {
+            secrets => [
+                substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 32 ),
+            ],
+        },
+        bcrypt => {
+            salt => substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 16 ),
+        },
+    },
+} );
 
-        cp( $src, $dest );
+for my $type (
+    [ 'lib',    '/lib/Project'    ],
+    [ 't/unit', '/t/unit/Project' ],
+) {
+    path( $root_dir . $type->[1] )
+        ->list_tree({ hidden => 1 })
+        ->each( sub {
+            my $src = $_->to_string;
+            ( my $dest = $src ) =~ s!^$root_dir/$type->[0]/Project!$proj_dir/$type->[0]/$opt->{name}!;
 
-        ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
-        $file->spurt($content);
-    } );
+            my $file = path($dest);
+            $file->dirname->make_path;
+
+            cp( $src, $dest );
+
+            ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
+            $file->spurt($content);
+        } );
+}
 
 =head1 NAME
 
