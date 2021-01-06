@@ -14,15 +14,15 @@ sub setup ($self) {
             name TEXT DEFAULT NULL UNIQUE,
             counter INTEGER DEFAULT 1,
             data TEXT DEFAULT NULL,
-            last_modified TEXT NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%S:%s', 'NOW', 'LOCALTIME' ) ),
-            created TEXT NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%S:%s', 'NOW', 'LOCALTIME' ) )
+            last_modified TEXT NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' ) ),
+            created TEXT NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' ) )
         );
     })->run;
 
     $self->dq->sql(q{
         CREATE TRIGGER IF NOT EXISTS socket_before_update BEFORE update ON socket
         BEGIN
-            UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%d %H:%M:%S:%s', 'NOW', 'LOCALTIME' )
+            UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' )
             WHERE socket_id = old.socket_id;
         END;
     })->run;
