@@ -12,7 +12,7 @@ my $obj;
 use_ok('Omniframe');
 lives_ok( sub { $obj = Omniframe->new->with_roles('+Model') }, q{new->with_roles('+Model')} );
 ok( $obj->does("Omniframe::Role::$_"), "does $_ role" ) for ( qw( Conf Database Logging Model ) );
-can_ok( $obj, $_ ) for ( qw( name id_name id data create load save delete every every_data ) );
+can_ok( $obj, $_ ) for ( qw( name id_name id data create load save delete every every_data data_merge ) );
 
 throws_ok( sub { $obj->create(undef) }, qr/create\(\) data hashref contains no data/, 'create() sans data' );
 throws_ok( sub { $obj->load(undef) }, qr/load\(\) called without input/, 'load() sans data' );
