@@ -20,24 +20,8 @@ has 'id';
 has 'data';
 has '_saved_data' => {};
 
-sub _data_merge ( $self, $data ) {
-    if ( not $data and $self->data ) {
-        $data = { %{ $self->data } };
-    }
-    elsif ( $data and $self->data ) {
-        $data = {%$data};
-        for ( keys %{ $self->data } ) {
-            $data->{$_} = $self->data->{$_} unless ( exists $data->{$_} );
-        }
-    }
-
-    $data //= {};
-    delete $data->{ $self->id_name };
-    return $data;
-}
-
 sub create ( $self, $data ) {
-    $data = $self->_data_merge($data);
+    $data = $self->data_merge($data);
     croak('create() data hashref contains no data') unless ( keys %$data );
 
     $data = $self->freeze($data) if ( $self->can('freeze') );
@@ -65,7 +49,7 @@ sub load ( $self, $search ) {
 }
 
 sub save ( $self, $data = undef ) {
-    $data = $self->_data_merge($data);
+    $data = $self->data_merge($data);
 
     unless ( $self->id ) {
         $self->create($data);
@@ -100,11 +84,6 @@ sub delete ( $self, @search ) {
     return $self;
 }
 
-sub _search ( $self, $search ) {
-    $search = { $self->id_name => $search } unless ( ref $search );
-    return $self->dq->get( $self->name )->where($search)->run->all({});
-}
-
 sub every ( $self, $search = {} ) {
     my @objects = map {
         $self->new(
@@ -112,14 +91,31 @@ sub every ( $self, $search = {} ) {
             data        => $_,
             _saved_data => $_,
         );
-    } @{ $self->_search($search) };
+    } $self->every_data($search);
 
     return (wantarray) ? @objects : \@objects;
 }
 
 sub every_data ( $self, $search = {} ) {
-    my $objects = $self->_search($search);
+    $search = { $self->id_name => $search } unless ( ref $search );
+    my $objects = $self->dq->get( $self->name )->where($search)->run->all({});
     return (wantarray) ? @$objects : $objects;
+}
+
+sub data_merge ( $self, $data ) {
+    if ( not $data and $self->data ) {
+        $data = { %{ $self->data } };
+    }
+    elsif ( $data and $self->data ) {
+        $data = {%$data};
+        for ( keys %{ $self->data } ) {
+            $data->{$_} = $self->data->{$_} unless ( exists $data->{$_} );
+        }
+    }
+
+    $data //= {};
+    delete $data->{ $self->id_name };
+    return $data;
 }
 
 1;
@@ -259,6 +255,13 @@ representing one database record.
 
     my @hhgttg_rows = Model->new->every_data({ answer => 42 });
     my $hhgttg_rows = Model->new->every_data({ answer => 42 });
+
+=head2 data_merge
+
+This method will likely not need to be used or called directly. Its purpose is
+to take a hashref of data and merge it with any existing object data. It's
+exposed here to more easily allow role consuming classes to override its
+behavior if ever necessary.
 
 =head1 DATA SERIALIZATION
 
