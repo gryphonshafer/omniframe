@@ -1,24 +1,20 @@
-use Test::Most;
-use Test::MockModule;
+use Test2::V0;
 use exact -conf;
+use Omniframe::Util::Sass;
 
-my $spurt;
-my $mojo_file = Test::MockModule->new('Mojo::File');
-$mojo_file->mock( spurt => sub { $spurt = $_[1] } );
+my ( $spurt, $obj );
+my $mock = mock 'Mojo::File' => ( override => [ spurt => sub { $spurt = $_[1] } ] );
 
-use_ok('Omniframe::Util::Sass');
-
-my $obj;
-lives_ok( sub { $obj = Omniframe::Util::Sass->new }, 'new' );
+ok( lives { $obj = Omniframe::Util::Sass->new }, 'new' ) or note $@;
 isa_ok( $obj, 'Omniframe::Util::Sass' );
-ok( $obj->does('Omniframe::Role::Conf'), 'does Conf role' );
+DOES_ok( $obj, 'Omniframe::Role::Conf' );
 can_ok( $obj, qw( mode scss_src compile_to report_cb error_cb build exists ) );
 
-lives_ok( sub { $obj->build }, 'build succeeeds' );
+ok( lives { $obj->build }, 'build succeeeds' ) or note $@;
 is( substr( $spurt, 0, 3 ), '/* ', 'CSS rendered in dev mode' );
 
-lives_ok( sub { $obj->mode('production') }, 'set production mode' );
-lives_ok( sub { $obj->build }, 'build succeeeds again' );
+ok( lives { $obj->mode('production') }, 'set production mode' ) or note $@;
+ok( lives { $obj->build }, 'build succeeeds again' ) or note $@;
 isnt( substr( $spurt, 0, 3 ), '/* ', 'CSS rendered not in dev mode' );
 
 ok(
@@ -39,8 +35,8 @@ $obj->scss_src(
     )
 );
 
-throws_ok(
-    sub {
+like(
+    dies {
         $obj->build(
             sub {},
             sub ($error) { die $error . "\n" },
@@ -50,4 +46,4 @@ throws_ok(
     'build fails on non-SASS',
 );
 
-done_testing();
+done_testing;

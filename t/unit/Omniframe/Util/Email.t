@@ -1,25 +1,21 @@
-use Test::Most;
-use Test::MockModule;
-use exact;
+use Test2::V0;
+use exact -conf;
+use Omniframe::Util::Email;
 
-my $log = Test::MockModule->new('Omniframe::Role::Logging');
-$log->redefine( 'info', 1 );
-
-my $mailer = Test::MockModule->new('Email::Mailer');
-$mailer->redefine( 'send', 1 );
+my $mock_email  = mock 'Omniframe::Util::Email' => ( override => 'info' );
+my $mock_mailer = mock 'Email::Mailer'          => ( override => 'send' );
 
 my $obj;
-use_ok('Omniframe::Util::Email');
 
-throws_ok(
-    sub { $obj = Omniframe::Util::Email->new() },
+like(
+    dies { $obj = Omniframe::Util::Email->new() },
     qr/Failed new\(\) because "type" must be defined/,
     'new() throws',
 );
-lives_ok( sub { $obj = Omniframe::Util::Email->new( type => 'example' ) }, 'new( type => $type )' );
+ok( lives { $obj = Omniframe::Util::Email->new( type => 'example' ) }, 'new( type => $type )' ) or note $@;
 isa_ok( $obj, $_ ) for ( qw( Omniframe::Util::Email Omniframe ) );
 ok( $obj->does("Omniframe::Role::$_"), "does $_ role" ) for ( qw( Template Logging ) );
 can_ok( $obj, qw( type subject html new send ) );
-lives_ok( sub { $obj->send({}) }, 'send()' );
+ok( lives { $obj->send({}) }, 'send()' ) or note $@;
 
-done_testing();
+done_testing;

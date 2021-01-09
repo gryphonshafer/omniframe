@@ -1,16 +1,11 @@
-use Test::Most;
+use Test2::V0;
 use Test::Output;
-use exact;
-
-use_ok($_) for ( qw(
-    Omniframe
-    Email::Mailer
-    Log::Dispatch::Email::Mailer
-) );
+use exact -conf;
+use Omniframe;
 
 my $obj;
-lives_ok( sub { $obj = Omniframe->new->with_roles('+Logging') }, q{new->with_roles('+Logging')} );
-ok( $obj->does("Omniframe::Role::$_"), "does $_ role" ) for ( qw( Conf Logging ) );
+ok( lives { $obj = Omniframe->new->with_roles('+Logging') }, q{new->with_roles('+Logging')} ) or note $@;
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Logging ) );
 can_ok( $obj, qw(
     log_file log_level log_levels log_dispatch dp
     debug info notice warning warn error err critical crit alert emergency emerg
@@ -48,4 +43,4 @@ output_like(
     )
 );
 
-done_testing();
+done_testing;

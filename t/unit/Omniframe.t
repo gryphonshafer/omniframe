@@ -1,7 +1,7 @@
-use Test::Most;
-use exact;
+use Test2::V0;
+use exact -conf;
+use Omniframe;
 
-use_ok('Omniframe');
-lives_ok( sub { Omniframe->new }, 'new' );
+ok( lives { Omniframe->new }, 'new' ) or note $@;
 
-done_testing();
+done_testing;

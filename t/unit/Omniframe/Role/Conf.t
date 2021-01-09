@@ -1,11 +1,11 @@
-use Test::Most;
+use Test2::V0;
 use exact -conf;
+use Omniframe;
 
 my $obj;
-use_ok('Omniframe');
-lives_ok( sub { $obj = Omniframe->new->with_roles('+Conf') }, q{new->with_roles('+Conf')} );
-ok( $obj->does('Omniframe::Role::Conf'), 'does Conf role' );
+ok( lives { $obj = Omniframe->new->with_roles('+Conf') }, q{new->with_roles('+Conf')} ) or note $@;
+DOES_ok( $obj, 'Omniframe::Role::Conf' );
 can_ok( $obj, 'conf' );
 is( ref $obj->conf, 'Config::App', 'conf() is a Config::App' );
 
-done_testing();
+done_testing;

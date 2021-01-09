@@ -1,4 +1,4 @@
-use Test::Most;
+use Test2::V0;
 use Test::EOL;
 use Cwd 'getcwd';
 use Mojo::File 'path';
@@ -6,7 +6,7 @@ use Text::Gitignore 'build_gitignore_matcher';
 use exact -conf;
 
 my $root_dir = conf->get( qw( config_app root_dir ) );
-my $cwd = getcwd();
+my $cwd = getcwd;
 chdir($root_dir);
 
 my $matcher = build_gitignore_matcher( [
@@ -22,4 +22,4 @@ path('.')
     } );
 
 chdir($cwd);
-done_testing();
+done_testing;

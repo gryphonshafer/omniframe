@@ -1,10 +1,10 @@
-use Test::Most;
-use exact;
+use Test2::V0;
+use exact -conf;
+use Omniframe;
 
 my $obj;
-use_ok('Omniframe');
-lives_ok( sub { $obj = Omniframe->new->with_roles('+Template') }, q{new->with_roles('+Template')} );
-ok( $obj->does("Omniframe::Role::$_"), "does $_ role" ) for ( qw( Conf Template ) );
+ok( lives { $obj = Omniframe->new->with_roles('+Template') }, q{new->with_roles('+Template')} ) or note $@;
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Template ) );
 can_ok( $obj, qw( version tt tt_settings ) );
 
 my $tt_conf = $obj->conf->get('template') || {};
@@ -19,7 +19,7 @@ is(
 );
 
 my $tt;
-lives_ok( sub { $tt = $obj->tt }, 'tt() executes' );
+ok( lives { $tt = $obj->tt }, 'tt() executes' ) or note $@;
 is( ref $tt, 'Template', 'tt() returns Template' );
 
 is(
@@ -29,8 +29,8 @@ is(
 );
 
 my $output;
-lives_ok(
-    sub {
+ok(
+    lives {
         $obj->tt->process(
             \q{
                 BEGIN TEST DATA BLOCK
@@ -59,8 +59,8 @@ lives_ok(
             \$output,
         ) or die $obj->tt->error;
     },
-    'process()',
-);
+    'process',
+) or note $@;
 
 like( $output, qr/
     BEGIN\sTEST\sDATA\sBLOCK\s+
@@ -80,4 +80,4 @@ like( $output, qr/
     END\sTEST\sDATA\sBLOCK
 /x, 'template test data block' );
 
-done_testing();
+done_testing;
