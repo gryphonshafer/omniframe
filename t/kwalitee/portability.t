@@ -5,7 +5,7 @@ use Text::Gitignore 'build_gitignore_matcher';
 use exact -conf;
 
 my $root_dir = conf->get( qw( config_app root_dir ) );
-my $cwd = getcwd();
+my $cwd = getcwd;
 chdir($root_dir);
 
 my $matcher = build_gitignore_matcher( [
@@ -36,5 +36,5 @@ options(
     test_windows_reserved => 1,
 );
 
-run_tests();
+run_tests;
 chdir($cwd);

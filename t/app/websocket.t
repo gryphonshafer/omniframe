@@ -1,14 +1,15 @@
-use Test::Most;
-use Test::Mojo;
-use Test::MockModule;
+use Test2::V0;
+use Test2::MojoX;
 use exact -conf;
+use Omniframe::Control;
 
 conf->put( qw( logging log_level ), $_ => 'error' ) for ( qw( production development ) );
-Test::MockModule->new('Omniframe::Control')->redefine( 'setup_access_log', 1 );
 
-Test::Mojo->new('Omniframe::Control')
+my $mock = mock 'Omniframe::Control' => ( override => 'setup_access_log' );
+
+Test2::MojoX->new('Omniframe::Control')
     ->websocket_ok('/ws')
     ->send_ok( 'y' x 50000 )
     ->finish_ok;
 
-done_testing();
+done_testing;

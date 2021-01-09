@@ -34,14 +34,15 @@ requires 'Time::HiRes', '1.9764';
 requires 'YAML::XS', '0.81';
 
 on 'test' => sub {
+    requires 'Test2::V0', '0.000139';
+    requires 'Test2::MojoX', '0.05';
+    requires 'Test::Output', '1.031';
+
     requires 'Cwd', '3.75';
     requires 'ExtUtils::Manifest', '1.72';
     requires 'Pod::Coverage::TrustPod', '0.100005';
     requires 'Test::EOL', '2.00';
-    requires 'Test::MockModule', '0.172.0';
-    requires 'Test::Most', '0.37';
     requires 'Test::NoTabs', '2.02';
-    requires 'Test::Output', '1.031';
     requires 'Test::Pod', '1.52';
     requires 'Test::Pod::Coverage', '1.10';
     requires 'Test::Portability::Files', '0.10';

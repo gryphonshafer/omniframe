@@ -1,9 +1,9 @@
-use Test::Most;
-use exact;
+use Test2::V0;
+use exact -conf;
+use Omniframe::Util::Time;
 
 my $obj;
-use_ok('Omniframe::Util::Time');
-lives_ok( sub { $obj = Omniframe::Util::Time->new }, 'new' );
+ok( lives { $obj = Omniframe::Util::Time->new }, 'new' ) or note $@;
 isa_ok( $obj, $_ ) for ( qw( Omniframe::Util::Time Omniframe ) );
 can_ok( $obj, qw( datetime ) );
 
@@ -42,4 +42,4 @@ $obj->hires(0);
 like( $obj->zulu, qr/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, 'zulu no hires' );
 is( $obj->zulu(1588813351.100764), '2020-05-07T01:02:31Z', 'zulu(time) no hires' );
 
-done_testing();
+done_testing;

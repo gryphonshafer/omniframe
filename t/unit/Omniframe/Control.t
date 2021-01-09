@@ -1,11 +1,15 @@
-use Test::Most;
-use exact;
+use Test2::V0;
+use exact -conf;
+use Omniframe::Control;
+
+my $mock = mock 'Omniframe::Control' => (
+    override => [ qw( setup_access_log debug info notice warning warn ) ],
+);
 
 my $obj;
-use_ok('Omniframe::Control');
-lives_ok( sub { $obj = Omniframe::Control->new }, 'new()' );
+ok( lives { $obj = Omniframe::Control->new }, 'new' ) or note $@;
 isa_ok( $obj, $_ ) for ( 'Mojolicious', 'Omniframe' );
-ok( $obj->does("Omniframe::Role::$_"), "does $_ role" ) for ( qw( Conf Logging ) );
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Logging ) );
 
 can_ok( $obj, qw(
     sass
@@ -21,4 +25,4 @@ can_ok( $obj, qw(
     preload_controllers
 ) );
 
-done_testing();
+done_testing;

@@ -1,20 +1,16 @@
-use Test::Most;
-use Test::MockModule;
+use Test2::V0;
 use exact -conf;
+use Omniframe::Util::Watch;
 
 my $break = 1;
-
-my $inotify = Test::MockModule->new('Linux::Inotify2');
-$inotify->mock( 'poll' => sub { $break = 0 } );
-
-use_ok('Omniframe::Util::Watch');
+my $mock  = mock 'Linux::Inotify2' => ( override => [ poll => sub { $break = 0 } ] );
 
 my $obj;
-lives_ok( sub { $obj = Omniframe::Util::Watch->new }, 'new' );
+ok( lives { $obj = Omniframe::Util::Watch->new }, 'new' ) or note $@;
 can_ok( $obj, 'watch' );
 
-lives_ok(
-    sub {
+ok(
+    lives {
         $obj->watch(
             sub {},
             conf->get( qw( config_app root_dir ) ),
@@ -22,6 +18,6 @@ lives_ok(
         )
     },
     'watch',
-);
+) or note $@;
 
-done_testing();
+done_testing;
