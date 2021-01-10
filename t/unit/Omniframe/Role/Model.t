@@ -1,6 +1,5 @@
 use Test2::V0;
 use DBIx::Query;
-use exact -conf;
 use Omniframe;
 
 my $mock = mock 'DBIx::Query' => (

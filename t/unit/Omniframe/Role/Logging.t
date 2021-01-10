@@ -1,6 +1,5 @@
 use Test2::V0;
 use Test::Output;
-use exact -conf;
 use Omniframe;
 
 my $obj;

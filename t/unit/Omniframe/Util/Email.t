@@ -1,5 +1,4 @@
 use Test2::V0;
-use exact -conf;
 use Omniframe::Util::Email;
 
 my $mock_email  = mock 'Omniframe::Util::Email' => ( override => 'info' );
