@@ -1,5 +1,6 @@
 use Test2::V0;
 use Test2::MojoX;
+use exact -conf;
 use Omniframe::Control;
 
 $ENV{MOJO_LOG_LEVEL} = 'error';

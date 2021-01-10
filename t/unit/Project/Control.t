@@ -1,4 +1,5 @@
 use Test2::V0;
+use exact -conf;
 use Project::Control;
 
 my $mock = mock 'Project::Control' => (
