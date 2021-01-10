@@ -1,5 +1,4 @@
 use Test2::V0;
-use exact -conf;
 use Omniframe::Mojo::Document;
 
 my $mock = mock 'Omniframe::Mojo::Document' => ( override => 'notice' );

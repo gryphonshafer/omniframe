@@ -1,5 +1,4 @@
 use Test2::V0;
-use exact -conf;
 use Omniframe::Mojo::Socket;
 
 my $mock_logging = mock 'Omniframe::Role::Logging' => ( set => [ qw( info debug ) ] );
