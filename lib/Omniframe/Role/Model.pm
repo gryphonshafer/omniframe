@@ -25,8 +25,7 @@ sub create ( $self, $data ) {
     croak('create() data hashref contains no data') unless ( keys %$data );
 
     $data = $self->freeze($data) if ( $self->can('freeze') );
-    $self->load( $self->dq->add( $self->name, $data ) );
-
+    eval { $self->load( $self->dq->add( $self->name, $data ) ) } or croak $self->deat($@);
     return $self;
 }
 
@@ -66,7 +65,10 @@ sub save ( $self, $data = undef ) {
         $data = $self->freeze($data) if ( $self->can('freeze') );
 
         if (%$data) {
-            $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
+            eval {
+                $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
+            } or croak $self->deat($@);
+
             $self->load( $self->id );
         }
     }
@@ -116,6 +118,28 @@ sub data_merge ( $self, $data ) {
     $data //= {};
     delete $data->{ $self->id_name };
     return $data;
+}
+
+sub resolve_id ( $self, $input = undef, $class_name = undef ) {
+    return $self->id unless ( defined $input );
+    return $input if ( $input =~ /^\d+$/ );
+
+    if ( eval { $input->does(__PACKAGE__) } ) {
+        croak( 'input does ' . __PACKAGE__ . ' but is not a ' . $class_name )
+            if ( $class_name and not eval { $input->isa($class_name) } );
+        return $input->id;
+    }
+
+    return (
+        ($class_name)
+            ? do {
+                eval "require $class_name" or croak $@;
+                $class_name;
+            }
+            : $self
+    )->new->load($input)->id if ( ref $input eq 'HASH' );
+
+    croak('unsupported input');
 }
 
 1;
@@ -262,6 +286,29 @@ This method will likely not need to be used or called directly. Its purpose is
 to take a hashref of data and merge it with any existing object data. It's
 exposed here to more easily allow role consuming classes to override its
 behavior if ever necessary.
+
+=head2 resolve_id
+
+This method will resolve a theoretical primary key ID for a given set of inputs.
+If passed nothing or a false value, it will return call C<id> and return that
+value. If passed an integer, it will simply return that integer. If passed a
+hashref, it will attempt to a C<load> based on the hashref, then return an ID.
+If passed an object, it will call C<id> on that object.
+
+    $obj->resolve_id;      # return $obj->id
+    $obj->resolve_id(42);  # return 42
+    $obj->resolve_id({});  # return $obj->new->load({})->id
+    $obj->resolve_id($in); # return $in->id
+
+If an optional class name is also provided, then in the case where a hashref is
+provided, an object will be instantiated based on that name and used for the
+C<load> operation.
+
+    $obj->resolve_id( {}, 'SomeClassName' );
+    # return 'SomeClassName'->new->load({})->id
+
+In the case where an object and a class name are provided, the object passed in
+will be checked that it does the class name.
 
 =head1 DATA SERIALIZATION
 

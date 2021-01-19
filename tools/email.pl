@@ -1,4 +1,8 @@
 #!/usr/bin/env perl
+use Cwd 'cwd';
+use FindBin;
+BEGIN { $FindBin::Bin = cwd(); }
+
 use exact -cli, -conf;
 use Mojo::JSON 'decode_json', 'encode_json';
 use Omniframe::Util::Email;
