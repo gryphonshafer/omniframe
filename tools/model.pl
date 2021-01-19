@@ -1,15 +1,21 @@
 #!/usr/bin/env perl
+use Cwd 'cwd';
+use FindBin;
+BEGIN { $FindBin::Bin = cwd(); }
+
 use exact -cli, -conf;
 use Data::Printer;
 use Mojo::Util 'camelize';
 
-my $opt = options( 'model|m=s', 'action|a=s', 'id|i=s', 'hash|h=s{,}', 'params|p=s{,}', 'namespace|n=s' );
-( $opt->{namespace} = conf->get('mojo_app_lib') ) =~ s/Control/Model/ unless ( $opt->{namespace} );
+my $opt = options(
+    'model|m=s', 'action|a=s', 'id|i=s', 'hash|h=s{,}', 'params|p=s{,}', 'namespace|n=s', 'silent|s',
+);
+( $opt->{namespace} = conf->get('mojo_app_lib') ) =~ s/::Control// unless ( $opt->{namespace} );
 pod2usage('Must provide at least a model and action') unless ( $opt->{model} and $opt->{action} );
 
 sub use_class ($name) {
-    my $class = $model . '::' . camelize($name);
-    eval "require $class";
+    my $class = camelize( $opt->{namespace} ) . '::Model::' . camelize($name);
+    eval "require $class" or die $@;
     return $class;
 }
 
@@ -23,13 +29,19 @@ for my $element ( @{ $opt->{params} || [] }, @{ $opt->{hash} || [] } ) {
 }
 
 my $action = $opt->{action};
-my $rv = $obj->$action(
-    grep { defined }
-        ( ( $opt->{hash} ) ? { @{ $opt->{hash} } } : undef ),
-        @{ $opt->{params} || [] }
-);
+my $rv;
+try {
+    $rv = $obj->$action(
+        grep { defined }
+            ( ( $opt->{hash} ) ? { @{ $opt->{hash} } } : undef ),
+            @{ $opt->{params} || [] }
+    );
+}
+catch {
+    die $obj->deat($_) . "\n";
+};
 
-p $rv;
+p $rv unless ( $opt->{silent} );
 
 =head1 NAME
 
@@ -44,6 +56,7 @@ model.pl - Invoke model methods
         -h, --hash      NAME VALUE DATA PAIRS
         -p, --params    LIST OF PARAMS
         -n, --namespace MODEL_CLASS_NAMESPACE
+        -s, --silent
         -h, --help
         -m, --man
 

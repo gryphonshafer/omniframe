@@ -14,7 +14,9 @@ my $mock = mock 'DBIx::Query' => (
 my $obj;
 ok( lives { $obj = Omniframe->new->with_roles('+Model') }, q{new->with_roles('+Model')} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Database Logging Model ) );
-can_ok( $obj, $_ ) for ( qw( name id_name id data create load save delete every every_data data_merge ) );
+can_ok( $obj, $_ ) for ( qw(
+    name id_name id data create load save delete every every_data data_merge resolve_id
+) );
 
 like( dies { $obj->create(undef) }, qr/create\(\) data hashref contains no data/, 'create() sans data' );
 like( dies { $obj->load(undef) }, qr/load\(\) called without input/, 'load() sans data' );
@@ -55,5 +57,8 @@ is( $rv, [
 
 ok( lives { $rv = $obj->every_data({}) }, 'every_data()' ) or note $@;
 is( $rv, [ { model_id => 42, thx => 1138 }, { model_id => 43, thx => 1139 } ], 'every_data() data check' );
+
+is( $obj->resolve_id(1138), 1138, 'resolve_id(id)' );
+is( $obj->resolve_id($obj), 42, 'resolve_id(obj)' );
 
 done_testing;

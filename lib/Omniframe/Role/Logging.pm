@@ -146,6 +146,11 @@ sub dp ( $self, $params, @np_settings ) {
     } @$params;
 }
 
+sub deat ( $self, $error ) {
+    $error =~ s/\s+at\s.+\sline\s\d+\.\s*$//g;
+    return $error;
+}
+
 sub _log_cb_time (%msg) {
     return $time->datetime('log') . ' ' . $msg{message};
 }
@@ -268,6 +273,11 @@ This method accepts data along with an optional set of settings useful for
 L<Data::Printer>'s C<np> method.
 
     say $self->dp( { answer => 42 }, @np_settings );
+
+=head2 deat
+
+This method removes any "at /some/place.pl line 42." instances from the end of
+any string passed in.
 
 =head1 CLASS ATTRIBUTES
 

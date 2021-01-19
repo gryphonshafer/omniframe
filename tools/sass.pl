@@ -1,4 +1,8 @@
 #!/usr/bin/env perl
+use Cwd 'cwd';
+use FindBin;
+BEGIN { $FindBin::Bin = cwd(); }
+
 use exact -cli, -conf;
 use Omniframe::Util::Sass;
 use Omniframe::Util::Watch;
