@@ -38,7 +38,6 @@ ok( lives { $obj->save({ thx => 1138 }) }, 'save() with merged data sans id' ) o
 ok( lives { $obj->save({ thx => 1138 }) }, 'save() with merged data with id' ) or note $@;
 
 ok( lives { $obj->delete }, 'delete()' ) or note $@;
-ok( lives { $obj->delete( 1, 2, 3 ) }, 'delete( 1, 2, 3 )' ) or note $@;
 
 my $rv;
 ok( lives { $rv = $obj->every({}) }, 'every()' ) or note $@;
