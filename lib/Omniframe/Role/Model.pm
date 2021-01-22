@@ -29,12 +29,17 @@ sub create ( $self, $data ) {
     return $self;
 }
 
-sub load ( $self, $search ) {
-    croak('load() called without input') unless ( defined $search );
+sub _setup_search ( $self, $search ) {
+    $search = ( ref $search ) ? { %$search } : { $self->id_name => $search // $self->id };
+    $search->{active} = \'IS TRUE' unless ( exists $search->{active} );
+    delete $search->{active} if ( ref $search->{active} eq 'SCALAR' and not defined ${ $search->{active} } );
+    return $search;
+}
 
-    $search = { $self->id_name => $search } unless ( ref $search );
+sub load ( $self, $search = undef ) {
+    croak('load() called without input') unless ($search);
 
-    my $data = $self->dq->get( $self->name )->where($search)->run->next;
+    my $data = $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->next;
     croak('Failed to load ' . $self->name ) unless ($data);
 
     $data = $data->data;
@@ -76,13 +81,9 @@ sub save ( $self, $data = undef ) {
     return $self;
 }
 
-sub delete ( $self, @search ) {
-    croak('Cannot delete() an object without loaded data') unless ( $self->id or @search );
-
-    my $search = ( @search > 1 ) ? \@search : ( @search == 1 ) ? $search[0] : undef;
-    $search = { $self->id_name => $search // $self->id } unless ( ref $search );
-    $self->dq->rm( $self->name, $search );
-
+sub delete ( $self, $search = undef ) {
+    croak('Cannot delete() an object without loaded data') unless ( $self->id or $search );
+    $self->dq->rm( $self->name, $self->_setup_search($search) );
     return $self;
 }
 
@@ -99,8 +100,7 @@ sub every ( $self, $search = {} ) {
 }
 
 sub every_data ( $self, $search = {} ) {
-    $search = { $self->id_name => $search } unless ( ref $search );
-    my $objects = $self->dq->get( $self->name )->where($search)->run->all({});
+    my $objects = $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->all({});
     return (wantarray) ? @$objects : $objects;
 }
 
@@ -252,14 +252,13 @@ merged with any data passed in via a hashref. The method will return the object.
 
 =head2 delete
 
-This method will delete a record or records from the database. If called on a
-loaded object without parameters, it will delete the row based on the object's
-C<id> attribute. Otherwise, it expects either a hashref with a SQL WHERE clause
-or a list of primary key values.
+This method will delete a record from the database. If called on a loaded object
+without parameters, it will delete the row based on the object's C<id>
+attribute. Otherwise, it expects either a hashref with a SQL WHERE clause or a
+primary key value.
 
     Model->new->load(1138)->delete;
     Model->new->load->delete(1138);
-    Model->new->load->delete( 42, 1138 );
     Model->new->load->delete({ model_id => 42 });
 
 =head2 every
@@ -335,6 +334,19 @@ ways such that you can serialize and deserialize data.
 
 Note that you probably shouldn't serialize and deserialize the entire C<$data>
 because that will likely cause database commands to fail.
+
+=head1 ACTIVE RECORDS
+
+If a database table contains a column called "active", the C<load>, C<delete>,
+C<every>, and C<every_data> methods will respect this as a flag to indicate the
+record may or may not be "virtually deleted". For example, if in a user table
+there's an active column, a C<load> for users will not find users where this
+active column's data contains a false value.
+
+This behavior can be overridden by setting "active" to a reference to C<undef>,
+which will result in "active" playing no factor in the record search.
+
+    $obj->data->{active} = \undef;
 
 =head1 WITH ROLES
 
