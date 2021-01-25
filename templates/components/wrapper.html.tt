@@ -11,6 +11,7 @@
         page.favicon      = '/favicon.ico',
         page.line_awesome = 0,
         page.css          = ['/app.css'],
+        page.style        = [],
         page.links        = [],
         page.body_classes = [],
         page.vue          = 0,
@@ -24,6 +25,12 @@
         PROCESS $template;
     END;
 
+    IF page.blank;
+        page.favicon = undef;
+        page.css     = undef;
+        page.layout  = undef;
+    END;
+
     content = BLOCK;
         TRY;
             PROCESS $page.layout;
@@ -33,7 +40,10 @@
     END;
 -%]
 <!DOCTYPE html>
-<html lang="[% page.lang %]" class="[% page.html_classes.join(' ') %]">
+<html
+    [%- IF page.lang %] lang="[% page.lang %]"[% END -%]
+    [%- IF page.html_classes.size %] class="[% page.html_classes.join(' ') %]"[% END -%]
+>
     <head>
         [% IF page.title %]
             <title>[% page.title %]</title>
@@ -71,6 +81,12 @@
                 href="[% c.url_for(css).query( version => constants.version ) %]">
         [% END %]
 
+        [% FOR style IN page.style %]
+            <style type="text/css">
+                [% style %]
+            </style>
+        [% END %]
+
         [% FOR file IN page.links %]
             [% UNLESS link_seen.$file %]
                 <link rel="import" href="[%
@@ -83,7 +99,9 @@
             [% END %]
         [% END %]
     </head>
-    <body class="[% page.body_classes.join(' ') %]">
+    <body
+        [%- IF page.body_classes.size %] class="[% page.body_classes.join(' ') %]"[% END -%]
+    >
         [% content %]
 
         [% IF page.vue %]
