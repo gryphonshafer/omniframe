@@ -3,10 +3,12 @@ package Omniframe::Role::Template;
 use exact -role;
 use Mojo::File 'path';
 use Template;
+use HTML::Packer;
 
 with 'Omniframe::Role::Conf';
 
 class_has version => time;
+class_has packer  => sub { HTML::Packer->init };
 
 my $tt;
 sub tt ( $self, $type = 'web' ) {
@@ -65,6 +67,11 @@ sub tt_settings ( $self, $type = 'web' ) {
             } );
         },
     };
+}
+
+sub tt_html ( $self, $tt, $data = {}, $opts = {} ) {
+    $self->tt->process( $tt, $data, \ my $output ) or croak $self->tt->error;
+    return $self->packer->minify( \$output, $opts );
 }
 
 1;
@@ -128,6 +135,13 @@ settings suitable to be used to create a new L<Template> object.
 
 Types are based on the types setup in the configuration. See L</"CONFIGURATION">
 below. These types are: web and email. The default type is "web".
+
+=head2 tt_html
+
+This method accepts a template filename as a string scalar or a template itself
+as a scalar reference, then some optional data as a hashref, and then an
+optional hashref of options for L<HTML::Packer>. The method will then generate
+HTML and return it.
 
 =head1 CONFIGURATION
 

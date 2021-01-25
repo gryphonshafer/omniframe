@@ -4,7 +4,7 @@ use Omniframe;
 my $obj;
 ok( lives { $obj = Omniframe->new->with_roles('+Template') }, q{new->with_roles('+Template')} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Template ) );
-can_ok( $obj, qw( version tt tt_settings ) );
+can_ok( $obj, qw( version tt tt_settings tt_html ) );
 
 my $tt_conf = $obj->conf->get('template') || {};
 $tt_conf->{web} ||= {};
