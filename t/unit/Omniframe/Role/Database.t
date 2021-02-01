@@ -4,7 +4,7 @@ use Omniframe;
 my $obj;
 ok( lives { $obj = Omniframe->new->with_roles('+Database') }, q{new->with_roles('+Database')} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Database ) );
-can_ok( $obj, 'dq' );
+can_ok( $obj, qw( dq time log ) );
 is( ref $obj->dq, 'DBIx::Query::db', 'dq() is a DBIx::Query' );
 
 my $sqlite_master_count;
