@@ -37,9 +37,9 @@ try {
             @{ $opt->{params} || [] }
     );
 }
-catch {
-    die $obj->deat($_) . "\n";
-};
+catch ($e) {
+    die $obj->deat($e) . "\n";
+}
 
 p $rv unless ( $opt->{silent} );
 

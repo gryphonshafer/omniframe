@@ -39,7 +39,7 @@ sub zulu ( $self, $time = undef ) {
     my $time_zone = 'Etc/UTC';
     try {
         $time_zone = DateTime::TimeZone->new( name => 'local' )->name;
-    };
+    }
 
     my $dt = DateTime->new(
         %time,
