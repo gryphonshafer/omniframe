@@ -39,7 +39,7 @@ class_has dq => sub ($self) {
         try {
             App::Dest->init;
             App::Dest->update;
-        };
+        }
     }
 
     my $dq = DBIx::Query->connect(

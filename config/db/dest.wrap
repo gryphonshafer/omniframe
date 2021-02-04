@@ -22,7 +22,7 @@ unless ( $ARGV[1] eq 'verify' ) {
         my $e = $dq->errstr;
         $dq->rollback;
         die $e;
-    };
+    }
 
     $dq->do('PRAGMA foreign_keys = ON');
 }

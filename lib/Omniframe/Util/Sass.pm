@@ -78,10 +78,10 @@ sub build (
             $report_cb->();
         }
     }
-    catch {
-        s/\s*at .+? line \d+\.\s*//;
-        $error_cb->($_);
-    };
+    catch ($e) {
+        $e =~ s/\s*at .+? line \d+\.\s*//;
+        $error_cb->($e);
+    }
 
     $error_cb->($error) if $error;
 
