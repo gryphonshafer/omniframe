@@ -40,6 +40,7 @@ class_has dq => sub ($self) {
             App::Dest->init;
             App::Dest->update;
         }
+        catch {}
     }
 
     my $dq = DBIx::Query->connect(

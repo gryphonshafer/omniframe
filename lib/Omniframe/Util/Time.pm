@@ -40,6 +40,7 @@ sub zulu ( $self, $time = undef ) {
     try {
         $time_zone = DateTime::TimeZone->new( name => 'local' )->name;
     }
+    catch {}
 
     my $dt = DateTime->new(
         %time,
