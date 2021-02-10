@@ -15,18 +15,22 @@ requires 'DBD::SQLite', '1.66';
 requires 'App::Dest', '1.27';
 
 requires 'Data::Printer', '0.40';
+requires 'Date::Format';
+requires 'Date::Parse';
 requires 'DateTime', '1.52';
 requires 'DateTime::TimeZone', '2.39';
 requires 'Digest::Bcrypt', '1.209';
 requires 'Email::Mailer', '1.09';
 requires 'File::Copy';
 requires 'File::Copy::Recursive', '0.45';
+requires 'FindBin';
 requires 'HTML::Packer', '1.004001';
 requires 'IPC::Run3', '0.048';
 requires 'JavaScript::Packer', '2.06';
 requires 'Linux::Inotify2', '2.2';
 requires 'Log::Dispatch', '2.69';
 requires 'Log::Dispatch::Email::Mailer', '1.05';
+requires 'Template';
 requires 'Term::ANSIColor', '5.01';
 requires 'Text::CSV_XS', '1.43';
 requires 'Text::MultiMarkdown', '1.000035';
@@ -41,6 +45,7 @@ on 'test' => sub {
     requires 'Cwd', '3.75';
     requires 'ExtUtils::Manifest', '1.72';
     requires 'Pod::Coverage::TrustPod', '0.100005';
+
     requires 'Test::EOL', '2.00';
     requires 'Test::NoTabs', '2.02';
     requires 'Test::Pod', '1.52';
