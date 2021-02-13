@@ -60,4 +60,6 @@ is( $rv, [ { model_id => 42, thx => 1138 }, { model_id => 43, thx => 1139 } ], '
 is( $obj->resolve_id(1138), 1138, 'resolve_id(id)' );
 is( $obj->resolve_id($obj), 42, 'resolve_id(obj)' );
 
+isa_ok( $obj->resolve_obj($obj), 'Omniframe' );
+
 done_testing;
