@@ -121,7 +121,7 @@ sub data_merge ( $self, $data ) {
 }
 
 sub resolve_id ( $self, $input = undef, $class_name = undef ) {
-    return $self->id unless ( defined $input );
+    return unless ( defined $input );
     return $input if ( $input =~ /^\d+$/ );
 
     if ( eval { $input->does(__PACKAGE__) } ) {
@@ -138,6 +138,27 @@ sub resolve_id ( $self, $input = undef, $class_name = undef ) {
             }
             : $self
     )->new->load($input)->id if ( ref $input eq 'HASH' );
+
+    croak('unsupported input');
+}
+
+sub resolve_obj ( $self, $input = undef, $class_name = undef ) {
+    return unless ( defined $input );
+
+    if ( eval { $input->does(__PACKAGE__) } ) {
+        croak( 'input does ' . __PACKAGE__ . ' but is not a ' . $class_name )
+            if ( $class_name and not eval { $input->isa($class_name) } );
+        return $input;
+    }
+
+    return (
+        ($class_name)
+            ? do {
+                eval "require $class_name" or croak $@;
+                $class_name;
+            }
+            : $self
+    )->new->load($input) if ( ref $input eq 'HASH' or $input =~ /^\d+$/ );
 
     croak('unsupported input');
 }
@@ -308,6 +329,15 @@ C<load> operation.
 
 In the case where an object and a class name are provided, the object passed in
 will be checked that it does the class name.
+
+=head2 resolve_obj
+
+This method will verify a given input is an object of a class, and if it isn't
+and is instead an integer or hashref, it'll try to create and return a loaded
+object based on the class name.
+
+    my $obj_42      = $obj->resolve_obj( 42, 'SomeClassName' );
+    my $also_obj_42 = $obj->resolve_obj( $obj_42, 'SomeClassName' );
 
 =head1 DATA SERIALIZATION
 
