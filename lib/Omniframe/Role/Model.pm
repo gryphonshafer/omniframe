@@ -126,7 +126,7 @@ sub resolve_id ( $self, $input = undef, $class_name = undef ) {
 
     if ( eval { $input->does(__PACKAGE__) } ) {
         croak( 'input does ' . __PACKAGE__ . ' but is not a ' . $class_name )
-            if ( $class_name and not eval { $input->isa($class_name) } );
+            if ( $class_name and not $input isa $class_name );
         return $input->id;
     }
 
@@ -147,7 +147,7 @@ sub resolve_obj ( $self, $input = undef, $class_name = undef ) {
 
     if ( eval { $input->does(__PACKAGE__) } ) {
         croak( 'input does ' . __PACKAGE__ . ' but is not a ' . $class_name )
-            if ( $class_name and not eval { $input->isa($class_name) } );
+            if ( $class_name and not $input isa $class_name );
         return $input;
     }
 
