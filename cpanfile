@@ -8,7 +8,6 @@ requires 'DateTime', '1.54';
 requires 'DateTime::TimeZone', '2.47';
 requires 'Digest::Bcrypt', '1.209';
 requires 'Email::Mailer', '1.17';
-requires 'File::Copy', '2.34';
 requires 'File::Copy::Recursive', '0.45';
 requires 'FindBin', '1.52';
 requires 'HTML::Packer', '2.10';
