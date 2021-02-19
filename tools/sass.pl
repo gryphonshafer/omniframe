@@ -4,11 +4,11 @@ use FindBin;
 BEGIN { $FindBin::Bin = cwd(); }
 
 use exact -cli, -conf;
-use Omniframe::Util::Sass;
-use Omniframe::Util::Watch;
+use Omniframe::Class::Sass;
+use Omniframe::Class::Watch;
 
 my $opt  = options( qw{ production|p watch|w } );
-my $sass = Omniframe::Util::Sass->new;
+my $sass = Omniframe::Class::Sass->new;
 
 $sass->mode('production') if ( $opt->{production} );
 
@@ -22,7 +22,7 @@ my $report = sub {
 $sass->build;
 $report->();
 
-Omniframe::Util::Watch->new->watch(
+Omniframe::Class::Watch->new->watch(
     sub {
         $sass->build(
             $report,

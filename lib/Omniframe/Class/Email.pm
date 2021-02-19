@@ -1,4 +1,4 @@
-package Omniframe::Util::Email;
+package Omniframe::Class::Email;
 
 use exact 'Omniframe';
 use Email::Mailer;
@@ -69,13 +69,13 @@ sub send ( $self, $data ) {
 
 =head1 NAME
 
-Omniframe::Util::Email
+Omniframe::Class::Email
 
 =head1 SYNOPSIS
 
-    use Omniframe::Util::Email;
+    use Omniframe::Class::Email;
 
-    my $email = Omniframe::Util::Email->new( type => 'example' );
+    my $email = Omniframe::Class::Email->new( type => 'example' );
 
     $email->send({
         to   => 'example@example.com',
@@ -97,7 +97,7 @@ template directory as per L<Omniframe::Role::Conf::Template> configuration.
 This instantiation method requires the attribute C<type> be provided. This should
 be the name of the template (minus suffix) to be used.
 
-    my $email = Omniframe::Util::Email->new( type => 'example' );
+    my $email = Omniframe::Class::Email->new( type => 'example' );
 
 The above line looks for an "example.html.tt" within the email templates
 directory.

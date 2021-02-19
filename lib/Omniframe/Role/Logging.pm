@@ -5,7 +5,7 @@ use Data::Printer return_value => 'dump', colored => 1;
 use Log::Dispatch;
 use Mojo::File 'path';
 use Term::ANSIColor;
-use Omniframe::Util::Time;
+use Omniframe::Class::Time;
 
 with 'Omniframe::Role::Conf';
 
@@ -41,7 +41,7 @@ my %color = (
     emergency => [ qw( underline bright_yellow on_blue ) ],
 );
 
-my $time = Omniframe::Util::Time->new;
+my $time = Omniframe::Class::Time->new;
 
 class_has log_levels => sub ($self) {
     return [

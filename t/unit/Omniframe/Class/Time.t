@@ -1,9 +1,9 @@
 use Test2::V0;
-use Omniframe::Util::Time;
+use Omniframe::Class::Time;
 
 my $obj;
-ok( lives { $obj = Omniframe::Util::Time->new }, 'new' ) or note $@;
-isa_ok( $obj, $_ ) for ( qw( Omniframe::Util::Time Omniframe ) );
+ok( lives { $obj = Omniframe::Class::Time->new }, 'new' ) or note $@;
+isa_ok( $obj, $_ ) for ( qw( Omniframe::Class::Time Omniframe ) );
 can_ok( $obj, qw( datetime ) );
 
 like( $obj->datetime, qr/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/, 'datetime' );
