@@ -2,7 +2,7 @@ package Omniframe::Class::Time;
 
 use exact 'Omniframe';
 use Date::Format 'time2str';
-use Date::Parse 'str2time';
+use Date::Parse qw( str2time strptime );
 use DateTime::TimeZone;
 use DateTime;
 use Time::HiRes 'gettimeofday';
@@ -15,7 +15,10 @@ has formats => {
     ctime  => '%C',
 };
 
-sub datetime ( $self, $format = undef, $time = time() ) {
+has _time => undef;
+
+sub datetime ( $self, $format = undef, $time = $self->_time // time() ) {
+    $self->_time(undef);
     $time = int($time);
     return time2str(
         ( ( ref($format) ) ? $$format : $self->formats->{ $format || 'ansi' } || $self->formats->{ansi} ),
@@ -23,11 +26,10 @@ sub datetime ( $self, $format = undef, $time = time() ) {
     );
 }
 
-sub zulu ( $self, $time = undef ) {
-    $time //= ( $self->hires ) ? gettimeofday() : time();
+sub zulu ( $self, $time = $self->_time // undef ) {
+    $self->_time(undef);
     $time = str2time($time) if ( $time and $time !~ /^\d+(?:\.\d+)?$/ );
-
-    croak('unable to parse time from input') unless ($time);
+    $time //= ( $self->hires ) ? gettimeofday() : time();
 
     my $micro = ( $self->hires ) ? substr( $time - int($time), 1, 7 ) : '';
     $time     = int($time);
@@ -50,6 +52,17 @@ sub zulu ( $self, $time = undef ) {
     $dt->set_time_zone('Etc/UTC');
 
     return $dt->stringify() . $micro . 'Z';
+}
+
+sub validate ( $self, $input ) {
+    my $time  = str2time($input);
+    my @parts = strptime($input);
+
+    croak('unable to parse time from input') unless ($time);
+    croak('unable to identify timezone in input') unless ( $parts[6] );
+
+    $self->_time($time);
+    return $self;
 }
 
 1;
@@ -148,6 +161,17 @@ It can optionally accept an epoch. If no epoch is provided, it will assume now.
 
 By default, this will include microseconds, but this can be switched off by
 setting C<hires> to a false value.
+
+=head2 validate
+
+This method provides an optional validation of both a time string input as
+having at least some valid date or time plus a valid timezone. It will throw an
+exception on failure or return the object on success. On success, the input to
+C<validate> is maintained so you can chain a subsequent call.
+
+say $time->validate('10/25/1973 3:15am EST')->zulu;
+say $time->validate('10/25/1973 3:15am EST')->datetime;
+say $time->validate('10/25/1973 3:15am EST')->datetime('common');
 
 =head1 INHERITANCE
 
