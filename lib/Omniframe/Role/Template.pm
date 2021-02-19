@@ -7,8 +7,8 @@ use HTML::Packer;
 
 with 'Omniframe::Role::Conf';
 
-class_has version => time;
-class_has packer  => sub { HTML::Packer->init };
+class_has tt_version  => time;
+class_has html_packer => sub { HTML::Packer->init };
 
 my $tt;
 sub tt ( $self, $type = 'web' ) {
@@ -47,7 +47,7 @@ sub tt_settings ( $self, $type = 'web' ) {
             },
             ENCODING  => 'utf8',
             CONSTANTS => {
-                version => $self->version,
+                version => $self->tt_version,
             },
             VARIABLES => {
                 time => sub { return time },
@@ -71,7 +71,7 @@ sub tt_settings ( $self, $type = 'web' ) {
 
 sub tt_html ( $self, $tt, $data = {}, $opts = {} ) {
     $self->tt->process( $tt, $data, \ my $output ) or croak $self->tt->error;
-    return $self->packer->minify( \$output, $opts );
+    return $self->html_packer->minify( \$output, $opts );
 }
 
 1;
@@ -111,9 +111,13 @@ setup includes a number of TT vmethods, variables, and other TT settings.
 
 =head1 CLASS ATTRIBUTES
 
-=head2 version
+=head2 tt_version
 
 This class attribute defaults to the current timestamp.
+
+=head2 html_packer
+
+This class attribute contains an instantiated L<HTML::Packer> object.
 
 =head1 METHODS
 
