@@ -7,10 +7,9 @@ use DBIx::Query;
 use Mojo::File 'path';
 use Omniframe::Class::Time;
 
-with 'Omniframe::Role::Conf';
+with qw( Omniframe::Role::Conf Omniframe::Role::Time );
 
-class_has time => sub { Omniframe::Class::Time->new },
-class_has log  => sub ($self) {
+class_has dq_sql_log => sub ($self) {
     my $root_dir = $self->conf->get( qw( config_app root_dir ) );
     unless ( my $log = $self->conf->get( qw( database log ) ) ) {
         return;
@@ -60,7 +59,7 @@ class_has dq => sub ($self) {
     $dq->do("PRAGMA $_->[0] = $_->[1]")
         for ( map { [ $_, $dq->quote( $conf->{pragmas}{$_} ) ] } keys %{ $conf->{pragmas} } );
 
-    if ( my $log = $self->log ) {
+    if ( my $log = $self->dq_sql_log ) {
         $dq->sqlite_trace( sub ($sql) {
             my $write = (
                 $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
@@ -139,19 +138,14 @@ nothing happens.
 Finally, using the L<DBIx::Query> C<connect> method, the database object is
 instantiated, and then specific SQLite pragmas are set.
 
-=head2 log
+=head2 dq_sql_log
 
 This contains a hashref with possible keys of "read", "write", and/or "all".
 The values of any keys will be filehandles to the read, write, or all SQL log
 files.
 
-The values of C<log> are generated automatically based on the C<log>
-configuration. See L</"CONFIGURATION"> below.
-
-=head2 time
-
-Contains an instantiated L<Omniframe::Class::Time> object used for logging the
-time in SQL logs.
+The values of C<dq_sql_log> are generated automatically based on the
+C<dq_sql_log> configuration. See L</"CONFIGURATION"> below.
 
 =head1 CONFIGURATION
 
@@ -177,4 +171,4 @@ application's configuration file. See L<Omniframe::Role::Conf>.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>.
+L<Omniframe::Role::Conf>, L<Omniframe::Role::Time>.
