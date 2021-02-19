@@ -1,4 +1,4 @@
-package Omniframe::Util::Time;
+package Omniframe::Class::Time;
 
 use exact 'Omniframe';
 use Date::Format 'time2str';
@@ -56,14 +56,14 @@ sub zulu ( $self, $time = undef ) {
 
 =head1 NAME
 
-Omniframe::Util::Time
+Omniframe::Class::Time
 
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Time;
+    use Omniframe::Class::Time;
 
-    my $time = Omniframe::Util::Time->new;
+    my $time = Omniframe::Class::Time->new;
 
     # print something like "2020-05-06 18:02:31"
     say $time->datetime; # defaults to using time()

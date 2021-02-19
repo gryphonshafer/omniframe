@@ -5,11 +5,11 @@ use App::Dest;
 use DBD::SQLite;
 use DBIx::Query;
 use Mojo::File 'path';
-use Omniframe::Util::Time;
+use Omniframe::Class::Time;
 
 with 'Omniframe::Role::Conf';
 
-class_has time => sub { Omniframe::Util::Time->new },
+class_has time => sub { Omniframe::Class::Time->new },
 class_has log  => sub ($self) {
     my $root_dir = $self->conf->get( qw( config_app root_dir ) );
     unless ( my $log = $self->conf->get( qw( database log ) ) ) {
@@ -150,7 +150,7 @@ configuration. See L</"CONFIGURATION"> below.
 
 =head2 time
 
-Contains an instantiated L<Omniframe::Util::Time> object used for logging the
+Contains an instantiated L<Omniframe::Class::Time> object used for logging the
 time in SQL logs.
 
 =head1 CONFIGURATION

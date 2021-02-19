@@ -6,14 +6,14 @@ use JavaScript::Packer;
 use Mojo::File 'path';
 use Mojo::Loader qw( find_modules load_class );
 use MojoX::Log::Dispatch::Simple;
-use Omniframe::Util::Sass;
-use Omniframe::Util::Time;
+use Omniframe::Class::Sass;
+use Omniframe::Class::Time;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Logging Omniframe::Role::Template );
 
-my $time = Omniframe::Util::Time->new;
+my $time = Omniframe::Class::Time->new;
 
-has sass => sub { Omniframe::Util::Sass->new };
+has sass => sub { Omniframe::Class::Sass->new };
 
 sub startup ($self) {
     $self->setup;
@@ -247,9 +247,9 @@ web application enviornment setup.
 =head2 sass
 
 This attribute will on first access be set with an instantiated object of
-L<Omniframe::Util::Sass>. The following 2 lines are equivalent:
+L<Omniframe::Class::Sass>. The following 2 lines are equivalent:
 
-        Omniframe::Util::Sass->new->build;
+        Omniframe::Class::Sass->new->build;
         $self->sass->build;
 
 =head1 METHODS

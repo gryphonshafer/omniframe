@@ -1,4 +1,4 @@
-package Omniframe::Util::Watch;
+package Omniframe::Class::Watch;
 
 use exact 'Omniframe';
 use Linux::Inotify2;
@@ -52,14 +52,14 @@ sub watch ( $self, $cb, $watches, $break = undef ) {
 
 =head1 NAME
 
-Omniframe::Util::Watch
+Omniframe::Class::Watch
 
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Watch;
+    use Omniframe::Class::Watch;
 
-    Omniframe::Util::Watch->new->watch(
+    Omniframe::Class::Watch->new->watch(
         sub ($event) {
             say $event->fullname;
         },
@@ -79,7 +79,7 @@ This method expects a callback and either a string or arrayref of files and/or
 directories to watch. Directories will be watched along with all their
 containing items.
 
-    Omniframe::Util::Watch->new->watch(
+    Omniframe::Class::Watch->new->watch(
         sub ($event) {
             say $event->fullname;
         },

@@ -1,4 +1,4 @@
-package Omniframe::Util::Sass;
+package Omniframe::Class::Sass;
 
 use exact 'Omniframe';
 use IPC::Run3 'run3';
@@ -103,14 +103,14 @@ sub exists ( $self, $scss ) {
 
 =head1 NAME
 
-Omniframe::Util::Sass
+Omniframe::Class::Sass
 
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Sass;
+    use Omniframe::Class::Sass;
 
-    my $sass = Omniframe::Util::Sass->new;
+    my $sass = Omniframe::Class::Sass->new;
 
     say $sass->mode;
     say $sass->scss_src;
