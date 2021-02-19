@@ -4,7 +4,7 @@ use Omniframe;
 my $obj;
 ok( lives { $obj = Omniframe->new->with_roles('+Template') }, q{new->with_roles('+Template')} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Template ) );
-can_ok( $obj, qw( version tt tt_settings tt_html ) );
+can_ok( $obj, qw( tt_version html_packer tt tt_settings tt_html ) );
 
 my $tt_conf = $obj->conf->get('template') || {};
 $tt_conf->{web} ||= {};
@@ -13,7 +13,7 @@ $obj->conf->put( template => $tt_conf );
 
 is(
     $obj->tt_settings->{config}{CONSTANTS}{version},
-    $obj->version,
+    $obj->tt_version,
     'tt_settings() return contains object version',
 );
 
@@ -22,7 +22,7 @@ ok( lives { $tt = $obj->tt }, 'tt() executes' ) or note $@;
 is( ref $tt, 'Template', 'tt() returns Template' );
 
 is(
-    $obj->version,
+    $obj->tt_version,
     $obj->tt->context->{CONFIG}{CONSTANTS}{version},
     'tt() Template context contains version',
 );
