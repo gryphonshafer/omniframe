@@ -25,14 +25,15 @@ sub datetime ( $self, $format = undef, $time = time() ) {
 
 sub zulu ( $self, $time = undef ) {
     $time //= ( $self->hires ) ? gettimeofday() : time();
+    $time = str2time($time) if ( $time and $time !~ /^\d+(?:\.\d+)?$/ );
+
+    croak('unable to parse time from input') unless ($time);
 
     my $micro = ( $self->hires ) ? substr( $time - int($time), 1, 7 ) : '';
     $time     = int($time);
 
     my %time;
-    @time{ qw(
-        year month day hour minute second
-    ) } = reverse( ( localtime( ( $time =~ /^\d+$/ ) ? $time : str2time($time) ) )[ 0 .. 5 ] );
+    @time{ qw( year month day hour minute second ) } = reverse( ( localtime($time) )[ 0 .. 5 ] );
     $time{year} += 1900;
     $time{month}++;
 
