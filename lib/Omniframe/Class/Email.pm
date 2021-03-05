@@ -131,7 +131,7 @@ application's configuration file. See L<Omniframe::Role::Conf>.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf::Template>, L<Omniframe::Role::Conf::Logging>.
+L<Omniframe::Role::Template>, L<Omniframe::Role::Logging>.
 
 =head1 INHERITANCE
 
