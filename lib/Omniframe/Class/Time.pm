@@ -102,7 +102,7 @@ sub zones ( $self, $time = time() ) {
 }
 
 sub olson ( $self, $offset, $time = time() ) {
-    my $dt = ( $time isa DateTime ) ? $time : DateTime->from_epoch( epoch => $time );
+    my $dt = ( eval { $time->isa('DateTime') } ) ? $time : DateTime->from_epoch( epoch => $time );
     $offset = int $offset;
 
     my ($time_zone) =
