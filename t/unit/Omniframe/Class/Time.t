@@ -4,22 +4,25 @@ use Omniframe::Class::Time;
 my $obj;
 ok( lives { $obj = Omniframe::Class::Time->new }, 'new' ) or note $@;
 isa_ok( $obj, $_ ) for ( qw( Omniframe::Class::Time Omniframe ) );
-can_ok( $obj, qw( datetime zulu validate ) );
+can_ok( $obj, qw(
+    hires formats olson_zones
+    datetime zulu zones olson format_offset parse canonical
+) );
 
 like( $obj->datetime, qr/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/, 'datetime' );
 
 like(
-    $obj->datetime( undef,    1588813351 ),
+    $obj->datetime( undef, 1588813351 ),
     qr|2020-05-0\d \d{2}:\d{2}:\d{2}|,
     'datetime( undef, time )',
 );
 like(
-    $obj->datetime( 'ansi',   1588813351 ),
+    $obj->datetime( 'ansi', 1588813351 ),
     qr|2020-05-0\d \d{2}:\d{2}:\d{2}|,
     q{datetime('ansi')},
 );
 like(
-    $obj->datetime( 'log',    1588813351 ),
+    $obj->datetime( 'log', 1588813351 ),
     qr|May  \d \d{2}:\d{2}:\d{2} 2020|,
     q{datetime('log')},
 );
@@ -29,7 +32,7 @@ like(
     q{datetime('common')},
 );
 like(
-    $obj->datetime( \'%c',    1588813351 ),
+    $obj->datetime( \'%c', 1588813351 ),
     qr|05/0\d/20 \d{2}:\d{2}:\d{2}|,
     q{datetime( time, 'access' )},
 );
@@ -41,20 +44,92 @@ $obj->hires(0);
 like( $obj->zulu, qr/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, 'zulu no hires' );
 is( $obj->zulu(1588813351.100764), '2020-05-07T01:02:31Z', 'zulu(time) no hires' );
 
-like(
-    dies { $obj->validate('this is not a real date') },
-    qr/^unable to parse time from input/,
-    'validate() throws on invalid input',
+my $zones = $obj->zones;
+is( scalar(@$zones), 424, 'zones count' );
+is(
+    $zones->[15],
+    {
+        description   => 'Pacific',
+        label         => '(GMT-08:00) America - Los Angeles [Pacific]',
+        name          => 'America/Los_Angeles',
+        name_parts    => [ 'America', 'Los Angeles' ],
+        offset        => -28800,
+        offset_string => '-08:00',
+    },
+    'Pacific time zone',
 );
 
-like(
-    dies { $obj->validate('10/25/1973') },
-    qr/^unable to identify timezone/,
-    'validate() throws on valid datetime but no timezone',
-);
+is( $obj->olson(-18000), 'America/New_York', 'olson(-18000)' );
+is( $obj->format_offset(-18000), '-05:00', 'format_offset(-18000)' );
 
-is( $obj->validate('10/25/1973 EST')->zulu, '1973-10-25T05:00:00Z', 'validate->zulu' );
+for (
+    [
+        [ '2020-03-04T01:02:31.1234Z' ],
+        [ '2020-02-04T01:02:31.123Z', 'UTC' ],
+    ],
+    [
+        [ '2020-03-04 01:02:31.1234' ],
+        [ '2020-02-04T01:02:31.123Z', 'UTC' ],
+    ],
+    [
+        [ '2020-03-04 01:02:31.1234 EST' ],
+        [ '2020-02-04T01:02:31.123-05:00', 'America/New_York' ],
+    ],
+    [
+        [ '2020-03-04 01:02:31.1234 GMT+7' ],
+        [ '2020-02-04T01:02:31.123+07:00', 'Asia/Jakarta' ],
+    ],
+    [
+        [ '2020-03-04 01:02:31.1234 PST' ],
+        [ '2020-02-04T01:02:31.123-08:00', 'America/Los_Angeles' ],
+    ],
+    [
+        [ '2020-03-04 01:02:31.1234', 'America/Los_Angeles' ],
+        [ '2020-02-04T01:02:31.123-08:00', 'America/Los_Angeles' ],
+    ],
+    [
+        [ '2020-03-04T01:02:31.1234Z', 'America/Los_Angeles' ],
+        [ '2020-02-04T01:02:31.123Z', 'UTC' ],
+    ],
+    [
+        [ '2020-03-04 01:02:31.1234 EST', 'America/Los_Angeles' ],
+        [ '2020-02-04T01:02:31.123-05:00', 'America/New_York' ],
+    ],
+    [
+        [ '3/3 01:02:31.1234', 'America/Los_Angeles' ],
+        [ '2021-02-03T01:02:31.000-08:00', 'America/Los_Angeles' ],
+    ],
+    [
+        [ '2021-02-12 01:02:31.1234 EST' ],
+        [ '2021-02-12T01:02:31.123-05:00', 'America/New_York' ],
+    ],
+    [
+        [ '2021-02-12 01:02:31.1234 EDT' ],
+        [ '2021-02-12T01:02:31.123-05:00', 'America/New_York' ],
+    ],
+    [
+        [ '2021-07-17 01:02:31.1234 EST' ],
+        [ '2021-02-17T01:02:31.123-04:00', 'America/New_York' ],
+    ],
+    [
+        [ '2021-07-17 01:02:31.1234 EDT' ],
+        [ '2021-02-17T01:02:31.123-04:00', 'America/New_York' ],
+    ],
+    [
+        [ '3/3/2021 3:14pm EST', 'America/Los_Angeles' ],
+        [ '2021-14-03T15:14:00.000-05:00', 'America/New_York' ],
+    ],
+) {
+    my $dt = $obj->parse( @{ $_->[0] } );
 
-isnt( $obj->zulu, '1973-10-25T05:00:00Z', 'validate->zulu' );
+    is(
+        [
+            $obj->canonical($dt),
+            $dt->time_zone->name,
+        ],
+        $_->[1],
+        join( ' + ', @{ $_->[0] } ),
+    );
+}
 
 done_testing;
