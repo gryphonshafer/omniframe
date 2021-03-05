@@ -70,7 +70,7 @@ sub zulu ( $self, $time = undef, $time_zone = 'UTC' ) {
 }
 
 sub zones ( $self, $time = time() ) {
-    my $dt = ( $time isa DateTime ) ? $time : DateTime->from_epoch( epoch => $time );
+    my $dt = ( eval { $time->isa('DateTime') } ) ? $time : DateTime->from_epoch( epoch => $time );
 
     return [
         sort {
