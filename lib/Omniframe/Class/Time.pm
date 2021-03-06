@@ -238,6 +238,11 @@ sub canonical ( $self, $dt ) {
     return $dt->strftime('%Y-%M-%dT%T.%3N') . $self->format_offset( $dt->offset );
 }
 
+sub validate ( $self, $time = undef, $time_zone = 'UTC' ) {
+    my $dt = $self->parse( $time, $time_zone );
+    return $self->canonical($dt), $dt->time_zone->name;
+}
+
 1;
 
 =head1 NAME
@@ -292,20 +297,27 @@ Omniframe::Class::Time
 
     my $formatted_offset = $time->format_offset(-18000);
 
-    my $dt = $time->parse('3/3/2021 3:14pm EST', 'America/Los_Angeles' );
+    my $dt = $time->parse( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
 
     my $string = $time->canonical($dt);
 
+    my ( $canonical_date_time, $olson_time_zone ) =
+        $time->validate( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
+
 =head1 DESCRIPTION
 
-This class provides methods for canonicalized date/time output. In all cases
-where a method can accept an epoch, if a string of a date/time is provided
-instead, that string is parsed and converted internally into an epoch.
+This class provides methods for handling date/time parsing and canonicalization
+of date/time output. It also handles Olson time zone identification from "fuzzy"
+time zones. For example, it can determine that "EST" is "America/New_York".
 
-The following print the same thing: "06/May/2020:18:02:31 -0700"
+Ideally, it's best to pick up an accurate Olson time zone. From a web browser,
+this can be done in Javascript with:
 
-    say $time->datetime( 'common', 1588813351 );
-    say $time->datetime( 'common', '2020-05-06 18:02:31' );
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+From Linux, this can be done from the command line with:
+
+    timedatectl
 
 =head1 ATTRIBUTES
 
@@ -449,6 +461,16 @@ that date/time.
 Zulu times will be represented with a "Z", and non-Zulu times will be
 represented with an offset in the form "[+-]HH:MM". Seconds can have
 microseconds if that data is provided in the epoch input.
+
+=head2 validate
+
+This method accepts the same inputs as C<parse> and will return a string like
+what would be returned from C<canonical> plus a valid Olson time zone name.
+
+    my ( $canonical_date_time, $olson_time_zone ) =
+        $time->validate( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
+
+Internally, this method calls C<parse> and C<canonical>.
 
 =head1 WITH ROLES
 

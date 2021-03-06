@@ -128,7 +128,13 @@ for (
             $dt->time_zone->name,
         ],
         $_->[1],
-        join( ' + ', @{ $_->[0] } ),
+        'canonical: ' . join( ' + ', @{ $_->[0] } ),
+    );
+
+    is(
+        [ $obj->validate( @{ $_->[0] } ) ],
+        $_->[1],
+        'validate: ' . join( ' + ', @{ $_->[0] } ),
     );
 }
 
