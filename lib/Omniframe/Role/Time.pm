@@ -3,7 +3,8 @@ package Omniframe::Role::Time;
 use exact -role;
 use Omniframe::Class::Time;
 
-class_has time => sub { Omniframe::Class::Time->new };
+my $time = Omniframe::Class::Time->new;
+class_has time => $time;
 
 1;
 

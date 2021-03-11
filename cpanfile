@@ -20,7 +20,7 @@ requires 'Log::Dispatch', '2.70';
 requires 'Log::Dispatch::Email::Mailer', '1.11';
 requires 'MojoX::ConfigAppStart', '1.02';
 requires 'MojoX::Log::Dispatch::Simple', '1.08';
-requires 'Mojolicious', '9.02';
+requires 'Mojolicious', '9.03';
 requires 'Mojolicious::Plugin::AccessLog', '0.010001';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '1.10';
@@ -31,7 +31,7 @@ requires 'Text::MultiMarkdown', '1.000035';
 requires 'Time::HiRes', '1.9764';
 requires 'YAML::XS', '0.82';
 requires 'exact', '1.17';
-requires 'exact::class', '1.12';
+requires 'exact::class', '1.13';
 requires 'exact::cli', '1.05';
 requires 'exact::conf', '1.05';
 
@@ -39,7 +39,7 @@ on test => sub {
     requires 'Cwd', '3.75';
     requires 'ExtUtils::Manifest', '1.73';
     requires 'Pod::Coverage::TrustPod', '0.100005';
-    requires 'Test2::MojoX', '0.05';
+    requires 'Test2::MojoX', '0.06';
     requires 'Test2::V0', '0.000139';
     requires 'Test::EOL', '2.02';
     requires 'Test::NoTabs', '2.02';

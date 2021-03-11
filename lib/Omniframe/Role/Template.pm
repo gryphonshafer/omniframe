@@ -7,8 +7,11 @@ use HTML::Packer;
 
 with 'Omniframe::Role::Conf';
 
-class_has tt_version  => time;
-class_has html_packer => sub { HTML::Packer->init };
+my $tt_version  = time;
+my $html_packer = HTML::Packer->init;
+
+class_has tt_version  => $tt_version;
+class_has html_packer => $html_packer;
 
 my $tt;
 sub tt ( $self, $type = 'web' ) {

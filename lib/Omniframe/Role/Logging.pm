@@ -9,7 +9,7 @@ use Omniframe::Class::Time;
 
 with 'Omniframe::Role::Conf';
 
-my $log_levels = {
+my $log_levels_definitions = {
     debug => 1,
     info  => 2,
     warn  => 3,
@@ -43,20 +43,24 @@ my %color = (
 
 my $time = Omniframe::Class::Time->new;
 
+my ( $log_levels, $log_file, $log_level, $log_dispatch );
+
 class_has log_levels => sub ($self) {
-    return [
+    return $log_levels //= [
         map { $_->[0] }
         sort {
             $a->[1] <=> $b->[1] ||
             $a->[0] cmp $b->[0]
         }
-        map { [ $_, $log_levels->{$_} ] }
-        keys %$log_levels
+        map { [ $_, $log_levels_definitions->{$_} ] }
+        keys %$log_levels_definitions
     ];
 };
 
 class_has log_file => sub ($self) {
-    my $log_file = join( '/',
+    return $log_file if ($log_file);
+
+    $log_file = join( '/',
         $self->conf->get( qw( config_app root_dir ) ),
         $self->conf->get( qw( logging log_file ) ),
     );
@@ -66,19 +70,23 @@ class_has log_file => sub ($self) {
 };
 
 class_has log_level => sub ($self) {
+    return $log_level if ($log_level);
+
     my $log_level_conf = $self->conf->get( 'logging', 'log_level' );
 
     my $env = (
         ( $ENV{CONFIGAPPENV} || $ENV{MOJO_MODE} || $ENV{PLACK_ENV} || 'development' ) eq 'production'
     ) ? 'production' : 'development';
 
-    return ( $log_level_conf->{$env} )
+    return $log_level = ( $log_level_conf->{$env} )
         ? $log_level_conf->{$env}
         : ( $env eq 'production' ) ? 'info' : 'debug';
 };
 
 class_has log_dispatch => sub ($self) {
-    my $log_dispatch = Log::Dispatch->new(
+    return $log_dispatch if ($log_dispatch);
+
+    $log_dispatch = Log::Dispatch->new(
         outputs => [
             [
                 'Screen',
@@ -163,7 +171,7 @@ sub _highest_level (@input) {
     return (
         map { $_->[1] }
         sort { $b->[0] <=> $a->[0] }
-        map { [ $log_levels->{$_}, $_ ] }
+        map { [ $log_levels_definitions->{$_}, $_ ] }
         @input
     )[0];
 }
