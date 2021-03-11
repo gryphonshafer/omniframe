@@ -9,37 +9,53 @@ with qw(
     Omniframe::Role::Logging
 );
 
-class_has 'name' => sub ($self) {
+class_has name => sub ($self) {
     my $name = ref $self;
     $name =~ s/^.*:://;
     return decamelize $name;
 };
-class_has 'id_name' => sub ($self) { $self->name . '_id' };
+class_has id_name => sub ($self) { $self->name . '_id' };
+class_has active  => 0;
 
 has 'id';
 has 'data';
-has '_saved_data' => {};
+has '_saved_data';
 
 sub create ( $self, $data ) {
     $data = $self->data_merge($data);
     croak('create() data hashref contains no data') unless ( keys %$data );
 
     $data = $self->freeze($data) if ( $self->can('freeze') );
-    eval { $self->load( $self->dq->add( $self->name, $data ) ) } or croak $self->deat($@);
+
+    eval { $self->load(
+        $self->dq->add( $self->name, $data ),
+        'skip_active_in_search_setup',
+    ) } or croak $self->deat($@);
+
     return $self;
 }
 
-sub _setup_search ( $self, $search ) {
+sub _setup_search ( $self, $search, $skip_active_in_search_setup = 0 ) {
     $search = ( ref $search ) ? { %$search } : { $self->id_name => $search // $self->id };
-    $search->{active} = \'IS TRUE' unless ( exists $search->{active} );
-    delete $search->{active} if ( ref $search->{active} eq 'SCALAR' and not defined ${ $search->{active} } );
+
+    if ( $self->active and not $skip_active_in_search_setup ) {
+        $search->{active} = \'IS TRUE' unless ( exists $search->{active} );
+        delete $search->{active} if (
+            ref $search->{active} eq 'SCALAR' and
+            not defined ${ $search->{active} }
+        );
+    }
+
     return $search;
 }
 
-sub load ( $self, $search = undef ) {
+sub load ( $self, $search = undef, $skip_active_in_search_setup = 0 ) {
     croak('load() called without input') unless ($search);
 
-    my $data = $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->next;
+    my $data = $self->dq->get( $self->name )->where(
+        $self->_setup_search( $search, $skip_active_in_search_setup )
+    )->run->next;
+
     croak('Failed to load ' . $self->name ) unless ($data);
 
     $data = $data->data;
@@ -218,6 +234,11 @@ This class attribute is the name of the class's table's primary key name. The
 value may be optionally defined. If not defined, C<id_name> will be set as
 "<name>_id".
 
+=head2 active
+
+Set this value to true if the class's table contains an "active" column. See
+L</"ACTIVE RECORDS"> below.
+
 =head1 OBJECT ATTRIBUTES
 
 =head2 id
@@ -367,11 +388,12 @@ because that will likely cause database commands to fail.
 
 =head1 ACTIVE RECORDS
 
-If a database table contains a column called "active", the C<load>, C<delete>,
-C<every>, and C<every_data> methods will respect this as a flag to indicate the
-record may or may not be "virtually deleted". For example, if in a user table
-there's an active column, a C<load> for users will not find users where this
-active column's data contains a false value.
+When the C<active> class attribute is set to a true value, we'll assume the
+database table contains a column called "active", and thus the C<load>,
+C<delete>, C<every>, and C<every_data> methods will respect this as a flag to
+indicate the record may or may not be "virtually deleted". For example, if in a
+user table there's an active column, a C<load> for users will not find users
+where this active column's data contains a false value.
 
 This behavior can be overridden by setting "active" to a reference to C<undef>,
 which will result in "active" playing no factor in the record search.
