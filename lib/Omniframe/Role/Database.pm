@@ -5,17 +5,17 @@ use App::Dest;
 use DBD::SQLite;
 use DBIx::Query;
 use Mojo::File 'path';
-use Omniframe::Class::Time;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Time );
 
+my ( $dq, $dq_sql_log, $dq_sql_log_setup );
+
 class_has dq_sql_log => sub ($self) {
+    return $dq_sql_log if ($dq_sql_log_setup);
+
     my $root_dir = $self->conf->get( qw( config_app root_dir ) );
-    unless ( my $log = $self->conf->get( qw( database log ) ) ) {
-        return;
-    }
-    else {
-        return {
+    if ( my $log = $self->conf->get( qw( database log ) ) ) {
+        $dq_sql_log = {
             map {
                 open( my $fh, '>>', $root_dir . '/' . $log->{$_} )
                     or croak( 'failed to open SQL log file for appending: ' . $root_dir . '/' . $log->{$_} );
@@ -23,9 +23,14 @@ class_has dq_sql_log => sub ($self) {
             } keys %$log
         };
     }
+
+    $dq_sql_log_setup = 1;
+    return $dq_sql_log;
 };
 
 class_has dq => sub ($self) {
+    return $dq if ($dq);
+
     my $conf     = $self->conf->get('database');
     my $root_dir = $self->conf->get( qw( config_app root_dir ) );
     my $file     = join( '/', $root_dir, $conf->{file} );
@@ -42,7 +47,7 @@ class_has dq => sub ($self) {
         catch {}
     }
 
-    my $dq = DBIx::Query->connect(
+    $dq = DBIx::Query->connect(
         'dbi:SQLite:dbname=' . $file,
         undef,
         undef,
@@ -61,6 +66,8 @@ class_has dq => sub ($self) {
 
     if ( my $log = $self->dq_sql_log ) {
         $dq->sqlite_trace( sub ($sql) {
+            my $time = ($self) ? $self->time->zulu : time;
+
             my $write = (
                 $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
                     ANALYZE
@@ -81,7 +88,7 @@ class_has dq => sub ($self) {
             ) {
                 my $this_sql = $sql;
                 $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
-                my $message = '-- ' . $self->time->zulu . "\n" . $this_sql . "\n\n";
+                my $message = '-- ' . $time . "\n" . $this_sql . "\n\n";
 
                 print { $log->{all}   } $message if ( $log->{all}                  );
                 print { $log->{write} } $message if ( $log->{write} and $write     );

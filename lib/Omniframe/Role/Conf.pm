@@ -2,7 +2,7 @@ package Omniframe::Role::Conf;
 
 use exact -role, -conf;
 
-class_has conf => sub { Config::App->new };
+class_has conf => conf;
 
 1;
 
