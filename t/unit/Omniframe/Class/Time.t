@@ -45,21 +45,22 @@ like( $obj->zulu, qr/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, 'zulu no hires' );
 is( $obj->zulu(1588813351.100764), '2020-05-07T01:02:31Z', 'zulu(time) no hires' );
 
 my $zones = $obj->zones;
+my ($ptz) = grep { $_->{name} eq 'America/Los_Angeles' } @$zones;
+
 is( scalar(@$zones), 424, 'zones count' );
-is(
-    $zones->[15],
+like(
+    $ptz,
     {
         description   => 'Pacific',
-        label         => '(GMT-08:00) America - Los Angeles [Pacific]',
+        label         => qr/\(GMT-0[78]:00\) America - Los Angeles \[Pacific\]/,
         name          => 'America/Los_Angeles',
         name_parts    => [ 'America', 'Los Angeles' ],
-        offset        => -28800,
-        offset_string => '-08:00',
+        offset        => qr/-2(?:52|88)00/,
+        offset_string => qr/\-0[78]:00/,
     },
     'Pacific time zone',
 );
-
-is( $obj->olson(-18000), 'America/New_York', 'olson(-18000)' );
+like( $obj->olson(-18000), qr\America/(?:Chicago|New_York)\, 'olson(-18000)' );
 is( $obj->format_offset(-18000), '-05:00', 'format_offset(-18000)' );
 
 for (
