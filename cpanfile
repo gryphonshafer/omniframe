@@ -20,7 +20,7 @@ requires 'Log::Dispatch', '2.70';
 requires 'Log::Dispatch::Email::Mailer', '1.11';
 requires 'MojoX::ConfigAppStart', '1.02';
 requires 'MojoX::Log::Dispatch::Simple', '1.08';
-requires 'Mojolicious', '9.03';
+requires 'Mojolicious', '9.13';
 requires 'Mojolicious::Plugin::AccessLog', '0.010001';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '1.10';

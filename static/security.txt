@@ -1,0 +1,4 @@
+Contact: mailto:security@example.com
+Expires: Sun, 9 Dec 2001 14:30 -0500
+Encryption: https://example.com/pgp-key.txt
+Preferred-Languages: en
