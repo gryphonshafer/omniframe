@@ -2,7 +2,7 @@ use Test2::V0;
 use Omniframe::Class::Email;
 
 my $mock_email  = mock 'Omniframe::Class::Email' => ( override => 'info' );
-my $mock_mailer = mock 'Email::Mailer'          => ( override => 'send' );
+my $mock_mailer = mock 'Email::Mailer'           => ( override => 'send' );
 
 my $obj;
 
