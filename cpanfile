@@ -31,7 +31,7 @@ requires 'Text::MultiMarkdown', '1.000035';
 requires 'Time::HiRes', '1.9764';
 requires 'YAML::XS', '0.82';
 requires 'exact', '1.17';
-requires 'exact::class', '1.14';
+requires 'exact::class', '1.15';
 requires 'exact::cli', '1.05';
 requires 'exact::conf', '1.05';
 
