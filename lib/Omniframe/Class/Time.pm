@@ -195,7 +195,7 @@ sub parse ( $self, $time = undef, $time_zone = 'UTC' ) {
         $time =~ s/\b([PMCE])[SD]T\b/$check_tz_imprecision->( $time, $1 )/ei;
 
         my ( $second, $minute, $hour, $day, $month, $year, $offset, $century ) = strptime($time);
-        croak('failed to parse time input') unless ( $day and defined $hour );
+        croak('failed to parse time input') unless ($day);
 
         $second //= 0;
         my $nanosecond = $second - int($second);
@@ -235,7 +235,7 @@ sub parse ( $self, $time = undef, $time_zone = 'UTC' ) {
 }
 
 sub canonical ( $self, $dt ) {
-    return $dt->strftime('%Y-%M-%dT%T.%3N') . $self->format_offset( $dt->offset );
+    return $dt->strftime('%Y-%m-%dT%T.%3N') . $self->format_offset( $dt->offset );
 }
 
 sub validate ( $self, $time = undef, $time_zone = 'UTC' ) {

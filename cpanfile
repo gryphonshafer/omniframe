@@ -34,6 +34,7 @@ requires 'exact', '1.17';
 requires 'exact::class', '1.15';
 requires 'exact::cli', '1.05';
 requires 'exact::conf', '1.05';
+requires 'exact::lib', '1.02';
 
 on test => sub {
     requires 'Cwd', '3.75';
