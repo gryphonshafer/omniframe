@@ -117,6 +117,11 @@ sub every ( $self, $search = {} ) {
 
 sub every_data ( $self, $search = {} ) {
     my $objects = $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->all({});
+
+    if ( $self->can('thaw') ) {
+        $_ = $self->thaw($_) for (@$objects);
+    }
+
     return (wantarray) ? @$objects : $objects;
 }
 
