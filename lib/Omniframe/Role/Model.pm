@@ -68,6 +68,25 @@ sub load ( $self, $search = undef, $skip_active_in_search_setup = 0 ) {
     return $self;
 }
 
+sub dirty ($self) {
+    my @changed_data_keys = keys %{ $self->_data_changes };
+    return (wantarray) ? @changed_data_keys : (@changed_data_keys) ? 1 : 0;
+}
+
+sub _grep_for_data_changes ( $self, $data = undef ) {
+    $data //= { %{ $self->data // {} } };
+
+    for ( grep { exists $self->_saved_data->{$_} } keys %$data ) {
+        delete $data->{$_} if (
+            defined $data->{$_} and
+            defined $self->_saved_data->{$_} and
+            $data->{$_} eq $self->_saved_data->{$_}
+        );
+    }
+
+    return $data;
+}
+
 sub save ( $self, $data = undef ) {
     $data = $self->data_merge($data);
 
@@ -75,17 +94,9 @@ sub save ( $self, $data = undef ) {
         $self->create($data);
     }
     else {
-        for ( grep { exists $self->_saved_data->{$_} } keys %$data ) {
-            delete $data->{$_} if (
-                defined $data->{$_} and
-                defined $self->_saved_data->{$_} and
-                $data->{$_} eq $self->_saved_data->{$_}
-            );
-        }
+        if ( $self->_grep_for_data_changes($data) ) {
+            $data = $self->freeze($data) if ( $self->can('freeze') );
 
-        $data = $self->freeze($data) if ( $self->can('freeze') );
-
-        if (%$data) {
             eval {
                 $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
             } or croak $self->deat($@);
@@ -284,6 +295,18 @@ hashref representing a SQL WHERE clause. The method will return the object.
 
     my $obj_0 = Model->new->load(42);
     my $obj_1 = Model->new->load( { model_id => 42 } );
+
+=head2 dirty
+
+This method will, in a scalar context, return a 1 or 0 representing the
+true/false state of whether the data loaded in the object is "dirty" (meaning
+it has been changed but not saved to the database).
+
+    my $is_dirty = $obj->dirty;
+
+In list context, it will return the keys/names of data that is "dirty".
+
+    my @dirty_key_names = $obj->dirty;
 
 =head2 save
 
