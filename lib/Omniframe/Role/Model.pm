@@ -25,6 +25,10 @@ sub create ( $self, $data ) {
     $data = $self->data_merge($data);
     croak('create() data hashref contains no data') unless ( keys %$data );
 
+    if ( $self->can('validate') ) {
+        $self->data($data);
+        $self->validate;
+    }
     $data = $self->freeze($data) if ( $self->can('freeze') );
 
     eval { $self->load(
@@ -95,6 +99,10 @@ sub save ( $self, $data = undef ) {
     }
     else {
         if ( $self->_grep_for_data_changes($data) ) {
+            if ( $self->can('validate') ) {
+                $self->data($data);
+                $self->validate;
+            }
             $data = $self->freeze($data) if ( $self->can('freeze') );
 
             eval {
@@ -388,9 +396,28 @@ object based on the class name.
     my $obj_42      = $obj->resolve_obj( 42, 'SomeClassName' );
     my $also_obj_42 = $obj->resolve_obj( $obj_42, 'SomeClassName' );
 
+=head1 DATA VALIDATION
+
+In classes with this role, you can optionally provide a C<validation> method
+that will be called prior to writing data within C<create> and C<save> calls.
+Return values are ignored. If you encounter a validation error, the expectation
+is that you throw an exception.
+
+    package Model;
+
+    use exact -class;
+
+    with 'Omniframe::Role::Model';
+
+    sub validate ($self) {
+        croak('"some_column_name_that_must_exist" does not exist')
+            unless ( exists $self->data->{some_column_name_that_must_exist} );
+        return;
+    }
+
 =head1 DATA SERIALIZATION
 
-In class with this role, you can optionally provide C<freeze> and C<thaw>
+In classes with this role, you can optionally provide C<freeze> and C<thaw>
 methods that will be called by C<create>, C<save>, and C<load> in appropriate
 ways such that you can serialize and deserialize data.
 
