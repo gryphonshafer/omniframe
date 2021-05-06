@@ -19,7 +19,7 @@ class_has active  => 0;
 
 has 'id';
 has 'data';
-has '_saved_data';
+has 'saved_data';
 
 sub create ( $self, $data ) {
     $data = $self->data_merge($data);
@@ -66,7 +66,7 @@ sub load ( $self, $search = undef, $skip_active_in_search_setup = 0 ) {
     $data = $self->thaw($data) if ( $self->can('thaw') );
 
     $self->data($data);
-    $self->_saved_data( { %{ $self->data } } );
+    $self->saved_data( { %{ $self->data } } );
     $self->id( $self->data->{ $self->id_name } );
 
     return $self;
@@ -80,11 +80,11 @@ sub dirty ($self) {
 sub _grep_for_data_changes ( $self, $data = undef ) {
     $data //= { %{ $self->data // {} } };
 
-    for ( grep { exists $self->_saved_data->{$_} } keys %$data ) {
+    for ( grep { exists $self->saved_data->{$_} } keys %$data ) {
         delete $data->{$_} if (
             defined $data->{$_} and
-            defined $self->_saved_data->{$_} and
-            $data->{$_} eq $self->_saved_data->{$_}
+            defined $self->saved_data->{$_} and
+            $data->{$_} eq $self->saved_data->{$_}
         );
     }
 
@@ -125,9 +125,9 @@ sub delete ( $self, $search = undef ) {
 sub every ( $self, $search = {} ) {
     my @objects = map {
         $self->new(
-            id          => $_->{ $self->id_name },
-            data        => $_,
-            _saved_data => $_,
+            id         => $_->{ $self->id_name },
+            data       => $_,
+            saved_data => $_,
         );
     } $self->every_data($search);
 
@@ -277,6 +277,11 @@ When loaded, this object attribute will be a hashref containing the record that
 is either in the database or will be (prior to a C<save> call). It gets set
 automatically when the object loads a record from the database.  It can be
 manually set and overridden.
+
+=head2 saved_data
+
+This attribute contains a hashref of the original C<data> hashref with
+unchanged values relative to what should be stored in the database.
 
 =head1 METHODS
 
