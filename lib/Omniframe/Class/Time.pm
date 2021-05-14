@@ -158,7 +158,8 @@ sub parse ( $self, $time = undef, $time_zone = 'UTC' ) {
         $time =~ /^\d+(?:\.\d+)?$/ or
         grep { lc $time eq $_ } qw( now time date datetime )
     ) {
-        $time = ( $self->hires ) ? gettimeofday() : time();
+        $time = ( $self->hires ) ? gettimeofday() : time()
+            unless ( $time =~ /^\d+(?:\.\d+)?$/ );
 
         my $nanosecond = $time - int($time);
         $time = int($time);
