@@ -79,6 +79,7 @@ sub dirty ($self) {
 
 sub _grep_for_data_changes ( $self, $data = undef ) {
     $data //= { %{ $self->data // {} } };
+    $data = {%$data};
 
     for ( grep { exists $self->saved_data->{$_} } keys %$data ) {
         delete $data->{$_} if (
@@ -98,15 +99,15 @@ sub save ( $self, $data = undef ) {
         $self->create($data);
     }
     else {
-        if ( $self->_grep_for_data_changes($data) ) {
+        if ( my $changes = $self->_grep_for_data_changes($data) ) {
             if ( $self->can('validate') ) {
                 $self->data($data);
                 $self->validate;
             }
-            $data = $self->freeze($data) if ( $self->can('freeze') );
+            $changes = $self->freeze($changes) if ( $self->can('freeze') );
 
             eval {
-                $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
+                $self->dq->update( $self->name, $changes, { $self->id_name => $self->id } );
             } or croak $self->deat($@);
 
             $self->load( $self->id );
