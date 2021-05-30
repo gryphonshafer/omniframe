@@ -8,14 +8,14 @@ in parallel with projects that depend upon it. By itself, it does little. The
 point of this project is to deduplicate frequently duplicated components between
 a set of projects.
 
-## Setup
+## Installation
 
-To setup an application (existing or new) in a fresh environment, you will need
-to ensure the following prerequisites are installed:
+To install the framework, you will need to ensure the following prerequisites
+are available:
 
-- Perl
+- SQLite (3.21 minimum version required; newest stable version recommended)
+- Perl (5.22 minimum version required; newest stable version recommended)
 - CPANminus (`cpanm`)
-- SQLite
 
 ### Development or Build Environments
 
@@ -33,6 +33,10 @@ within this project's root directory:
 
     cpanm -n -f --installdeps .
 
+## Project Setup
+
+To setup an application (existing or new), use one the following instructions:
+
 ### New Dependent Project
 
 To setup a new project that depends on this project, change to the desired
@@ -41,7 +45,7 @@ to this project's root directory, though this is not required. Then (assuming
 you are in a directory which is parallel to this project's root named
 `omniframe`) run:
 
-    ../omniframe/tools/build.pl --man
+    ../omniframe/tools/build_app.pl --man
 
 Then follow the instructions.
 
@@ -55,7 +59,18 @@ dependent project's root from this project's root, you will need to change the
 paths to `libs`, `omniframe`, and `preinclude` along with any other pointers
 to this projects resources.
 
-## Run
+### External Resources
+
+Depending on the dependent project, it may be necessary to install external
+resources into the Omniframe  installation. From within your dependent project's
+root directory (and assuming the dependent project's root is a directory which
+is parallel to the Omniframe project's root named `omniframe`) run:
+
+    ../omniframe/tools/install_externals.pl --man
+
+Then follow the instructions.
+
+## Run Application
 
 To run the dependent project application, follow the instructions in the
 `~/app.psgi` file within the dependent project's root directory.

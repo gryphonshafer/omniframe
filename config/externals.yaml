@@ -1,0 +1,25 @@
+---
+google_fonts:
+    dest:
+        fonts : static/fonts
+        css   : config/assets/css/fonts
+    fonts:
+        Roboto:
+            variants:
+                normal : regular
+                italic : italic
+                bold   : 500
+            subsets:
+                - latin
+            formats:
+                - woff2
+vue:
+    dest: static/js/vue
+    libs:
+        vuejs.org/js/vue.js                     : vue.development.js
+        vuejs.org/js/vue.min.js                 : vue.production.js
+        unpkg.com/vuex                          : vuex.js
+        unpkg.com/vue-router/dist/vue-router.js : vue-router.js
+font_awesome:
+    webfonts    : static/font-awesome
+    css/all.css : config/assets/css/font-awesome.css
