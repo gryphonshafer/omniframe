@@ -119,12 +119,15 @@ if ( $ext_yaml->{font_awesome} ) {
 
     my $payload = path( $install->list({ dir => 1 })->grep(qr|\bfontawesome\-free\-[\d\.]+\-web$|)->first );
 
-    while ( my ( $source, $target ) = each %{ $ext_yaml->{font_awesome} } ) {
-        my $source_path = $payload->child($source);
-        my $target_path = $omni_path->child($target);
+    my $dest = $omni_path
+        ->child( $ext_yaml->{font_awesome}{dest} )
+        ->make_path
+        ->remove_tree({ keep_root => 1 });
 
-        $target_path->make_path->remove_tree({ keep_root => 1 }) if ( -d $source_path->to_string );
-        $source_path->move_to( $target_path->to_string );
+    for my $part ( @{ $ext_yaml->{font_awesome}{parts} } ) {
+        my $target = $dest->child($part);
+        $target->dirname->make_path;
+        $payload->child($part)->move_to( $target->to_string );
     }
 
     $install->remove_tree;
