@@ -9,7 +9,6 @@
         page.noindex      = 0,
         page.viewport     = '1.0',
         page.favicon      = '/favicon.ico',
-        page.line_awesome = 0,
         page.css          = ['/app.css'],
         page.style        = [],
         page.links        = [],
@@ -64,16 +63,6 @@
         [% IF page.favicon %]
             <link rel="shortcut icon" type="image/x-icon"
                 href="[% c.url_for( page.favicon ).query( version => constants.version ) %]">
-        [% END %]
-
-        [% IF page.line_awesome %]
-            <link rel="stylesheet" type="text/css" href="[%
-                c.url_for(
-                    '/line-awesome/css/line-awesome' _ (
-                        ( c.app.mode == 'production' ) ? '.min' : ''
-                    ) _ '.css'
-                )
-            %]">
         [% END %]
 
         [% FOR css IN page.css %]
