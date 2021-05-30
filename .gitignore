@@ -41,3 +41,7 @@ nytprof.out
 
 # Application
 /static/app.css
+/static/fonts/
+/config/assets/css/fonts/
+/static/js/vue/
+/static/font-awesome/

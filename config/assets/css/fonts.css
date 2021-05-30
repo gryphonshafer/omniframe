@@ -1,0 +1,18 @@
+* {
+    font-family : 'Roboto Normal', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, b, strong {
+    font-family : 'Roboto Bold';
+    font-weight : normal;
+}
+
+i, em {
+    font-family : 'Roboto Italic';
+    font-style  : normal;
+}
+
+dl dt {
+    font-family : 'Roboto Bold';
+    font-weight : normal;
+}
