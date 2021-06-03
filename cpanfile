@@ -24,6 +24,7 @@ requires 'Mojolicious', '9.14';
 requires 'Mojolicious::Plugin::AccessLog', '0.010001';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '1.10';
+requires 'Pod::Simple::HTML', '3.42';
 requires 'Template', '3.009';
 requires 'Term::ANSIColor', '5.01';
 requires 'Text::CSV_XS', '1.46';
