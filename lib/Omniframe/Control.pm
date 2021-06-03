@@ -20,16 +20,16 @@ sub startup ($self) {
 
     my $r = $self->routes;
 
+    $r->websocket( '/ws' => sub ($c) {
+        $c->socket( setup => 'example_ws' );
+    } );
+
     $r->any( '/test.js' => sub ($c) {
-        return $c->document('/static/js/util/browser_test.js')
+        return $c->document('/static/js/util/browser_test.js');
     } );
 
     $r->any( '/api' => sub ($c) {
         $c->render( json => { request => $c->req->json } );
-    } );
-
-    $r->websocket( '/ws' => sub ($c) {
-        $c->socket( setup => 'example_ws' );
     } );
 
     $r->any( '/*null' => { null => undef } => sub ($c) {
@@ -60,6 +60,7 @@ sub setup ($self) {
     $self->setup_compressor;
     $self->setup_sockets;
     $self->setup_document;
+    $self->setup_devdocs;
 
     $self->preload_controllers;
     return;
@@ -174,14 +175,28 @@ sub setup_compressor ($self) {
 sub setup_sockets ($self) {
     require Omniframe::Mojo::Socket;
     $self->helper( socket => Omniframe::Mojo::Socket->new->setup->event_handler );
-    $self->info('Setup sockets');
+    $self->info('Setup socket system');
     return;
 }
 
 sub setup_document ($self) {
     require Omniframe::Mojo::Document;
     $self->helper( document => Omniframe::Mojo::Document->new->helper );
-    $self->info('Setup documents');
+    $self->info('Setup document system');
+    return;
+}
+
+sub setup_devdocs (
+    $self,
+    $location = '/devdocs',
+    $trigger = sub ($app) {
+        $app->mode eq 'development'
+    },
+) {
+    return unless ( $trigger->($self) );
+    require Omniframe::Mojo::DevDocs;
+    Omniframe::Mojo::DevDocs->new->setup( $self, $location );
+    $self->info('Setup development documents');
     return;
 }
 
@@ -226,6 +241,7 @@ Omniframe::Control
         $self->setup_compressor;
         $self->setup_sockets;
         $self->setup_document;
+        $self->setup_devdocs;
         $self->preload_controllers;
 
         $self->routes->any( '/*null' => { null => undef } => sub ($c) {
@@ -280,6 +296,7 @@ The above line is equivalent to the following block:
     $self->setup_compressor;
     $self->setup_sockets;
     $self->setup_document;
+    $self->setup_devdocs;
     $self->preload_controllers;
 
 =head2 setup_access_log
@@ -332,6 +349,11 @@ methods.
 
 This method will setup the C<document> Mojolicious helper via a lazy use of
 L<Omniframe::Mojo::Document> and a call to its C<helper> method.
+
+=head2 setup_devdocs
+
+This method will setup the "/devdocs" routes and functionality via a lazy use of
+L<Omniframe::Mojo::DevDocs> and a call to its C<setup> method.
 
 =head2 preload_controllers
 

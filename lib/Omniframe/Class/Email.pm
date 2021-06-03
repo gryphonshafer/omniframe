@@ -88,7 +88,7 @@ Omniframe::Class::Email
 =head1 DESCRIPTION
 
 This class provides the means to send emails using templates stored within a
-template directory as per L<Omniframe::Role::Conf::Template> configuration.
+template directory as per L<Omniframe::Role::Template> configuration.
 
 =head1 METHODS
 

@@ -1,6 +1,4 @@
 [%-
-    page = {};
-
     DEFAULT
         page.lang         = 'en',
         page.html_classes = [],
@@ -50,7 +48,7 @@
         [% END %]
 
         [% IF page.charset %]
-            <meta charset="utf-8">
+            <meta charset="[% page.charset %]">
         [% END %]
 
         [% IF page.noindex %]

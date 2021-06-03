@@ -27,7 +27,7 @@ sub helper ($self) {
         }
 
         unless ($pathfile) {
-            $self->notice( '404 in Main content: ' . ( $file || '>undef<' ) );
+            $self->notice( '404 in ' . __PACKAGE__ . ' content: ' . ( $file || '>undef<' ) );
 
             my $default_handler = $c->app->renderer->default_handler;
             $c->app->renderer->default_handler('ep');
