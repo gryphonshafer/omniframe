@@ -2,7 +2,13 @@ package Omniframe::Role::Template;
 
 use exact -role;
 use Mojo::File 'path';
-use Template;
+
+BEGIN {
+    local $SIG{__WARN__} = sub {};
+    require Template;
+    Template->import;
+}
+
 use HTML::Packer;
 
 with 'Omniframe::Role::Conf';
