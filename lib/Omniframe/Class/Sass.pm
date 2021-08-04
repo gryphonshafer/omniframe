@@ -21,10 +21,8 @@ has scss_src => sub ($self) {
         map { "\@use '$_';" }
         map {
             my $scss_file = join( '/', $root_dir, $_ );
-
-            if ($omniframe) {
-                $scss_file = join( '/', $root_dir, $omniframe, $_ ) if ( not $self->exists($scss_file) );
-            }
+            $scss_file = join( '/', $root_dir, $omniframe, $_ )
+                if ( $omniframe and not $self->exists($scss_file) );
 
             croak( 'Unable to locate SCSS file: ' . $scss_file ) if ( not $self->exists($scss_file) );
             $scss_file;
@@ -57,6 +55,9 @@ sub build (
         return;
     }
 
+    my $scss_src = $self->conf->get( qw( sass scss_src ) );
+    $scss_src = [$scss_src] unless ( ref $scss_src eq 'ARRAY' );
+
     my ( $output, $error );
     try {
         run3(
@@ -67,6 +68,17 @@ sub build (
                 '--no-error-css',
                 '--color',
                 '--style=' . ( ( $self->mode ne 'production' ) ? 'expanded' : 'compressed' ),
+                (
+                    map {
+                        my $path = $_;
+                        map {
+                            '--load-path=' . path( $path . '/' . $_  )->realpath->dirname
+                        } @$scss_src;
+                    }
+                    grep { $_ }
+                        $self->conf->get( qw( config_app root_dir ) ),
+                        $self->conf->get('omniframe')
+                ),
             ],
             \$self->scss_src,
             \$output,
