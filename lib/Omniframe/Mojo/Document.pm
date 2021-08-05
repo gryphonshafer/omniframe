@@ -55,8 +55,8 @@ sub helper ($self) {
                 } split( '/', $name )
             ) );
 
-            return $c->stash( html => markdown($payload) ) if ( $type eq 'md' );
-            return $c->stash( csv => csv( in => \$payload ) ) if ( $type eq 'csv' );
+            return $c->stash( html => markdown($payload)     ) if ( $type eq 'md'  );
+            return $c->stash( csv  => csv( in => \$payload ) ) if ( $type eq 'csv' );
         }
 
         my ($filename) = $file =~ /\/([^\/]+)$/;
@@ -90,10 +90,8 @@ Omniframe::Mojo::Document
         my $r = $self->routes;
 
         $r->any( '/sw.js' => sub ($c) {
-            return $c->document('/static/js/util/sw.js')
+            $c->document('/static/js/util/sw.js');
         } );
-
-        return;
     }
 
 =head1 DESCRIPTION
@@ -122,7 +120,7 @@ This helper once set can be called with a path to a file asset, assuming root
 is the project's root directory.
 
     $self->routes->any( '/sw.js' => sub ($c) {
-        return $c->document('/static/js/util/sw.js')
+        $c->document('/static/js/util/sw.js');
     } );
 
 =head1 WITH ROLES

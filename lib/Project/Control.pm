@@ -13,8 +13,6 @@ sub startup ($self) {
         );
         $c->render( template => 'example/index' );
     } );
-
-    return;
 }
 
 1;

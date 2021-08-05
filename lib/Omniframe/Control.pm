@@ -42,8 +42,6 @@ sub startup ($self) {
         );
         $c->render( template => 'example/index' );
     } );
-
-    return;
 }
 
 sub setup ($self) {
