@@ -77,25 +77,36 @@ sub zones ( $self, $time = time() ) {
             $a->{offset} <=> $b->{offset} or
             $a->{name} cmp $b->{name}
         }
+        grep { defined }
         map {
-            my $offset        = DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt);
-            my $description   = $self->olson_zones->{$_}{olson_description};
-            my $offset_string = DateTime::TimeZone->offset_as_string( $offset, ':' );
-            my $name_parts    = [
-                map { s/_/ /gr }
-                split( '/', $self->olson_zones->{$_}{timezone_name} )
-            ];
+            my $offset;
+            try {
+                $offset = DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt);
+            }
+            catch {}
 
-            +{
-                name          => $self->olson_zones->{$_}{timezone_name},
-                name_parts    => $name_parts,
-                description   => $description,
-                offset        => $offset,
-                offset_string => $offset_string,
-                label         => '(GMT' . $offset_string . ') ' .
-                    join( ' - ', @$name_parts ) .
-                    ( ($description) ? ' [' . $description . ']' : '' )
-            };
+            if ($offset) {
+                my $description   = $self->olson_zones->{$_}{olson_description};
+                my $offset_string = DateTime::TimeZone->offset_as_string( $offset, ':' );
+                my $name_parts    = [
+                    map { s/_/ /gr }
+                    split( '/', $self->olson_zones->{$_}{timezone_name} )
+                ];
+
+                +{
+                    name          => $self->olson_zones->{$_}{timezone_name},
+                    name_parts    => $name_parts,
+                    description   => $description,
+                    offset        => $offset,
+                    offset_string => $offset_string,
+                    label         => '(GMT' . $offset_string . ') ' .
+                        join( ' - ', @$name_parts ) .
+                        ( ($description) ? ' [' . $description . ']' : '' )
+                };
+            }
+            else {
+                undef;
+            }
         }
         keys %{ $self->olson_zones }
     ];
@@ -119,12 +130,22 @@ sub olson ( $self, $offset, $time = time() ) {
             $_;
         }
         grep {
-            $_->{offset} == $offset
+            defined and $_->{offset} == $offset
         }
         map {
-            +{
-                %{ $self->olson_zones->{$_} },
-                offset => DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt),
+            my $offset;
+            try {
+                $offset = DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt);
+            } catch {}
+
+            if ($offset) {
+                +{
+                    %{ $self->olson_zones->{$_} },
+                    offset => $offset,
+                }
+            }
+            else {
+                undef;
             }
         }
         keys %{ $self->olson_zones };

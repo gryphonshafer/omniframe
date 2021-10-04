@@ -47,7 +47,6 @@ is( $obj->zulu(1588813351.100764), '2020-05-07T01:02:31Z', 'zulu(time) no hires'
 my $zones = $obj->zones;
 my ($ptz) = grep { $_->{name} eq 'America/Los_Angeles' } @$zones;
 
-is( scalar(@$zones), 424, 'zones count' );
 like(
     $ptz,
     {
