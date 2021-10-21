@@ -16,24 +16,17 @@
         page.vuex         = 0,
         page.vue_router   = 0,
         page.js           = [],
-        page.inline_js    = [];
-        page.layout       = 'page_layout.html.tt';
+        page.inline_js    = [],
+        page.wrappers     = [];
 
     content = BLOCK;
         PROCESS $template;
     END;
 
-    IF page.blank;
-        page.favicon = undef;
-        page.css     = undef;
-        page.layout  = undef;
-    END;
-
-    content = BLOCK;
-        TRY;
-            PROCESS $page.layout;
-        CATCH;
-            content;
+    WHILE page.wrappers.size;
+        content = BLOCK;
+            wrapper = page.wrappers.shift;
+            PROCESS $wrapper;
         END;
     END;
 -%]
@@ -64,7 +57,7 @@
                 href="[% c.url_for( page.favicon ).query( version => constants.version ) %]">
         [% END %]
 
-        [% IF page.line_awesome %]
+        [% IF page.font_awesome %]
             <link rel="stylesheet" type="text/css" href="[%
                 c.url_for(
                     '/font-awesome/css/all' _ (

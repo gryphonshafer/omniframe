@@ -5,11 +5,13 @@ my $mock = mock 'Omniframe::Mojo::Document' => ( override => 'notice' );
 
 my $obj;
 ok( lives { $obj = Omniframe::Mojo::Document->new }, 'new' ) or note $@;
-can_ok( $obj, 'helper' );
+can_ok( $obj, qw( document_helper docs_nav_helper ) );
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Logging ) );
 
-my $helper;
-ok( lives { $helper = $obj->helper }, 'helper' ) or note $@;
-ref_ok( $helper, 'CODE', 'helper set' );
+for my $name ( qw( document_helper docs_nav_helper ) ) {
+    my $helper;
+    ok( lives { $helper = $obj->$name }, $name ) or note $@;
+    ref_ok( $helper, 'CODE', 'helper set' );
+}
 
 done_testing;

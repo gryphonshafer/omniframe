@@ -1,14 +1,16 @@
 package Omniframe::Mojo::Document;
 
 use exact 'Omniframe';
+use File::Find 'find';
+use Mojo::File;
 use Mojo::Util 'decode';
 use Text::CSV_XS 'csv';
 use Text::MultiMarkdown 'markdown';
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Logging );
 
-sub helper ($self) {
-    return sub ( $c, $file, $content_type = undef ) {
+sub document_helper ($self) {
+    return sub ( $c, $file, $payload_process = undef ) {
         my $paths = [ grep { defined }
             $self->conf->get( qw( config_app root_dir ) ),
             $self->conf->get('omniframe'),
@@ -55,6 +57,8 @@ sub helper ($self) {
                 } split( '/', $name )
             ) );
 
+            $payload = $payload_process->( $payload, $type ) if ( ref $payload_process eq 'CODE' );
+
             return $c->stash( html => markdown($payload)     ) if ( $type eq 'md'  );
             return $c->stash( csv  => csv( in => \$payload ) ) if ( $type eq 'csv' );
         }
@@ -68,6 +72,101 @@ sub helper ($self) {
         $c->res->content->asset($asset);
 
         return $c->rendered(200);
+    };
+}
+
+sub docs_nav_helper ($self) {
+    return sub ( $c, $relative_docs_dir, $root_type = 'md', $root_title = 'Home Page' ) {
+        my $docs_dir = $self->conf->get( qw( config_app root_dir ) ) . '/' . $relative_docs_dir;
+
+        my @files;
+        find(
+            {
+                wanted => sub {
+                    push( @files, $File::Find::name ) if (
+                        /\.(?:md|csv|pdf|xls|xlsx|xlsm|xlsb|doc|docx|ppt|pptx)$/i
+                    );
+                },
+                preprocess => sub {
+                    sort {
+                        ( $a eq 'index.md' and $b ne 'index.md' ) ? 0 :
+                        ( $a ne 'index.md' and $b eq 'index.md' ) ? 1 :
+                        lc $a cmp lc $b
+                    } @_;
+                },
+            },
+            $docs_dir,
+        );
+
+        my $docs_dir_length = length($docs_dir) + 1;
+        my $docs_nav        = [];
+
+        for (@files) {
+            next if (m|/_[^_]|);
+
+            my $href = substr( $_, $docs_dir_length );
+            my @path = ( 'Home Page', map {
+                ucfirst( join( ' ', map {
+                    ( /^(?:a|an|the|and|but|or|for|nor|on|at|to|from|by)$/i ) ? $_ : ucfirst
+                } split('_') ) )
+            } split( /\/|\.[^\.]+$/, $href ) );
+
+            my $type = (/\.([^\.]+)$/) ? lc($1) : '';
+            $type =~ s/x$// if ( length $type == 4 );
+
+            my $name  = pop @path;
+            my $title = $name;
+
+            if ( $type eq 'md' ) {
+                my $content = Mojo::File->new($_)->slurp;
+                my @headers = $content =~ /^\s*(#[^\n]*)/msg;
+                ( $title = $headers[0] ) =~ s/^\s*#+\s*//g if ( $headers[0] );
+            }
+
+            my $set = $docs_nav;
+            my $parent;
+
+            for my $node (@path) {
+                my @items = grep { $_->{folder} and $_->{folder} eq $node } @$set;
+                $parent   = $set;
+
+                if (@items) {
+                    $items[0]->{nodes} = [] unless ( $items[0]->{nodes} );
+                    $set = $items[0]->{nodes};
+                }
+                else {
+                    my $nodes = [];
+                    push( @$set, {
+                        folder => $node,
+                        nodes  => $nodes,
+                    } );
+                    $set = $nodes;
+                }
+            }
+
+            if ( $name eq 'Index' ) {
+                $parent->[-1]{href}  = '/' . $href;
+                $parent->[-1]{title} = $title;
+                delete $parent->[-1]{nodes};
+            }
+            else {
+                push( @$set, {
+                    name  => $name,
+                    href  => '/' . $href,
+                    title => decode( 'UTF-8', $title ),
+                    type  => $type,
+                } );
+            }
+        }
+
+        push( @$docs_nav, @{ delete $docs_nav->[0]{nodes} } );
+
+        $docs_nav->[0]{name}  = delete $docs_nav->[0]{folder};
+        $docs_nav->[0]{href}  = '/';
+        $docs_nav->[0]{title} = $root_title;
+        $docs_nav->[0]{type}  = $root_type;
+
+        return $docs_nav;
     };
 }
 
@@ -85,12 +184,15 @@ Omniframe::Mojo::Document
     use Omniframe::Mojo::Document;
 
     sub startup ($self) {
-        $self->helper( socket => Omniframe::Mojo::Document->new->helper );
+        my $document = Omniframe::Mojo::Document->new;
+        $self->helper( document => $document->document_helper );
+        $self->helper( docs_nav => $document->docs_nav_helper );
 
         my $r = $self->routes;
 
         $r->any( '/sw.js' => sub ($c) {
             $c->document('/static/js/util/sw.js');
+            $c->stash( docs_nav => $c->docs_nav );
         } );
     }
 
@@ -107,14 +209,17 @@ converted into a reasonable page title and stored as "title" in L<Mojolicious>
 C<stash>. In all other cases, the contents of the file will be rendered using
 some reasonable assumptions based on the file name's suffix.
 
+This package also provides the ability to setup a "docs_nav" helper to return a
+data structure of document files.
+
 =head1 METHODS
 
-=head2 helper
+=head2 document_helper
 
 This method will return a subroutine reference that can be used in a
 Mojolicious helper.
 
-    $self->helper( document => Omniframe::Mojo::Document->new->helper );
+    $self->helper( document => Omniframe::Mojo::Document->new->document_helper );
 
 This helper once set can be called with a path to a file asset, assuming root
 is the project's root directory.
@@ -122,6 +227,25 @@ is the project's root directory.
     $self->routes->any( '/sw.js' => sub ($c) {
         $c->document('/static/js/util/sw.js');
     } );
+
+You can optionally pass a subroutine reference that will be passed any MD or CSV
+payload just prior to processing it into its final form.
+
+=head2 docs_nav_helper
+
+This method will return a subroutine reference that can be used in a
+Mojolicious helper.
+
+    $self->helper( docs_nav => Omniframe::Mojo::Document->new->docs_nav_helper );
+
+This helper once set can be called with the relative-to-the-project's-root path
+of a documents directory. You can optionally pass in a file type and title for
+the base/root page.
+
+    my $docs_nav = $self->docs_nav( 'docs', 'md', 'Home Page' );
+
+What will be returned is a data structure of the documents directory suitable
+for use in a navigation menu.
 
 =head1 WITH ROLES
 

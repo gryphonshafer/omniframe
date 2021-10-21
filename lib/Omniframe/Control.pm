@@ -179,7 +179,9 @@ sub setup_sockets ($self) {
 
 sub setup_document ($self) {
     require Omniframe::Mojo::Document;
-    $self->helper( document => Omniframe::Mojo::Document->new->helper );
+    my $document = Omniframe::Mojo::Document->new;
+    $self->helper( document => $document->document_helper );
+    $self->helper( docs_nav => $document->docs_nav_helper );
     $self->info('Setup document system');
     return;
 }
