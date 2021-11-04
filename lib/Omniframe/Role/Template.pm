@@ -61,7 +61,9 @@ sub tt_settings ( $self, $type = 'web' ) {
             VARIABLES => {
                 time => sub { return time },
                 rand => sub { return int( rand( $_[0] // 2 ) + ( $_[1] // 0 ) ) },
-                pick => sub { return ( map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @_ )[0] },
+                pick => sub {
+                    return ( map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @_ )[0];
+                },
             },
         },
         context => sub ($context) {
@@ -73,6 +75,10 @@ sub tt_settings ( $self, $type = 'web' ) {
 
             $context->define_vmethod( 'scalar', 'commify', sub {
                 return scalar( reverse join( ',', unpack( '(A3)*', scalar( reverse $_[0] ) ) ) );
+            } );
+
+            $context->define_vmethod( 'list', 'randomize', sub {
+                return map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @{ $_[0] };
             } );
         },
     };
