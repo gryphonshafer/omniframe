@@ -96,7 +96,7 @@ for (
         [ '2020-03-04T01:02:31.123-05:00', 'America/New_York' ],
     ],
     [
-        [ '3/3 01:02:31.1234', 'America/Los_Angeles' ],
+        [ '3/3/2021 01:02:31.1234', 'America/Los_Angeles' ],
         [ '2021-03-03T01:02:31.000-08:00', 'America/Los_Angeles' ],
     ],
     [
