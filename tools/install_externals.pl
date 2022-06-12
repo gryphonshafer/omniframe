@@ -51,7 +51,7 @@ if ( $ext_yaml->{google_fonts} ) {
 
         my @font_face_css_blocks;
 
-        for ( map { [ each %$_ ] } @{ $font_set->{variants} } ) {
+        for ( map { [ $_, $font_set->{variants} ] } sort keys %{ $font_set->{variants} } ) {
             my ( $font_family, $variant ) = @$_;
 
             push(

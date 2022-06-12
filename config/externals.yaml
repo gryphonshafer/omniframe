@@ -6,9 +6,9 @@ google_fonts:
     fonts:
         Roboto:
             variants:
-                - 'Roboto Normal' : regular
-                - 'Roboto Italic' : italic
-                - 'Roboto Bold'   : 500
+                'Roboto Bold'   : 500
+                'Roboto Italic' : italic
+                'Roboto Normal' : regular
             subsets:
                 - latin
             formats:
