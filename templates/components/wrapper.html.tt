@@ -97,19 +97,19 @@
 
         [% IF page.vue %]
             <script type="text/javascript" src="[%
-                c.url_for( '/js/vue/vue.' _ c.app.mode _ '.js' ).query( version => constants.version )
+                c.url_for('/js/vue/vue.js').query( version => constants.version )
             %]"></script>
         [% END %]
 
         [% IF page.vuex %]
             <script type="text/javascript" src="[%
-                c.url_for( '/js/vue/vuex.js' ).query( version => constants.version )
+                c.url_for('/js/vue/vuex.js').query( version => constants.version )
             %]"></script>
         [% END %]
 
         [% IF page.vue_router %]
             <script type="text/javascript" src="[%
-                c.url_for( '/js/vue/vue-router.js' ).query( version => constants.version )
+                c.url_for('/js/vue/vue-router.js').query( version => constants.version )
             %]"></script>
         [% END %]
 

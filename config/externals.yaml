@@ -6,9 +6,9 @@ google_fonts:
     fonts:
         Roboto:
             variants:
-                'Roboto Normal' : regular
-                'Roboto Italic' : italic
-                'Roboto Bold'   : 500
+                - 'Roboto Normal' : regular
+                - 'Roboto Italic' : italic
+                - 'Roboto Bold'   : 500
             subsets:
                 - latin
             formats:
@@ -16,10 +16,9 @@ google_fonts:
 vue:
     dest: static/js/vue
     libs:
-        vuejs.org/js/vue.js                     : vue.development.js
-        vuejs.org/js/vue.min.js                 : vue.production.js
-        unpkg.com/vuex                          : vuex.js
-        unpkg.com/vue-router/dist/vue-router.js : vue-router.js
+        unpkg.com/vue        : vue.js
+        unpkg.com/vuex       : vuex.js
+        unpkg.com/vue-router : vue-router.js
 font_awesome:
     dest: static/font-awesome
     parts:

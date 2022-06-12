@@ -12,7 +12,7 @@ $opt->{dir}      //= q{.};
 my $omni_path = path( conf->get( qw( config_app root_dir ) ) );
 my $proj_path = path( $opt->{dir} );
 my $ext_yaml  = LoadFile( $proj_path->child( $opt->{settings} )->to_string );
-my $ua        = Mojo::UserAgent->new;
+my $ua        = Mojo::UserAgent->new( max_redirects => 3 );
 
 if ( $ext_yaml->{google_fonts} ) {
     my $dest_fonts = $omni_path->child( $ext_yaml->{google_fonts}{dest}{fonts} );
@@ -50,7 +50,10 @@ if ( $ext_yaml->{google_fonts} ) {
         ) =~ /\-(v\d+)/;
 
         my @font_face_css_blocks;
-        while ( my ( $font_family, $variant ) = each %{ $font_set->{variants} } ) {
+
+        for ( map { [ each %$_ ] } @{ $font_set->{variants} } ) {
+            my ( $font_family, $variant ) = @$_;
+
             push(
                 @font_face_css_blocks,
                 join(
@@ -105,7 +108,6 @@ if ( $ext_yaml->{font_awesome} ) {
     $ua->get(
         'https://github.com/' .
         $ua
-            ->max_redirects(1)
             ->get('https://github.com/FortAwesome/Font-Awesome/releases/latest')
             ->result
             ->dom
