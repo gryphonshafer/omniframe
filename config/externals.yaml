@@ -16,9 +16,12 @@ google_fonts:
 vue:
     dest: static/js/vue
     libs:
-        unpkg.com/vue        : vue.js
-        unpkg.com/vuex       : vuex.js
-        unpkg.com/vue-router : vue-router.js
+        unpkg.com/vue/dist/vue.global.js                    : vue.js
+        unpkg.com/vue/dist/vue.global.prod.js               : vue.min.js
+        unpkg.com/vuex/dist/vuex.global.js                  : vuex.js
+        unpkg.com/vuex/dist/vuex.global.prod.js             : vuex.min.js
+        unpkg.com/vue-router/dist/vue-router.global.js      : vue-router.js
+        unpkg.com/vue-router/dist/vue-router.global.prod.js : vue-router.min.js
 font_awesome:
     dest: static/font-awesome
     parts:
