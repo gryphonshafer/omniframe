@@ -73,6 +73,12 @@ sub build (
                         my $path = $_;
                         map {
                             '--load-path=' . path( $path . '/' . $_  )->realpath->dirname
+                        }
+                        grep {
+                            path( $path . '/' . $_           )->stat or
+                            path( $path . '/' . $_ . '.sass' )->stat or
+                            path( $path . '/' . $_ . '.scss' )->stat or
+                            path( $path . '/' . $_ . '.css'  )->stat
                         } @$scss_src;
                     }
                     grep { $_ }

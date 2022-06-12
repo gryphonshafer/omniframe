@@ -45,7 +45,7 @@ The following is the default configuration, which should be overridden in the
 application's configuration file. See L<Omniframe::Role::Conf>.
 
     bcrypt:
-        cost: 1
+        cost: 5
         salt: 0123456789abcdef
 
 =head1 WITH ROLES
