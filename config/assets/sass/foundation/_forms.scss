@@ -72,10 +72,6 @@ input[type=radio],
 input[type=url] {
     border  : 1px solid lightgray;
     padding : 1px 3px 1px 3px;
-
-    &:hover {
-        border-color : gray;
-    }
 }
 
 select:focus,
@@ -105,6 +101,18 @@ input[type=email]:focus,
 input[type=search]:focus,
 input[type=url]:focus {
     background-color : lightyellow;
+}
+
+select:hover,
+textarea:hover,
+input[type=text]:hover,
+input[type=password]:hover,
+input[type=email]:hover,
+input[type=search]:hover,
+input[type=checkbox]:hover,
+input[type=radio]:hover,
+input[type=url]:hover {
+    border-color : gray;
 }
 
 input[type=checkbox],
