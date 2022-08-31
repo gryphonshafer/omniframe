@@ -6,13 +6,32 @@ google_fonts:
     fonts:
         Roboto:
             variants:
-                'Roboto Bold'   : 500
-                'Roboto Italic' : italic
-                'Roboto Normal' : regular
+                'Roboto Regular' : regular
+                'Roboto Italic'  : italic
+                'Roboto Bold'    : 500
             subsets:
                 - latin
+                - latin-ext
             formats:
                 - woff2
+        'Open Sans':
+            variants:
+                'Open Sans Regular' : regular
+                'Open Sans Italic'  : italic
+                'Open Sans Bold'    : 700
+            subsets:
+                - latin
+                - latin-ext
+            formats:
+                - woff2
+    icons:
+        browser: 'Firefox/104.1'
+        types:
+            - 'Material Icons'
+            - 'Material Icons Outlined'
+            - 'Material Icons Two Tone'
+            - 'Material Icons Round'
+            - 'Material Icons Sharp'
 vue:
     dest: static/js/vue
     libs:
