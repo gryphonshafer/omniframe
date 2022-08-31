@@ -1,4 +1,4 @@
-Contact: mailto:security@example.com
-Expires: Sun, 9 Dec 2001 14:30 -0500
-Encryption: https://example.com/pgp-key.txt
+Contact: mailto:g@gldg.us
+Expires: Tue, 25 Oct 2050 12:00 -0700
+Encryption: https://keys.openpgp.org/search?q=0x66165293E4161E60
 Preferred-Languages: en

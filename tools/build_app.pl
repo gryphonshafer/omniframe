@@ -10,6 +10,8 @@ my $opt = options( qw{ name|n=s dir|d=s } );
 $opt->{name} //= 'Project';
 $opt->{dir}  //= '.';
 
+$opt->{name} = ucfirst $opt->{name};
+
 my $root_dir = conf->get( qw( config_app root_dir ) );
 my $proj_dir = path( $opt->{dir} )->to_rel->to_string;
 
@@ -29,6 +31,7 @@ cp(
     dest.watch
     .gitignore
     config/externals.yaml
+    static/security.txt
 ) );
 
 path( $proj_dir . '/t/app' )->make_path;
