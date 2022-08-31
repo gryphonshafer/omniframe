@@ -2,9 +2,15 @@
 
 <h1>[% page.title %]</h1>
 
+<div v-cloak style="
+    position : fixed;
+    top      : 1rem;
+    right    : 1rem;
+"></div>
+
 <p>
-    This is an example page that displays elements styled with the foundational
-    sass/css.
+    This is an <a href="[% c.url_for('/') %]">example page</a> that displays elements styled with the
+    foundational sass/css.
 </p>
 
 <ul>
@@ -13,6 +19,8 @@
     <li>HTML code test: <b>&copy;</b></li>
     <li>Embedded UTF8 test: <b>©</b></li>
     <li>Stash UTF8 test: <b>[% copy %]</b></li>
+    <li><a href="[% c.url_for( '/' _ rand(1000000000) ) %]">Unvisited Link</a></li>
+    <li><a href="[% c.url_for('/') %]">Visited Link</a></li>
 </ul>
 
 <hr>
@@ -21,10 +29,18 @@
 
 <p>This is a paragraph.</p>
 
+<p>This is another paragraph.<br>
+This is another paragraph.<br>
+This is another paragraph.</p>
+
 <blockquote>This is a blockquote.</blockquote>
 
 <pre>This is a
     "pre" block.</pre>
+
+<pre>This is another "pre" block.
+This is another "pre" block.
+This is another "pre" block.</pre>
 
 <section>This is a section block.</section>
 
@@ -79,14 +95,60 @@
 
 <hr>
 
+<h2>Table Elements</h2>
+
+<table class="shade_even_rows">
+    <caption>Caption</caption>
+    <thead>
+        <tr>
+            <th colspan="3">Header</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Cell</td>
+            <td>Cell</td>
+            <td>Cell</td>
+        </tr>
+        <tr>
+            <td>Cell</td>
+            <td>Cell</td>
+            <td>Cell</td>
+        </tr>
+        <tr>
+            <td>Cell</td>
+            <td>Cell</td>
+            <td>Cell</td>
+        </tr>
+        <tr>
+            <td>Cell</td>
+            <td>Cell</td>
+            <td>Cell</td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="3">Footer</td>
+        </tr>
+    </tfoot>
+</table>
+
+<hr>
+
 <h2>Form Elements</h2>
 
 <form method="post" action="[% c.url.for('/') %]">
     <fieldset>
         <legend>Form Test</legend>
 
-        <label>Input: <input type="text" name="input" title="Input text..." placeholder="Type Input"></label>
-        <label>URL: <input type="url" name="url" title="Input URL..." placeholder="Type URL"></label>
+        <label>
+            Input:
+            <input type="text" name="input" title="Input text..." placeholder="Type Input">
+        </label>
+        <label>
+            URL:
+            <input type="url" name="url" title="Input URL..." placeholder="Type URL">
+        </label>
 
         <label>
             Select:
@@ -96,51 +158,32 @@
                 <option>Delta</option>
                 <option>Gamma</option>
             </select>
-        <label>
+        </label>
 
         <label>
             Select:
-            <select size="3">
+            <select size="3" multiple>
                 <option>Alpha</option>
                 <option>Beta</option>
                 <option>Delta</option>
                 <option>Gamma</option>
             </select>
-        <label>
+        </label>
 
         <textarea>This is a textarea.</textarea>
 
-        <label>Checkbox: <input type="checkbox" name="checkbox"></label>
-        <label>Radio: <input type="radio" name="radio"></label>
+        <label><input type="checkbox"> Checkbox</label>
+        <label><input type="checkbox" checked> Checkbox</label>
+        <label><input type="checkbox" checked> Checkbox</label>
+        <label><input type="radio" name="radio"> Radio</label>
+        <label><input type="radio" name="radio" checked> Radio</label>
+        <label><input type="radio" name="radio"> Radio</label>
 
         <button>Button</button>
         <input type="reset" value="Reset">
         <input type="submit" value="Submit">
+        <button disabled>Button</button>
     </fieldset>
 </form>
 
 [% IF input %]<p>[% input | html %]</p>[% END %]
-
-<hr>
-
-<h2>Table Elements</h2>
-
-<table>
-    <caption>Caption</caption>
-    <thead>
-        <tr>
-            <th colspan="2">Header</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>Cell</td>
-            <td>Cell</td>
-        </tr>
-    </tbody>
-    <tfoot>
-        <tr>
-            <td colspan="2">Footer</td>
-        </tr>
-    </tfoot>
-</table>

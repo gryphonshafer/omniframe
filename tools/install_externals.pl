@@ -60,7 +60,7 @@ if ( $ext_yaml->{google_fonts} ) {
                     "\n",
                     q\@font-face {\,
                     qq\    font-family : '$font_family';\,
-                    q\    src         : local(''),\,
+                    qq\    src         : local('$font_family'),\,
                     join( ",\n", map {
                         sprintf(
                             ' ' x 18 . q\url('fonts/%s/%s-%s-%s-%s.%s') format('%s')\,
@@ -162,3 +162,80 @@ This is the relative path to the external resources YAML file.
 
 This is the new project's root directory. If not defined, it defaults to "."
 or the current directory. If it doesn't exist, this directory will be created.
+
+
+
+
+
+
+
+
+---
+google_fonts:
+    dest:
+        fonts : static/fonts
+        css   : config/assets/css/fonts
+    fonts:
+        Roboto:
+            variants:
+                'Roboto Bold'   : 500
+                'Roboto Italic' : italic
+                'Roboto Normal' : regular
+            subsets:
+                - latin
+            formats:
+                - woff2
+vue:
+    dest: static/js/vue
+    libs:
+        unpkg.com/vue/dist/vue.global.js                    : vue.js
+        unpkg.com/vue/dist/vue.global.prod.js               : vue.min.js
+        unpkg.com/vuex/dist/vuex.global.js                  : vuex.js
+        unpkg.com/vuex/dist/vuex.global.prod.js             : vuex.min.js
+        unpkg.com/vue-router/dist/vue-router.global.js      : vue-router.js
+        unpkg.com/vue-router/dist/vue-router.global.prod.js : vue-router.min.js
+font_awesome:
+    dest: static/font-awesome
+    parts:
+        - webfonts
+        - css/all.css
+        - css/all.min.css
+
+
+
+
+
+
+
+
+* {
+    font-family : 'Roboto Normal', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, b, strong {
+    font-family : 'Roboto Bold';
+    font-weight : normal;
+}
+
+i, em {
+    font-family : 'Roboto Italic';
+    font-style  : normal;
+}
+
+dl dt {
+    font-family : 'Roboto Bold';
+    font-weight : normal;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

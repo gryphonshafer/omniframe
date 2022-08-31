@@ -45,7 +45,7 @@ blockquote, q {
     quotes : none;
 }
 
-blockquote:before, blockquote:after, q:before, q:after {
+blockquote::before, blockquote::after, q::before, q::after {
     content : '';
     content : none;
 }
@@ -162,6 +162,10 @@ legend {
     white-space  : normal;
 }
 
+select, textarea, button, input {
+    border-radius : 0;
+}
+
 button, input, select {
     font-size      : 100%;
     margin         : 0;
@@ -258,7 +262,7 @@ a:hover {
 }
 
 a:active {
-    color : darkblue;
+    color : midnightblue;
 }
 
 /* extra */

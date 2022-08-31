@@ -1,0 +1,60 @@
+$table_borders            : 1px solid silver !default;
+$table_header_bgcolor     : lightgray        !default;
+$table_cell_bgcolor       : white            !default;
+$table_cell_shade_bgcolor : #eee             !default;
+
+table {
+    th, td {
+        padding : 0.1rem 0.25rem;
+    }
+
+    caption {
+        font-style : italic;
+        text-align : center;
+    }
+
+    th {
+        font-weight : bold;
+    }
+
+    tr.bold td, td.bold {
+        font-weight : bold;
+    }
+
+    th.right, td.right, tr.right td {
+        text-align : right;
+    }
+
+    th.center, td.center, tr.center td {
+        text-align : center;
+    }
+
+    th, thead td {
+        text-align : left;
+    }
+}
+
+table,
+table th,
+table td {
+    border : $table_borders;
+}
+
+table {
+    td {
+        background-color : $table_cell_bgcolor;
+    }
+
+    th, thead td {
+        background-color : $table_header_bgcolor;
+        text-align       : left;
+    }
+
+    tfoot td {
+        background-color : $table_header_bgcolor;
+    }
+}
+
+table.shade_even_rows tr:nth-child(even) td {
+    background-color : $table_cell_shade_bgcolor;
+}

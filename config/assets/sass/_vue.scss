@@ -1,0 +1,29 @@
+$vue_spinner_speed     : 1s                !default;
+$vue_spinner_base      : 0.5rem solid gray !default;
+$vue_spinner_highlight : 0.5rem solid blue !default;
+$vue_spinner_width     : 1rem              !default;
+$vue_spinner_height    : 1rem              !default;
+
+[v-cloak] > * {
+    display : none;
+}
+
+[v-cloak]::before {
+    display       : block;
+    content       : " ";
+    border-radius : 50%;
+    border        : $vue_spinner_base;
+    border-top    : $vue_spinner_highlight;
+    width         : $vue_spinner_width;
+    height        : $vue_spinner_height;
+    animation     : v-cloak-spinner $vue_spinner_speed linear infinite;
+}
+
+@keyframes v-cloak-spinner {
+    0% {
+        transform : rotate(0deg);
+    }
+    100% {
+        transform : rotate(360deg);
+    }
+}

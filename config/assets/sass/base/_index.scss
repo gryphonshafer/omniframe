@@ -1,0 +1,82 @@
+$text_font_size   : 12px       !default;
+$text_font_family : sans-serif !default;
+
+$table_borders            : 1px solid silver !default;
+$table_header_bgcolor     : lightgray        !default;
+$table_cell_bgcolor       : white            !default;
+$table_cell_shade_bgcolor : #eee             !default;
+
+$form_borders                  : 1px solid silver !default;
+$form_checked_color            : blue             !default;
+$form_checked_bgcolor          : white            !default;
+$form_input_color              : black            !default;
+$form_input_focus_border_color : black            !default;
+$form_input_hover_border_color : gray             !default;
+$form_input_disabled_color     : gray             !default;
+$form_input_focus_bgcolor      : lightyellow      !default;
+$form_button_bgcolor           : gainsboro        !default;
+$form_legend_bgcolor           : white            !default;
+
+$page_color    : black   !default;
+$page_bgcolor  : white   !default;
+$page_hr_color : dimgray !default;
+
+$a_link_color    : blue          !default;
+$a_visited_color : darkslateblue !default;
+$a_hover_color   : slateblue     !default;
+$a_active_color  : midnightblue  !default;
+
+@use '../../css/reset';
+@use '../../css/page';
+@use '../../css/text';
+@use '../../css/lists';
+@use '../../css/align';
+
+@use 'tables' with (
+    $table_borders            : $table_borders,
+    $table_header_bgcolor     : $table_header_bgcolor,
+    $table_cell_bgcolor       : $table_cell_bgcolor,
+    $table_cell_shade_bgcolor : $table_cell_shade_bgcolor,
+);
+
+@use 'forms' with (
+    $form_borders                  : $form_borders,
+    $form_checked_color            : $form_checked_color,
+    $form_checked_bgcolor          : $form_checked_bgcolor,
+    $form_input_color              : $form_input_color,
+    $form_input_focus_border_color : $form_input_focus_border_color,
+    $form_input_hover_border_color : $form_input_hover_border_color,
+    $form_input_disabled_color     : $form_input_disabled_color,
+    $form_input_focus_bgcolor      : $form_input_focus_bgcolor,
+    $form_button_bgcolor           : $form_button_bgcolor,
+);
+
+:root {
+    font-size   : $text_font_size;
+    font-family : $text_font_family;
+}
+
+body {
+    color            : $page_color;
+    background-color : $page_bgcolor;
+}
+
+hr {
+    border-color : $page_hr_color;
+}
+
+a:link {
+    color : $a_link_color;
+}
+
+a:visited {
+    color : $a_visited_color;
+}
+
+a:hover {
+    color : $a_hover_color;
+}
+
+a:active {
+    color : $a_active_color;
+}

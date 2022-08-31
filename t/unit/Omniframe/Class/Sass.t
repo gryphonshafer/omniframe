@@ -21,7 +21,7 @@ ok(
     $obj->exists(
         join( '/',
             $obj->conf->get( qw( config_app root_dir ) ),
-            'config/assets/sass/foundation',
+            'config/assets/sass/base',
         )
     ),
     'exists() success',

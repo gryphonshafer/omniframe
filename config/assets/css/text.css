@@ -1,0 +1,66 @@
+:root {
+    font-size : 12px;
+}
+
+* {
+    font-family : sans-serif;
+    font-size   : 1rem;
+    line-height : 1.25rem;
+}
+
+h1 { font-size : 200% }
+h2 { font-size : 180% }
+h3 { font-size : 160% }
+h4 { font-size : 140% }
+h5 { font-size : 120% }
+h6 { font-size : 100% }
+
+h1, h2, h3, h4, h5, h6, strong, b {
+    font-weight : bold;
+}
+
+dl dt {
+    font-weight : bold;
+}
+
+pre, code, kbd, samp, tt {
+    font-family : monospace;
+    font-size   : 1rem;
+    line-height : 1.125rem;
+}
+
+em, i, var, address {
+    font-style : italic;
+}
+
+small {
+    font-size : 0.8rem;
+}
+
+big {
+    font-size : 1.2rem;
+}
+
+sub, sup {
+    font-size      : 0.8rem;
+    line-height    : 0;
+    position       : relative;
+    vertical-align : baseline;
+}
+
+sup {
+    top : -0.5em;
+}
+
+sub {
+    bottom : -0.25em;
+}
+
+abbr, acronym {
+    border-bottom : 1px dotted;
+    cursor        : help;
+}
+
+del {
+    text-decoration : line-through;
+}
