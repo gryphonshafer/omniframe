@@ -30,7 +30,6 @@ cp(
     app.psgi
     dest.watch
     .gitignore
-    config/externals.yaml
     static/security.txt
 ) );
 
