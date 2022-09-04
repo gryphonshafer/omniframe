@@ -12,7 +12,7 @@ $tt_conf->{web}{wrapper} = undef;
 $obj->conf->put( template => $tt_conf );
 
 is(
-    $obj->tt_settings->{config}{CONSTANTS}{version},
+    $obj->tt_settings->{config}{VARIABLES}{version},
     $obj->tt_version,
     'tt_settings() return contains object version',
 );
@@ -23,7 +23,7 @@ is( ref $tt, 'Template', 'tt() returns Template' );
 
 is(
     $obj->tt_version,
-    $obj->tt->context->{CONFIG}{CONSTANTS}{version},
+    $obj->tt->context->{CONFIG}{VARIABLES}{version},
     'tt() Template context contains version',
 );
 
@@ -35,8 +35,7 @@ ok(
                 BEGIN TEST DATA BLOCK
                 [% name | ucfirst %]
                 [% pi | round %]
-                [% constants.version %]
-                [% time %]
+                [% version %]
                 [% rand %]
                 [% rand( 9 ) %]
                 [% rand( 9, 1 ) %]
@@ -65,7 +64,6 @@ like( $output, qr/
     BEGIN\sTEST\sDATA\sBLOCK\s+
     Omniframe\s+
     3\s+
-    \d{10}\s+
     \d{10}\s+
     \d\s+
     \d\s+
