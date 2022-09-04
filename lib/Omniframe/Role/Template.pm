@@ -13,11 +13,8 @@ use HTML::Packer;
 
 with 'Omniframe::Role::Conf';
 
-my $tt_version  = time;
-my $html_packer = HTML::Packer->init;
-
-class_has tt_version  => $tt_version;
-class_has html_packer => $html_packer;
+class_has tt_version  => time;
+class_has html_packer => HTML::Packer->init;
 
 my $tt;
 sub tt ( $self, $type = 'web' ) {
@@ -56,14 +53,15 @@ sub tt_settings ( $self, $type = 'web' ) {
             },
             ENCODING  => 'utf8',
             CONSTANTS => {
-                version => $self->tt_version,
+                %{ $tt_conf->{$type}{constants} || {} },
             },
             VARIABLES => {
-                time => sub { return time },
-                rand => sub { return int( rand( $_[0] // 2 ) + ( $_[1] // 0 ) ) },
-                pick => sub {
+                version => $self->tt_version,
+                rand    => sub { return int( rand( $_[0] // 2 ) + ( $_[1] // 0 ) ) },
+                pick    => sub {
                     return ( map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @_ )[0];
                 },
+                %{ $tt_conf->{$type}{variables} || {} },
             },
         },
         context => sub ($context) {

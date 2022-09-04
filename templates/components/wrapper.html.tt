@@ -4,8 +4,9 @@
         page.html_classes = [],
         page.title        = '',
         page.charset      = 'utf-8',
+        page.robots       = 'index, follow',
         page.noindex      = 0,
-        page.viewport     = '1.0',
+        page.viewport     = 1,
         page.favicon      = '/favicon.ico',
         page.font_awesome = 0,
         page.css          = ['/app.css'],
@@ -44,8 +45,8 @@
             <meta charset="[% page.charset %]">
         [% END %]
 
-        [% IF page.noindex %]
-            <meta name="robots" content="noindex">
+        [% IF page.robots %]
+            <meta name="robots" content="[% page.robots %]">
         [% END %]
 
         [% IF page.viewport %]
@@ -54,7 +55,7 @@
 
         [% IF page.favicon %]
             <link rel="shortcut icon" type="image/x-icon"
-                href="[% c.url_for( page.favicon ).query( version => constants.version ) %]">
+                href="[% c.url_for( page.favicon ).query( version => version ) %]">
         [% END %]
 
         [% IF page.font_awesome %]
@@ -69,7 +70,7 @@
 
         [% FOR css IN page.css %]
             <link rel="stylesheet" type="text/css"
-                href="[% c.url_for(css).query( version => constants.version ) %]">
+                href="[% c.url_for(css).query( version => version ) %]">
         [% END %]
 
         [% FOR style IN page.style %]
@@ -81,7 +82,7 @@
         [% FOR file IN page.links %]
             [% UNLESS link_seen.$file %]
                 <link rel="import" href="[%
-                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
+                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => version )
                 %]">
                 [% link_seen.$file = ( link_seen.$file || 0 ) + 1 %]
             [% END %]
@@ -101,7 +102,7 @@
                     '/js/vue/vue' _ (
                         ( c.app.mode == 'production' ) ? '.min' : ''
                     ) _ '.js'
-                ).query( version => constants.version )
+                ).query( version => version )
             %]"></script>
         [% END %]
 
@@ -111,7 +112,7 @@
                     '/js/vue/vuex' _ (
                         ( c.app.mode == 'production' ) ? '.min' : ''
                     ) _ '.js'
-                ).query( version => constants.version )
+                ).query( version => version )
             %]"></script>
         [% END %]
 
@@ -121,7 +122,7 @@
                     '/js/vue/vue-router' _ (
                         ( c.app.mode == 'production' ) ? '.min' : ''
                     ) _ '.js'
-                ).query( version => constants.version )
+                ).query( version => version )
             %]"></script>
         [% END %]
 
@@ -132,7 +133,19 @@
         [% FOR file IN page.js %]
             [% UNLESS js_seen.$file %]
                 <script type="text/javascript" src="[%
-                    ( file.match('^\w+://') ) ? file : c.url_for(file).query( version => constants.version )
+                    IF NOT file.match('\.js$');
+                        file = file _ '.js';
+                    END;
+
+                    IF NOT file.match('^\w+://');
+                        IF NOT file.match('^/');
+                            file = '/js/' _ file;
+                        END;
+
+                        file = c.url_for(file).query( version => version );
+                    END;
+
+                    file;
                 %]"></script>
                 [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
             [% END %]
