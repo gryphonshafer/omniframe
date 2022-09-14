@@ -52,11 +52,11 @@ $a_active_color  : midnightblue  !default;
 );
 
 :root {
-    font-size   : $text_font_size;
-    font-family : $text_font_family;
+    font-size : $text_font_size;
 }
 
 body {
+    font-family      : $text_font_family;
     color            : $page_color;
     background-color : $page_bgcolor;
 }

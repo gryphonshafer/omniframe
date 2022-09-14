@@ -14,81 +14,105 @@ my $proj_path = path( $opt->{dir} );
 my $ext_yaml  = LoadFile( $proj_path->child( $opt->{settings} )->to_string );
 my $ua        = Mojo::UserAgent->new( max_redirects => 3 );
 
-if ( $ext_yaml->{google_fonts} ) {
-    my $dest_fonts = $omni_path->child( $ext_yaml->{google_fonts}{dest}{fonts} );
-    my $dest_css   = $omni_path->child( $ext_yaml->{google_fonts}{dest}{css}   );
+$ua->transactor->name('Firefox/104.1');
+
+if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
+    my $dest_fonts = $omni_path->child( $google_fonts->{dest}{fonts} );
+    my $dest_css   = $omni_path->child( $google_fonts->{dest}{css}   );
 
     $dest_css->make_path;
 
-    while ( my ( $font_name, $font_set ) = each %{ $ext_yaml->{google_fonts}{fonts} } ) {
-        my $font_key = lc $font_name;
-        $font_key =~ s/\s+/\-/g;
+    if ( my $fonts = $google_fonts->{fonts} ) {
+        for my $font_name ( sort keys %$fonts ) {
+            my $font_set = $fonts->{$font_name};
 
-        my $save_to = $dest_fonts->child( $font_key . '/download.zip' );
-        $save_to->dirname->make_path;
+            ( my $font_name_camel = $font_name ) =~ s/\s+//g;
 
-        $ua->get(
-            'https://google-webfonts-helper.herokuapp.com/api/fonts/' . $font_key,
-            form => {
-                download => 'zip',
-                map {
-                    $_ => join( ',',
-                        ( ref $font_set->{$_} eq 'HASH' )
-                            ? values %{ $font_set->{$_} }
-                            : @{ $font_set->{$_} }
-                    )
-                } keys %$font_set
-            },
-        )->result->save_to( $save_to->to_string );
+            my $font_key = lc $font_name;
+            $font_key =~ s/\s+/\-/g;
 
-        system( 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -qq download.zip' );
-        unlink( $save_to->to_string );
+            my $save_to = $dest_fonts->child( $font_key . '/download.zip' );
+            $save_to->dirname->make_path;
 
-        my ($version) = substr(
-            $save_to->to_abs->dirname->list->first->basename,
-            length $font_key,
-        ) =~ /\-(v\d+)/;
+            $ua->get(
+                'https://google-webfonts-helper.herokuapp.com/api/fonts/' . $font_key,
+                form => {
+                    download => 'zip',
+                    map { $_ => join( ',', @{ $font_set->{$_} } ) } qw( variants subsets formats ),
+                },
+            )->result->save_to( $save_to->to_string );
 
-        my @font_face_css_blocks;
+            system( 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -qq download.zip' );
+            unlink( $save_to->to_string );
 
-        for ( map { [ $_, $font_set->{variants}{$_} ] } sort keys %{ $font_set->{variants} } ) {
-            my ( $font_family, $variant ) = @$_;
+            my ($version) = substr(
+                $save_to->to_abs->dirname->list->first->basename,
+                length $font_key,
+            ) =~ /\-(v\d+)/;
 
-            push(
-                @font_face_css_blocks,
-                join(
-                    "\n",
-                    q\@font-face {\,
-                    qq\    font-family : '$font_family';\,
-                    qq\    src         : local('$font_family'),\,
-                    join( ",\n", map {
-                        sprintf(
-                            ' ' x 18 . q\url('fonts/%s/%s-%s-%s-%s.%s') format('%s')\,
-                            $font_key,
-                            $font_key,
-                            $version,
-                            join( '-', @{ $font_set->{subsets} } ),
-                            $variant,
-                            $_,
+            $dest_css->child( $font_key . '.css' )->spurt(
+                join( "\n\n",
+                    map {
+                        my $variant = $_;
+                        my $style   = ( $variant =~ /italic/ ) ? 'italic' : 'normal';
+                        my $weight  = ( $variant =~ /(\d+)/  ) ? $1       : 400;
+
+                        join(
+                            "\n",
+                            q\@font-face {\,
+                            qq\    font-family : '$font_name';\,
+                            qq\    font-style  : $style;\,
+                            qq\    font-weight : $weight;\,
                             (
-                                ( $_ eq 'eot' ) ? 'embedded-opentype' :
-                                ( $_ eq 'ttf' ) ? 'truetype'          : $_
+                                ( grep { $_ eq 'eot' } @{ $font_set->{formats} } ) ? (
+                                    sprintf(
+                                        q\    src         : url('fonts/%s/%s-%s-%s-%s.%s');\,
+                                        $font_key,
+                                        $font_key,
+                                        $version,
+                                        join( '_', reverse sort @{ $font_set->{subsets} } ),
+                                        $variant,
+                                        'eot',
+                                    )
+                                ) : ()
                             ),
-                        )
-                    } @{ $font_set->{formats} } ) . ';',
-                    q\}\,
-                ),
+                            q\    src         : local(''),\,
+                            join( ",\n", map {
+                                sprintf(
+                                    ' ' x 8 . q\url('fonts/%s/%s-%s-%s-%s.%s') format('%s')\,
+                                    $font_key,
+                                    $font_key,
+                                    $version,
+                                    join( '_', reverse sort @{ $font_set->{subsets} } ),
+                                    $variant,
+                                    (
+                                        ( $_ eq 'eot' ) ? $_ . '?#iefix'              :
+                                        ( $_ eq 'svg' ) ? $_ . '#' . $font_name_camel : $_
+                                    ),
+                                    (
+                                        ( $_ eq 'eot' ) ? 'embedded-opentype' :
+                                        ( $_ eq 'ttf' ) ? 'truetype'          : $_
+                                    ),
+                                )
+                            } @{ $font_set->{formats} } ) . ';',
+                            q\}\,
+                        );
+                    } @{ $font_set->{variants} }
+                ) . "\n"
             );
         }
-
-        $dest_css->child( $font_key . '.css' )->spurt(
-            join( "\n\n", @font_face_css_blocks ) . "\n"
-        );
     }
 
-    if ( my $icons = $ext_yaml->{google_fonts}{icons} ) {
-        $ua->transactor->name( $icons->{browser} );
+    if ( my $icons = $google_fonts->{icons} ) {
+        my $type_ua_map = {
+            woff2 => 'Firefox/104.1',
+            woff  => 'Firefox/30.0',
+            ttf   => 'Mozilla/5.0',
+            eot   => 'MSIE 7.0',
+        };
+
         my $save_to = $dest_fonts->child('material-icons')->make_path;
+
         my ( @font_face_css_blocks, @font_style_css_blocks );
 
         for my $icon_name ( @{ $icons->{types} } ) {
@@ -97,12 +121,16 @@ if ( $ext_yaml->{google_fonts} ) {
             )->result->body =~ /src:\s*url\(([^\)]+)\)/;
 
             my ($version) = $icon_url =~ m|/(v\d+)/|;
-            my ($format)  = $icon_url =~ /\.(\w+)$/;
             ( my $icon_key = lc $icon_name ) =~ s/\s+/\-/g;
 
-            $ua->get($icon_url)->result->save_to(
-                $save_to->child( $icon_key . '-' . $version . '.' . $format )->to_string
-            );
+            my $ua_name = $ua->transactor->name;
+            for my $format ( @{ $icons->{formats} || ['woff2'] } ) {
+                $ua->transactor->name( $type_ua_map->{$format} );
+                $ua->get($icon_url)->result->save_to(
+                    $save_to->child( $icon_key . '-' . $version . '.' . $format )->to_string
+                );
+            }
+            $ua->transactor->name($ua_name);
 
             push(
                 @font_face_css_blocks,
@@ -112,14 +140,30 @@ if ( $ext_yaml->{google_fonts} ) {
                     qq\    font-family : '$icon_name';\,
                     q\    font-style  : normal;\,
                     q\    font-weight : 400;\,
-                    qq\    src         : local('$icon_name'),\,
-                    sprintf(
-                        ' ' x 18 . q\url('fonts/%s/%s-%s.%s') format('%s');\,
-                        'material-icons',
-                        $icon_key,
-                        $version,
-                        ($format) x 2,
+                    (
+                        ( grep { $_ eq 'eot' } @{ $icons->{formats} || [] } ) ? (
+                            sprintf(
+                                q\    src         : url('fonts/%s/%s-%s.%s');\,
+                                $icon_key,
+                                $version,
+                                'eot',
+                            )
+                        ) : ()
                     ),
+                    q\    src         : local(''),\,
+                    join( ",\n", map {
+                        sprintf(
+                            ' ' x 8 . q\url('fonts/%s/%s-%s.%s') format('%s')\,
+                            'material-icons',
+                            $icon_key,
+                            $version,
+                            ( ( $_ eq 'eot' ) ? $_ . '?#iefix' : $_ ),
+                            (
+                                ( $_ eq 'eot' ) ? 'embedded-opentype' :
+                                ( $_ eq 'ttf' ) ? 'truetype'          : $_
+                            ),
+                        )
+                    } @{ $icons->{formats} || ['woff2'] } ) . ';',
                     q\}\,
                 ),
             );
@@ -153,9 +197,9 @@ if ( $ext_yaml->{google_fonts} ) {
     }
 }
 
-if ( $ext_yaml->{vue} ) {
-    my $dest = $omni_path->child( $ext_yaml->{vue}{dest} );
-    while ( my ( $src, $target ) = each %{ $ext_yaml->{vue}{libs} } ) {
+if ( my $vue = $ext_yaml->{vue} ) {
+    my $dest = $omni_path->child( $vue->{dest} );
+    while ( my ( $src, $target ) = each %{ $vue->{libs} } ) {
         ( my $body = $ua->get( 'https://' . $src )->result->body ) =~ s/\s+$//g;
         my $save_to = $dest->child($target);
         $save_to->dirname->make_path;
@@ -163,7 +207,7 @@ if ( $ext_yaml->{vue} ) {
     }
 }
 
-if ( $ext_yaml->{font_awesome} ) {
+if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
     my $install = $omni_path
         ->child('install_externals_font_awesome')
         ->make_path
@@ -188,11 +232,11 @@ if ( $ext_yaml->{font_awesome} ) {
     my $payload = path( $install->list({ dir => 1 })->grep(qr|\bfontawesome\-free\-[\d\.]+\-web$|)->first );
 
     my $dest = $omni_path
-        ->child( $ext_yaml->{font_awesome}{dest} )
+        ->child( $font_awesome->{dest} )
         ->make_path
         ->remove_tree({ keep_root => 1 });
 
-    for my $part ( @{ $ext_yaml->{font_awesome}{parts} } ) {
+    for my $part ( @{ $font_awesome->{parts} } ) {
         my $target = $dest->child($part);
         $target->dirname->make_path;
         $payload->child($part)->move_to( $target->to_string );
@@ -238,29 +282,6 @@ Review the default C<config/externals.yaml> file for a comprehensive example.
 For Google Fonts, use C<https://fonts.google.com> to search for fonts, then use
 C<https://google-webfonts-helper.herokuapp.com/fonts> to help sugggest settings
 for the YAML.
-
-To deploy a Google Font, include the generated CSS (stipulated in the
-C<google_fonts/dest/css> setting) in the CSS build. Then add some amount of CSS
-to connect the font definition to selectors. For example:
-
-    * {
-        font-family : 'Roboto Normal', sans-serif;
-    }
-
-    h1, h2, h3, h4, h5, h6, b, strong {
-        font-family : 'Roboto Bold';
-        font-weight : normal;
-    }
-
-    i, em {
-        font-family : 'Roboto Italic';
-        font-style  : normal;
-    }
-
-    dl dt {
-        font-family : 'Roboto Bold';
-        font-weight : normal;
-    }
 
 =head2 Google Icons
 

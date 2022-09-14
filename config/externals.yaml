@@ -4,34 +4,28 @@ google_fonts:
         fonts : static/fonts
         css   : config/assets/css/fonts
     fonts:
-        Roboto:
-            variants:
-                'Roboto Regular' : regular
-                'Roboto Italic'  : italic
-                'Roboto Bold'    : 500
-            subsets:
-                - latin
-                - latin-ext
-            formats:
-                - woff2
         'Open Sans':
             variants:
-                'Open Sans Regular' : regular
-                'Open Sans Italic'  : italic
-                'Open Sans Bold'    : 700
+                - regular
+                - italic
+                - 700
+                - 700italic
             subsets:
                 - latin
                 - latin-ext
             formats:
                 - woff2
+                - woff
     icons:
-        browser: 'Firefox/104.1'
         types:
             - 'Material Icons'
             - 'Material Icons Outlined'
             - 'Material Icons Two Tone'
             - 'Material Icons Round'
             - 'Material Icons Sharp'
+        formats:
+            - woff2
+            - woff
 vue:
     dest: static/js/vue
     libs:
