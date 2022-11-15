@@ -20,7 +20,11 @@ sub setup ($self) {
     })->run;
 
     $self->dq->sql(q{
-        CREATE TRIGGER IF NOT EXISTS socket_before_update BEFORE update ON socket
+        CREATE TRIGGER IF NOT EXISTS socket_before_update AFTER UPDATE OF
+            name,
+            counter,
+            data
+        ON socket
         BEGIN
             UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' )
             WHERE socket_id = old.socket_id;
