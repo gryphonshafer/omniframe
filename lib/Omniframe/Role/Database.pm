@@ -2,42 +2,56 @@ package Omniframe::Role::Database;
 
 use exact -role;
 use App::Dest;
-use DBD::SQLite;
+use Cwd 'cwd';
 use DBIx::Query;
 use Mojo::File 'path';
+use YAML::XS;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Time );
 
-my ( $dq, $dq_sql_log, $dq_sql_log_setup );
+class_has default_shard => undef;
+class_has dq_shards     => undef;
+class_has dq_logs       => {};
 
-class_has dq_sql_log => sub ($self) {
-    return $dq_sql_log if ($dq_sql_log_setup);
+sub dq ( $self, $shard = undef ) {
+    my $return_shard = sub {
+        $shard //= $self->default_shard;
+        croak('Database shard not specified and default shard not set') if ( not defined $shard );
+        croak('Database shard requested not defined') unless ( $self->dq_shards->{$shard} );
+        return $self->dq_shards->{$shard};
+    };
+    return $return_shard->() if ( ref $self->dq_shards eq 'HASH' );
 
-    my $root_dir = $self->conf->get( qw( config_app root_dir ) );
-    if ( my $log = $self->conf->get( qw( database log ) ) ) {
-        $dq_sql_log = {
-            map {
-                open( my $fh, '>>', $root_dir . '/' . $log->{$_} )
-                    or croak( 'failed to open SQL log file for appending: ' . $root_dir . '/' . $log->{$_} );
-                $_ => $fh;
-            } keys %$log
-        };
+    my $conf_full = $self->conf->get('database');
+    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
+
+    my @shards;
+    if ( $conf_full->{shards} ) {
+        @shards = map {
+            $self->default_shard($_) if ( $conf_full->{shards}{$_}{default_shard} );
+
+            my $shard_conf = YAML::XS::Load( YAML::XS::Dump( {
+                %$conf_full,
+                %{ $conf_full->{shards}{$_} },
+                shard => $_,
+            } ) );
+
+            delete $shard_conf->{shards};
+
+            $shard_conf;
+        } keys %{ $conf_full->{shards} };
+    }
+    else {
+        $self->default_shard('default_shard');
+        @shards = { %$conf_full, shard => 'default_shard' };
     }
 
-    $dq_sql_log_setup = 1;
-    return $dq_sql_log;
-};
+    $_->{path} = $root_dir . '/' . $_->{file} for (@shards);
 
-class_has dq => sub ($self) {
-    return $dq if ($dq);
+    if ( my @to_be_created_db_files = grep { not -f $_ } map { $_->{path} } @shards ) {
+        path($_)->dirname->make_path for (@to_be_created_db_files);
 
-    my $conf     = $self->conf->get('database');
-    my $root_dir = $self->conf->get( qw( config_app root_dir ) );
-    my $file     = join( '/', $root_dir, $conf->{file} );
-
-    path($file)->dirname->make_path;
-
-    unless ( -f $file ) {
+        my $cwd = cwd;
         chdir $root_dir;
 
         try {
@@ -45,62 +59,73 @@ class_has dq => sub ($self) {
             App::Dest->update;
         }
         catch {}
+
+        chdir $cwd;
     }
 
-    $dq = DBIx::Query->connect(
-        'dbi:SQLite:dbname=' . $file,
-        undef,
-        undef,
-        $conf->{settings},
-    );
+    $self->dq_shards({
+        map {
+            my $conf = $_;
 
-    exact->monkey_patch(
-        'DBIx::Query',
-        quote => sub ( $self, @values ) {
-            return DBD::SQLite::db->quote(@values);
-        },
-    );
+            my $dq = DBIx::Query->connect(
+                'dbi:SQLite:dbname=' . $conf->{path},
+                undef,
+                undef,
+                $conf->{settings},
+            );
 
-    $dq->do("PRAGMA $_->[0] = $_->[1]")
-        for ( map { [ $_, $dq->quote( $conf->{pragmas}{$_} ) ] } keys %{ $conf->{pragmas} } );
+            $dq->do("PRAGMA $_->[0] = $_->[1]")
+                for ( map { [ $_, $dq->quote( $conf->{pragmas}{$_} ) ] } keys %{ $conf->{pragmas} } );
 
-    if ( my $log = $self->dq_sql_log ) {
-        $dq->sqlite_trace( sub ($sql) {
-            my $time = ($self) ? $self->time->zulu : time;
+            if ( $conf->{log} ) {
+                $self->dq_logs->{ $conf->{shard} } = { map {
+                    my $log_file = $root_dir . '/' . $conf->{log}{$_};
+                    open( my $fh, '>>', $log_file )
+                        or croak( 'failed to open SQL log file for appending: ' . $log_file );
+                    $_ => $fh;
+                } keys %{ $conf->{log} } };
 
-            my $write = (
-                $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
-                    ANALYZE
-                    EXPLAIN
-                    PRAGMA
-                    REINDEX
-                    RELEASE
-                    SAVEPOINT
-                    SELECT
-                    VACUUM
-                )
-            ) ? 1 : 0;
+                $dq->sqlite_trace( sub ($sql) {
+                    my $time = ($self) ? $self->time->zulu : time;
 
-            if (
-                $log->{all} or
-                ( $log->{write} and $write ) or
-                ( $log->{read} and not $write )
-            ) {
-                my $this_sql = $sql;
-                $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
-                my $message = '-- ' . $time . "\n" . $this_sql . "\n\n";
+                    my $write = (
+                        $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
+                            ANALYZE
+                            EXPLAIN
+                            PRAGMA
+                            REINDEX
+                            RELEASE
+                            SAVEPOINT
+                            SELECT
+                            VACUUM
+                        )
+                    ) ? 1 : 0;
 
-                print { $log->{all}   } $message if ( $log->{all}                  );
-                print { $log->{write} } $message if ( $log->{write} and $write     );
-                print { $log->{read}  } $message if ( $log->{read}  and not $write );
+                    my $log_fhs = $self->dq_logs->{ $conf->{shard} };
+                    if (
+                        $log_fhs->{all} or
+                        ( $log_fhs->{write} and $write ) or
+                        ( $log_fhs->{read} and not $write )
+                    ) {
+                        my $this_sql = $sql;
+                        $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
+                        my $message = '-- ' . $time . "\n" . $this_sql . "\n\n";
+
+                        print { $log_fhs->{all}   } $message if ( $log_fhs->{all}                  );
+                        print { $log_fhs->{write} } $message if ( $log_fhs->{write} and $write     );
+                        print { $log_fhs->{read}  } $message if ( $log_fhs->{read}  and not $write );
+                    }
+
+                    return 1;
+                } );
             }
 
-            return 1;
-        } );
-    }
+            $conf->{shard} => $dq;
+        } @shards
+    });
 
-    return $dq;
-};
+    return $return_shard->();
+}
 
 1;
 
@@ -117,22 +142,33 @@ Omniframe::Role::Database
     with 'Omniframe::Role::Database';
 
     sub method ($self) {
-        return $self->dq->sql('SELECT name FROM thing WHERE thing_id = ?')->run(42)->value;
+        return $self->dq
+            ->sql('SELECT name FROM thing WHERE thing_id = ?')->run(42)->value;
+    }
+
+    sub method_via_aux_db ($self) {
+        return $self->dq('aux_db')
+            ->sql('SELECT name FROM thing WHERE thing_id = ?')->run(42)->value;
     }
 
 =head1 DESCRIPTION
 
-This role provides a single C<dq> class attribute which is an application-wide
-singleton L<DBIx::Query> object connected to the application's SQLite database.
+This role provides a single C<dq> method which returns an application-wide
+singleton L<DBIx::Query> object or objects connected to the application's
+SQLite database(s).
 
-=head1 CLASS ATTRIBUTES
+=head1 METHODS
 
 =head2 dq
 
-This class attribute, when accessed, will become an application-wide singleton
-L<DBIx::Query> object connected to the application's SQLite database. When first
-accessed, a series of actions will take place that will create and save the
-singleton. On subsequent accesses, the singleton is returned.
+This method will return an application-wide singleton L<DBIx::Query> object or
+objects connected to the application's SQLite database(s).
+
+    $self->dq;             # return the default shard database singleton
+    $self->dq('specific'); # return the "specific" shard database singleton
+
+When first accessed, a series of actions will take place that will create and
+save the singleton(s). On subsequent accesses, the singleton(s) is/are returned.
 
 First, database configuration is established. See L</"CONFIGURATION"> below.
 
@@ -145,14 +181,31 @@ nothing happens.
 Finally, using the L<DBIx::Query> C<connect> method, the database object is
 instantiated, and then specific SQLite pragmas are set.
 
-=head2 dq_sql_log
+=head1 CLASS ATTRIBUTES
+
+=head2 default_shard
+
+This attribute represents what the object of this class will consider to be the
+default "shard" (which SQLite database) to return the singleton of if not
+specified in the C<dq> call.
+
+If not set explicitly and there's only a single database without a shard name,
+the C<default_shard> value will be set to "default_shard", which will be the
+name automatically given to the single database.
+
+=head2 dq_shards
+
+This contains a hashref with keys of the names of each database "shard" and the
+values being the associated L<DBIx::Query> object.
+
+=head2 dq_logs
 
 This contains a hashref with possible keys of "read", "write", and/or "all".
 The values of any keys will be filehandles to the read, write, or all SQL log
 files.
 
-The values of C<dq_sql_log> are generated automatically based on the
-C<dq_sql_log> configuration. See L</"CONFIGURATION"> below.
+The values are generated automatically based on the configuration. See
+L</"CONFIGURATION"> below.
 
 =head1 CONFIGURATION
 
@@ -175,6 +228,33 @@ application's configuration file. See L<Omniframe::Role::Conf>.
             write: local/db_write_log.sql
             read: local/db_read_log.sql
             all: local/db_log.sql
+
+If you replace C<file> with C<shards>, each key of that hashref will be
+considered the name of the "shard" and the value will be a hashref of settings
+specific to that "shard".
+
+In a multi-shard setup, you can specify a positive value for C<default_shard>
+to indicate which shard is the default.
+
+    database:
+        shards:
+            user:
+                default_shard: 1
+                file: local/user.sqlite
+                log:
+                    all: local/user_log.sql
+            lookup:
+                file: local/lookup.sqlite
+        settings:
+            sqlite_see_if_its_a_number: 1
+            sqlite_defensive: 1
+            RaiseError: 1
+            PrintError: 0
+        pragmas:
+            encoding: UTF-8
+            foreign_keys: ON
+            recursive_triggers: ON
+            temp_store: MEMORY
 
 =head1 WITH ROLES
 

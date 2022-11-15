@@ -11,7 +11,7 @@ default:
         pragmas:
             encoding: UTF-8
             foreign_keys: ON
-            recursive_triggers: ON;
+            recursive_triggers: OFF
             temp_store: MEMORY
     logging:
         log_file: local/app.log

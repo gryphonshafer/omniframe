@@ -1,4 +1,5 @@
 requires 'App::Dest', '1.31';
+requires 'Cwd', '3.75';
 requires 'DBD::SQLite', '1.70';
 requires 'DBIx::Query', '1.14';
 requires 'Data::Printer', '1.000004';
@@ -38,7 +39,6 @@ requires 'exact::conf', '1.07';
 requires 'exact::lib', '1.03';
 
 on test => sub {
-    requires 'Cwd', '3.75';
     requires 'ExtUtils::Manifest', '1.73';
     requires 'Pod::Coverage::TrustPod', '0.100005';
     requires 'Test2::MojoX', '0.07';

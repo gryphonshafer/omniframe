@@ -1,4 +1,5 @@
 use Test2::V0;
+use DBD::SQLite;
 use Omniframe::Mojo::Socket;
 
 my $mock_logging = mock 'Omniframe::Role::Logging' => ( set => [ qw( info debug ) ] );
@@ -6,6 +7,7 @@ my $mock_dbixc   = mock 'DBIx::Query'              => (
     set => [
         all   => sub { [] },
         value => 1,
+        quote => sub { shift; DBD::SQLite::db->quote(@_) },
         map { $_ => sub { $_[0] } } qw( _connect do run sql ),
     ],
 );

@@ -1,18 +1,20 @@
 use Test2::V0;
+use DBD::SQLite;
 use DBIx::Query;
 use Omniframe;
 
 my $mock = mock 'DBIx::Query' => (
-    set => {
-        add  => 42,
-        data => sub { { model_id => 42, thx => 1138 } },
-        all  => sub { [ { model_id => 42, thx => 1138 }, { model_id => 43, thx => 1139 } ] },
+    set => [
+        add   => 42,
+        data  => sub { { model_id => 42, thx => 1138 } },
+        all   => sub { [ { model_id => 42, thx => 1138 }, { model_id => 43, thx => 1139 } ] },
+        quote => sub { shift; DBD::SQLite::db->quote(@_) },
         map { $_ => sub { $_[0] } } qw( _connect do get where run next update rm ),
-    },
+    ],
 );
 
 my $obj;
-ok( lives { $obj = Omniframe->new->with_roles('+Model') }, q{new->with_roles('+Model')} ) or note $@;
+ok( lives { $obj = Omniframe->with_roles('+Model')->new }, q{new->with_roles('+Model')} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Database Logging Model ) );
 can_ok( $obj, $_ ) for ( qw(
     name id_name id data saved_data create load dirty save delete every every_data data_merge resolve_id
