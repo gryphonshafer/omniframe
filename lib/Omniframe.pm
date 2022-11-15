@@ -11,7 +11,7 @@ Omniframe
 =head1 SYNOPSIS
 
     use Omniframe;
-    my $obj = Omniframe->new->with_roles('+Conf');
+    my $obj = Omniframe->with_roles('+Conf')->new;
 
 =head1 DESCRIPTION
 

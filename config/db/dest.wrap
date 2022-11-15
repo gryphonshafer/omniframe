@@ -4,7 +4,7 @@ use Mojo::File 'path';
 use Mojo::Util 'decode';
 use Omniframe;
 
-my $obj = Omniframe->new->with_roles('+Database');
+my $obj = Omniframe->with_roles('+Database')->new;
 $obj->conf->put( qw( database settings sqlite_allow_multiple_statements ) => 1 );
 
 my $dq  = $obj->dq;

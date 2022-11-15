@@ -14,7 +14,7 @@ my $mock = mock 'DBIx::Query' => (
 );
 
 my $obj;
-ok( lives { $obj = Omniframe->with_roles('+Model')->new }, q{new->with_roles('+Model')} ) or note $@;
+ok( lives { $obj = Omniframe->with_roles('+Model')->new }, q{with_roles('+Model')->new} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Database Logging Model ) );
 can_ok( $obj, $_ ) for ( qw(
     name id_name id data saved_data create load dirty save delete every every_data data_merge resolve_id

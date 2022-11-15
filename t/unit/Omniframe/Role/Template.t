@@ -2,7 +2,7 @@ use Test2::V0;
 use Omniframe;
 
 my $obj;
-ok( lives { $obj = Omniframe->new->with_roles('+Template') }, q{new->with_roles('+Template')} ) or note $@;
+ok( lives { $obj = Omniframe->with_roles('+Template')->new }, q{with_roles('+Template')->new} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Template ) );
 can_ok( $obj, qw( tt_version html_packer tt tt_settings tt_html ) );
 
