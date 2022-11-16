@@ -20,7 +20,7 @@ sub setup ($self) {
     })->run;
 
     $self->dq->sql(q{
-        CREATE TRIGGER IF NOT EXISTS socket_before_update AFTER UPDATE OF
+        CREATE TRIGGER IF NOT EXISTS socket_after_update AFTER UPDATE OF
             name,
             counter,
             data
