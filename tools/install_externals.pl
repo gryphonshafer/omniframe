@@ -4,7 +4,7 @@ use Mojo::File 'path';
 use Mojo::UserAgent;
 use YAML::XS 'LoadFile';
 
-my $opt = options( qw{ settings|s=s dir|d=s } );
+my $opt = options( qw{ settings|s=s dir|d=s local|l } );
 
 $opt->{settings} //= q{config/externals.yaml};
 $opt->{dir}      //= q{.};
@@ -16,9 +16,11 @@ my $ua        = Mojo::UserAgent->new( max_redirects => 3 );
 
 $ua->transactor->name('Firefox/104.1');
 
+my $target_path = ( $opt->{local} ) ? $proj_path : $omni_path;
+
 if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
-    my $dest_fonts = $omni_path->child( $google_fonts->{dest}{fonts} );
-    my $dest_css   = $omni_path->child( $google_fonts->{dest}{css}   );
+    my $dest_fonts = $target_path->child( $google_fonts->{dest}{fonts} );
+    my $dest_css   = $target_path->child( $google_fonts->{dest}{css}   );
 
     $dest_css->make_path;
 
@@ -35,7 +37,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
             $save_to->dirname->make_path;
 
             $ua->get(
-                'https://google-webfonts-helper.herokuapp.com/api/fonts/' . $font_key,
+                'https://gwfh.mranftl.com/api/fonts/' . $font_key,
                 form => {
                     download => 'zip',
                     map { $_ => join( ',', @{ $font_set->{$_} } ) } qw( variants subsets formats ),
@@ -44,7 +46,6 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
 
             system( 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -qq download.zip' );
             unlink( $save_to->to_string );
-
             my ($version) = substr(
                 $save_to->to_abs->dirname->list->first->basename,
                 length $font_key,
@@ -70,7 +71,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                                         $font_key,
                                         $font_key,
                                         $version,
-                                        join( '_', reverse sort @{ $font_set->{subsets} } ),
+                                        join( '_', sort @{ $font_set->{subsets} } ),
                                         $variant,
                                         'eot',
                                     )
@@ -83,7 +84,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                                     $font_key,
                                     $font_key,
                                     $version,
-                                    join( '_', reverse sort @{ $font_set->{subsets} } ),
+                                    join( '_', sort @{ $font_set->{subsets} } ),
                                     $variant,
                                     (
                                         ( $_ eq 'eot' ) ? $_ . '?#iefix'              :
@@ -198,7 +199,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
 }
 
 if ( my $vue = $ext_yaml->{vue} ) {
-    my $dest = $omni_path->child( $vue->{dest} );
+    my $dest = $target_path->child( $vue->{dest} );
     while ( my ( $src, $target ) = each %{ $vue->{libs} } ) {
         ( my $body = $ua->get( 'https://' . $src )->result->body ) =~ s/\s+$//g;
         my $save_to = $dest->child($target);
@@ -208,7 +209,7 @@ if ( my $vue = $ext_yaml->{vue} ) {
 }
 
 if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
-    my $install = $omni_path
+    my $install = $target_path
         ->child('install_externals_font_awesome')
         ->make_path
         ->remove_tree({ keep_root => 1 });
@@ -231,7 +232,7 @@ if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
 
     my $payload = path( $install->list({ dir => 1 })->grep(qr|\bfontawesome\-free\-[\d\.]+\-web$|)->first );
 
-    my $dest = $omni_path
+    my $dest = $target_path
         ->child( $font_awesome->{dest} )
         ->make_path
         ->remove_tree({ keep_root => 1 });
@@ -254,6 +255,7 @@ install_externals.pl - Install external resources into Omniframe installation
     install_externals.pl OPTIONS
         -s, --settings FILE  # external resources YAML file (default: "config/externals.yaml")
         -d, --dir      DIR   # project's root directory (default: ".")
+        -l, --local
         -h, --help
         -m, --man
 
@@ -273,6 +275,11 @@ This is the relative path to the external resources YAML file.
 This is the new project's root directory. If not defined, it defaults to "."
 or the current directory. If it doesn't exist, this directory will be created.
 
+=head2 -l, --local
+
+Install in the project's local directory (project's root director) instead of
+into the Omniframe installation instance.
+
 =head1 USAGE DETAILS
 
 Review the default C<config/externals.yaml> file for a comprehensive example.
@@ -280,8 +287,7 @@ Review the default C<config/externals.yaml> file for a comprehensive example.
 =head2 Google Fonts
 
 For Google Fonts, use C<https://fonts.google.com> to search for fonts, then use
-C<https://google-webfonts-helper.herokuapp.com/fonts> to help sugggest settings
-for the YAML.
+C<https://gwfh.mranftl.com/fonts> to help sugggest settings for the YAML.
 
 =head2 Google Icons
 
