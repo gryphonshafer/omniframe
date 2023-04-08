@@ -21,9 +21,10 @@ jobs:
           PERL_CPANM_OPT: --from https://cpan.metacpan.org/ --notest --force --skip-satisfied
       - run: dest init
       - run: dest update
-      - run: prove --recurse --lib --failures --jobs 4 --timer t
-        env:
-          HARNESS_PERL_SWITCHES: -MDevel::Cover
+      - run: |-
+          PATH="$PATH:." \
+          HARNESS_PERL_SWITCHES=-MDevel::Cover \
+          prove --recurse --lib --failures --jobs 4 --timer t
       - run: cover -report codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
