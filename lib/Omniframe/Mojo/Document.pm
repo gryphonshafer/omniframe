@@ -10,7 +10,7 @@ use Text::MultiMarkdown 'markdown';
 with qw( Omniframe::Role::Conf Omniframe::Role::Logging );
 
 sub document_helper ($self) {
-    return sub ( $c, $file, $payload_process = undef ) {
+    return sub ( $c, $file, $payload_process = undef, $file_filter = undef ) {
         my $paths = [ grep { defined }
             $self->conf->get( qw( config_app root_dir ) ),
             $self->conf->get('omniframe'),
@@ -49,6 +49,8 @@ sub document_helper ($self) {
 
             ( my $name = $file ) =~ s/\.[^\.\/]+$//;
             $name =~ s|/_|/|g;
+            $name =~ s/$file_filter// if ($file_filter);
+
             $c->stash( title => join( ' / ',
                 map {
                     ucfirst( join( ' ', map {
@@ -76,7 +78,13 @@ sub document_helper ($self) {
 }
 
 sub docs_nav_helper ($self) {
-    return sub ( $c, $relative_docs_dir, $root_type = 'md', $root_title = 'Home Page' ) {
+    return sub (
+        $c,
+        $relative_docs_dir,
+        $home_type  = 'md',
+        $home_name  = 'Home Page',
+        $home_title = 'Home Page',
+    ) {
         my $docs_dir = $self->conf->get( qw( config_app root_dir ) ) . '/' . $relative_docs_dir;
 
         my @files;
@@ -105,7 +113,7 @@ sub docs_nav_helper ($self) {
             next if (m|/_[^_]|);
 
             my $href = substr( $_, $docs_dir_length );
-            my @path = ( 'Home Page', map {
+            my @path = ( $home_name, map {
                 ucfirst( join( ' ', map {
                     ( /^(?:a|an|the|and|but|or|for|nor|on|at|to|from|by)$/i ) ? $_ : ucfirst
                 } split('_') ) )
@@ -163,8 +171,8 @@ sub docs_nav_helper ($self) {
 
         $docs_nav->[0]{name}  = delete $docs_nav->[0]{folder};
         $docs_nav->[0]{href}  = '/';
-        $docs_nav->[0]{title} = $root_title;
-        $docs_nav->[0]{type}  = $root_type;
+        $docs_nav->[0]{title} = $home_title;
+        $docs_nav->[0]{type}  = $home_type;
 
         return $docs_nav;
     };
