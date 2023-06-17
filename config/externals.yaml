@@ -27,14 +27,12 @@ google_fonts:
             - woff2
             - woff
 vue:
-    dest: static/js/vue
+    dest: static/js/vue/lib
     libs:
-        unpkg.com/vue/dist/vue.global.js                    : vue.js
-        unpkg.com/vue/dist/vue.global.prod.js               : vue.min.js
-        unpkg.com/vuex/dist/vuex.global.js                  : vuex.js
-        unpkg.com/vuex/dist/vuex.global.prod.js             : vuex.min.js
-        unpkg.com/vue-router/dist/vue-router.global.js      : vue-router.js
-        unpkg.com/vue-router/dist/vue-router.global.prod.js : vue-router.min.js
+        vue/dist/vue.global.js     : vue.global.js
+        vue/dist/vue.global.prod.js: vue.global.prod.js
+        vue-demi                   : demi.iife.js
+        pinia/dist/pinia.iife.js   : pinia.iife.js
 font_awesome:
     dest: static/font-awesome
     parts:

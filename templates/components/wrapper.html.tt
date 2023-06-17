@@ -1,27 +1,32 @@
 [%-
     DEFAULT
+        page.wrappers     = [],
         page.lang         = 'en',
         page.html_classes = [],
         page.title        = '',
         page.charset      = 'utf-8',
         page.robots       = 'index, follow',
-        page.noindex      = 0,
         page.viewport     = 1,
         page.favicon      = '/favicon.ico',
         page.font_awesome = 0,
         page.css          = ['/app.css'],
         page.style        = [],
         page.links        = [],
-        page.body_classes = [],
-        page.vue          = 0,
-        page.vuex         = 0,
-        page.vue_router   = 0,
-        page.js           = [],
-        page.inline_js    = [],
-        page.wrappers     = [];
+        page.js.defer     = [],
+        page.js.import    = {},
+        page.js.module    = [],
+        page.js.inline    = [],
+        page.js.post      = [],
+        page.body_classes = [];
+
+    DEFAULT page.vue = 0;
 
     content = BLOCK;
         PROCESS $template;
+    END;
+
+    IF page.vue;
+        page.js.defer.push( 'vue/lib/vue.global' _ ( ( c.app.mode == 'production' ) ? '.prod' : '' ) );
     END;
 
     WHILE page.wrappers.size;
@@ -37,17 +42,9 @@
     [%- IF page.html_classes.size %] class="[% page.html_classes.join(' ') %]"[% END -%]
 >
     <head>
-        [% IF page.title %]
-            <title>[% page.title %]</title>
-        [% END %]
-
-        [% IF page.charset %]
-            <meta charset="[% page.charset %]">
-        [% END %]
-
-        [% IF page.robots %]
-            <meta name="robots" content="[% page.robots %]">
-        [% END %]
+        [% IF page.title %]<title>[% page.title %]</title>[% END %]
+        [% IF page.charset %]<meta charset="[% page.charset %]">[% END %]
+        [% IF page.robots %]<meta name="robots" content="[% page.robots %]">[% END %]
 
         [% IF page.viewport %]
             <meta name="viewport" content="width=device-width, initial-scale=[% page.viewport %]">
@@ -64,7 +61,7 @@
                     '/font-awesome/css/all' _ (
                         ( c.app.mode == 'production' ) ? '.min' : ''
                     ) _ '.css'
-                )
+                ).query( version => version )
             %]">
         [% END %]
 
@@ -73,11 +70,7 @@
                 href="[% c.url_for(css).query( version => version ) %]">
         [% END %]
 
-        [% FOR style IN page.style %]
-            <style type="text/css">
-                [% style %]
-            </style>
-        [% END %]
+        [% FOR style IN page.style %]<style>[% style %]</style>[% END %]
 
         [% FOR file IN page.links %]
             [% UNLESS link_seen.$file %]
@@ -90,65 +83,54 @@
                 [% page.js.unshift('/js/util/import_links.js') %]
             [% END %]
         [% END %]
+
+        [%
+            BLOCK js_src;
+                IF NOT file.match('\.js$');
+                    file = file _ '.js';
+                END;
+
+                IF NOT file.match('^\w+://');
+                    IF NOT file.match('^/');
+                        file = '/js/' _ file;
+                    END;
+
+                    file = c.url_for(file).query( version => version );
+                END;
+
+                file;
+            END;
+        %]
+
+        [% BLOCK js %]
+            [% UNLESS js_seen.$file %]
+                <script [% type %] src="[% PROCESS js_src file = file %]"></script>
+                [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
+            [% END %]
+        [% END %]
+
+        [% FOR file IN page.js.defer %][% PROCESS js file = file, type = 'defer' %][% END %]
+
+        [% IF page.js.import.keys.size %]
+            <script type="importmap">
+                {
+                    "imports" : {
+                        [% FOR name IN page.js.import.keys -%]
+                            "[% name %]" : "[% PROCESS js_src file = page.js.import.$name %]"[%
+                                UNLESS loop.last %],[% END %]
+                        [% END %]
+                    }
+                }
+            </script>
+        [% END %]
+
+        [% FOR file IN page.js.module %][% PROCESS js file = file, type = 'type="module"' %][% END %]
     </head>
     <body
         [%- IF page.body_classes.size %] class="[% page.body_classes.join(' ') %]"[% END -%]
     >
         [% content %]
-
-        [% IF page.vue %]
-            <script type="text/javascript" src="[%
-                c.url_for(
-                    '/js/vue/vue' _ (
-                        ( c.app.mode == 'production' ) ? '.min' : ''
-                    ) _ '.js'
-                ).query( version => version )
-            %]"></script>
-        [% END %]
-
-        [% IF page.vuex %]
-            <script type="text/javascript" src="[%
-                c.url_for(
-                    '/js/vue/vuex' _ (
-                        ( c.app.mode == 'production' ) ? '.min' : ''
-                    ) _ '.js'
-                ).query( version => version )
-            %]"></script>
-        [% END %]
-
-        [% IF page.vue_router %]
-            <script type="text/javascript" src="[%
-                c.url_for(
-                    '/js/vue/vue-router' _ (
-                        ( c.app.mode == 'production' ) ? '.min' : ''
-                    ) _ '.js'
-                ).query( version => version )
-            %]"></script>
-        [% END %]
-
-        [% FOREACH code IN page.inline_js %]
-            <script type="text/javascript">[% code %]</script>
-        [% END %]
-
-        [% FOR file IN page.js %]
-            [% UNLESS js_seen.$file %]
-                <script type="text/javascript" src="[%
-                    IF NOT file.match('\.js$');
-                        file = file _ '.js';
-                    END;
-
-                    IF NOT file.match('^\w+://');
-                        IF NOT file.match('^/');
-                            file = '/js/' _ file;
-                        END;
-
-                        file = c.url_for(file).query( version => version );
-                    END;
-
-                    file;
-                %]"></script>
-                [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
-            [% END %]
-        [% END %]
+        [% FOR code IN page.js.inline %]<script>[% code %]</script>[% END %]
+        [% FOR file IN page.js.post %][% PROCESS js file = file %][% END %]
     </body>
 </html>

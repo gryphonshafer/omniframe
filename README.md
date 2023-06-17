@@ -62,7 +62,7 @@ to this projects resources.
 ### External Resources
 
 Depending on the dependent project, it may be necessary to install external
-resources into the Omniframe  installation. From within your dependent project's
+resources into the Omniframe installation. From within your dependent project's
 root directory (and assuming the dependent project's root is a directory which
 is parallel to the Omniframe project's root named `omniframe`) run:
 

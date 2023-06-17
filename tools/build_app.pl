@@ -59,6 +59,7 @@ DumpFile( $proj_dir . '/config/app.yaml', {
     },
     optional_include => 'local/config.yaml',
 } );
+say $proj_dir . '/config/app.yaml';
 
 path( $proj_dir . '/local' )->make_path;
 DumpFile( $proj_dir . '/local/config.yaml', {
@@ -73,6 +74,7 @@ DumpFile( $proj_dir . '/local/config.yaml', {
         },
     },
 } );
+say $proj_dir . '/local/config.yaml';
 
 for my $type (
     [ 'lib',    '/lib/Project'    ],
@@ -91,6 +93,8 @@ for my $type (
 
             ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
             $file->spurt($content);
+
+            say $dest;
         } );
 }
 

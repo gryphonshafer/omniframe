@@ -44,14 +44,17 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                 },
             )->result->save_to( $save_to->to_string );
 
-            system( 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -qq download.zip' );
+            my $cmd = 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -q download.zip';
+            print `$cmd`;
+
             unlink( $save_to->to_string );
             my ($version) = substr(
                 $save_to->to_abs->dirname->list->first->basename,
                 length $font_key,
             ) =~ /\-(v\d+)/;
 
-            $dest_css->child( $font_key . '.css' )->spurt(
+            my $css = $dest_css->child( $font_key . '.css' );
+            $css->spurt(
                 join( "\n\n",
                     map {
                         my $variant = $_;
@@ -101,6 +104,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                     } @{ $font_set->{variants} }
                 ) . "\n"
             );
+            say $css;
         }
     }
 
@@ -127,9 +131,9 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
             my $ua_name = $ua->transactor->name;
             for my $format ( @{ $icons->{formats} || ['woff2'] } ) {
                 $ua->transactor->name( $type_ua_map->{$format} );
-                $ua->get($icon_url)->result->save_to(
-                    $save_to->child( $icon_key . '-' . $version . '.' . $format )->to_string
-                );
+                my $target = $save_to->child( $icon_key . '-' . $version . '.' . $format )->to_string;
+                $ua->get($icon_url)->result->save_to($target);
+                say $target;
             }
             $ua->transactor->name($ua_name);
 
@@ -192,19 +196,22 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
             );
         }
 
-        $dest_css->child('material-icons.css')->spurt(
+        my $css = $dest_css->child('material-icons.css');
+        $css->spurt(
             join( "\n\n", @font_face_css_blocks, @font_style_css_blocks ) . "\n"
         );
+        say $css;
     }
 }
 
 if ( my $vue = $ext_yaml->{vue} ) {
     my $dest = $target_path->child( $vue->{dest} );
     while ( my ( $src, $target ) = each %{ $vue->{libs} } ) {
-        ( my $body = $ua->get( 'https://' . $src )->result->body ) =~ s/\s+$//g;
+        ( my $body = $ua->get( 'https://unpkg.com/' . $src )->result->body ) =~ s/\s+$//g;
         my $save_to = $dest->child($target);
         $save_to->dirname->make_path;
         $save_to->spurt($body);
+        say $save_to;
     }
 }
 
@@ -218,8 +225,17 @@ if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
 
     $ua->get(
         'https://github.com/' .
-        $ua
-            ->get('https://github.com/FortAwesome/Font-Awesome/releases/latest')
+        $ua->get(
+            'https://github.com/FortAwesome/Font-Awesome/releases/expanded_assets/' . $ua
+                ->get('https://github.com/FortAwesome/Font-Awesome/releases/latest')
+                ->result
+                ->dom
+                ->find('a')
+                ->map( sub { $_->attr('href') } )
+                ->grep(qr|/FortAwesome/Font-Awesome/releases/tag/|)
+                ->map( sub { m|/FortAwesome/Font-Awesome/releases/tag/([\d\.]+)| } )
+                ->first,
+        )
             ->result
             ->dom
             ->find('a')
@@ -228,7 +244,8 @@ if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
             ->first
     )->result->save_to( $save_to->to_string );
 
-    system( 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -qq download.zip' );
+    my $cmd = 'cd ' . $save_to->to_abs->dirname . '; unzip -a -o -q download.zip';
+    print `$cmd`;
 
     my $payload = path( $install->list({ dir => 1 })->grep(qr|\bfontawesome\-free\-[\d\.]+\-web$|)->first );
 
@@ -241,6 +258,7 @@ if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
         my $target = $dest->child($part);
         $target->dirname->make_path;
         $payload->child($part)->move_to( $target->to_string );
+        say $target->to_string;
     }
 
     $install->remove_tree;
