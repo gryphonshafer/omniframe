@@ -44,23 +44,40 @@ sub startup ($self) {
     } );
 }
 
-sub setup ($self) {
-    $self->setup_mojo_logging;
+sub setup ( $self, %params ) {
+    my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? $params{run}->@* : qw(
+        mojo_logging
+        request_base
+        sass_build
+        access_log
+        templating
+        static_paths
+        config
+        packer
+        compressor
+        sockets
+        document
+        devdocs
+        preload_controllers
+    ) };
+    delete $run->{$_} for ( @{ $params{skip} // [] } );
 
-    $self->plugin('RequestBase');
-    $self->sass->build;
+    $self->setup_mojo_logging if $run->{mojo_logging};
 
-    $self->setup_access_log;
-    $self->setup_templating;
-    $self->setup_static_paths;
-    $self->setup_config;
-    $self->setup_packer;
-    $self->setup_compressor;
-    $self->setup_sockets;
-    $self->setup_document;
-    $self->setup_devdocs;
+    $self->plugin('RequestBase') if $run->{request_base};
+    $self->sass->build           if $run->{sass_build};
 
-    $self->preload_controllers;
+    $self->setup_access_log   if $run->{access_log};
+    $self->setup_templating   if $run->{templating};
+    $self->setup_static_paths if $run->{static_paths};
+    $self->setup_config       if $run->{config};
+    $self->setup_packer       if $run->{packer};
+    $self->setup_compressor   if $run->{compressor};
+    $self->setup_sockets      if $run->{sockets};
+    $self->setup_document     if $run->{document};
+    $self->setup_devdocs      if $run->{devdocs};
+
+    $self->preload_controllers if $run->{preload_controllers};
     return;
 }
 
@@ -298,6 +315,34 @@ The above line is equivalent to the following block:
     $self->setup_document;
     $self->setup_devdocs;
     $self->preload_controllers;
+
+The method optionally accepts input to explicitly specify the setup steps and/or
+skip certain setup steps. For example, the following is equivalent to calling
+C<$self->setup>:
+
+    $self->setup( run => [ qw(
+        mojo_logging
+        request_base
+        sass_build
+        access_log
+        templating
+        static_paths
+        config
+        packer
+        compressor
+        sockets
+        document
+        devdocs
+        preload_controllers
+    ) ] );
+
+The following will setup only the listed options:
+
+    $self->setup( run => [ qw( mojo_logging templating config ) ] );
+
+The following will setup all steps the lilsted options:
+
+    $self->setup( skip => [ qw( document devdocs ) ] );
 
 =head2 setup_access_log
 
