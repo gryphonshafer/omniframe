@@ -10,12 +10,12 @@ class_has sockets => {};
 sub setup ($self) {
     $self->dq->sql(q{
         CREATE TABLE IF NOT EXISTS socket (
-            socket_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT DEFAULT NULL UNIQUE,
-            counter INTEGER DEFAULT 1,
-            data TEXT DEFAULT NULL,
-            last_modified TEXT NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' ) ),
-            created TEXT NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' ) )
+            socket_id     INTEGER PRIMARY KEY,
+            name          TEXT    NOT NULL CHECK( LENGTH(name) > 0 ) UNIQUE,
+            counter       INTEGER NOT NULL DEFAULT 0,
+            data          TEXT,
+            last_modified TEXT    NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' ) ),
+            created       TEXT    NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' ) )
         );
     })->run;
 
@@ -26,7 +26,7 @@ sub setup ($self) {
             data
         ON socket
         BEGIN
-            UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%dT%H:%M:%S:%sZ', 'NOW' )
+            UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' )
             WHERE socket_id = old.socket_id;
         END;
     })->run;
