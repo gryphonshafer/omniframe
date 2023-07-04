@@ -12,6 +12,7 @@
         page.css          = ['/app.css'],
         page.style        = [],
         page.links        = [],
+        page.rss          = '',
         page.js.defer     = [],
         page.js.import    = {},
         page.js.module    = [],
@@ -82,6 +83,10 @@
             [% IF loop.last %]
                 [% page.js.unshift('/js/util/import_links.js') %]
             [% END %]
+        [% END %]
+
+        [% IF page.rss %]
+            <link rel="alternate" type="application/rss+xml" title="RSS" href="[% page.rss %]">
         [% END %]
 
         [%
