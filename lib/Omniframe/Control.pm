@@ -45,7 +45,7 @@ sub startup ($self) {
 }
 
 sub setup ( $self, %params ) {
-    my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? $params{run}->@* : qw(
+    my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? @{ $params{run} } : qw(
         mojo_logging
         request_base
         sass_build
