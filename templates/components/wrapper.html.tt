@@ -127,6 +127,18 @@
                     }
                 }
             </script>
+
+            <script>
+                // Firefox can throw a "bare specifier" error erroneously when
+                // using an importmap and a page is opened in a new tab.
+                // Reloading the page when that error happens bypasses the bug.
+                window.addEventListener( 'error', (e) => {
+                    if (
+                        navigator.appCodeName == 'Mozilla' &&
+                        e.message.indexOf('was a bare specifier, but was not remapped to anything') != -1
+                    ) window.location.reload();
+                } );
+            </script>
         [% END %]
 
         [% FOR file IN page.js.module %][% PROCESS js file = file, type = 'type="module"' %][% END %]
