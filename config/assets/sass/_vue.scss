@@ -4,7 +4,7 @@ $vue_spinner_highlight : 0.5rem solid blue !default;
 $vue_spinner_width     : 1rem              !default;
 $vue_spinner_height    : 1rem              !default;
 
-[v-cloak] > * {
+[v-cloak] * {
     display : none;
 }
 
