@@ -58,7 +58,7 @@ sub zulu ( $self, $time = undef, $time_zone = 'UTC' ) {
     try {
         $time_zone = DateTime::TimeZone->new( name => 'local' )->name;
     }
-    catch {}
+    catch ($e) {}
 
     my $dt = DateTime->from_epoch(
         epoch     => $time,
@@ -83,7 +83,7 @@ sub zones ( $self, $time = time() ) {
             try {
                 $offset = DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt);
             }
-            catch {}
+            catch ($e) {}
 
             if ($offset) {
                 my $description   = $self->olson_zones->{$_}{olson_description};
@@ -136,7 +136,8 @@ sub olson ( $self, $offset, $time = time() ) {
             my $offset;
             try {
                 $offset = DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt);
-            } catch {}
+            }
+            catch ($e) {}
 
             if ($offset) {
                 +{

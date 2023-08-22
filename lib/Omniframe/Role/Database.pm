@@ -58,7 +58,7 @@ sub dq ( $self, $shard = undef ) {
             App::Dest->init;
             App::Dest->update;
         }
-        catch {}
+        catch ($e) {}
 
         chdir $cwd;
     }

@@ -42,7 +42,7 @@ sub setup ($self) {
                 $self->debug( 'Socket ' . $socket->{name} . ' was messaged; ' . $$ . ' responding' );
 
                 for ( values %{ $self->sockets->{ $socket->{name} }{transactions} } ) {
-                    try { $socket->{data} = decode_json( $socket->{data} ) } catch {}
+                    try { $socket->{data} = decode_json( $socket->{data} ) } catch ($e) {}
                     $_->send({ json => $socket->{data} });
                 }
             }
