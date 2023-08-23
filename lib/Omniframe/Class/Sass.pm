@@ -92,7 +92,7 @@ sub build (
         );
 
         unless ($error) {
-            path( $self->compile_to )->spurt($output);
+            path( $self->compile_to )->spew($output);
             $report_cb->();
         }
     }

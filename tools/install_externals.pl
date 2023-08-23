@@ -54,7 +54,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
             ) =~ /\-(v\d+)/;
 
             my $css = $dest_css->child( $font_key . '.css' );
-            $css->spurt(
+            $css->spew(
                 join( "\n\n",
                     map {
                         my $variant = $_;
@@ -197,7 +197,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
         }
 
         my $css = $dest_css->child('material-icons.css');
-        $css->spurt(
+        $css->spew(
             join( "\n\n", @font_face_css_blocks, @font_style_css_blocks ) . "\n"
         );
         say $css;
@@ -210,7 +210,7 @@ if ( my $vue = $ext_yaml->{vue} ) {
         ( my $body = $ua->get( 'https://unpkg.com/' . $src )->result->body ) =~ s/\s+$//g;
         my $save_to = $dest->child($target);
         $save_to->dirname->make_path;
-        $save_to->spurt($body);
+        $save_to->spew($body);
         say $save_to;
     }
 }

@@ -35,7 +35,7 @@ cp(
 
 path( $proj_dir . '/t/app' )->make_path;
 ( my $content = path( $root_dir . '/t/app/home_page.t' )->slurp ) =~ s/\bProject::/$opt->{name}::/g;
-path( $proj_dir . '/t/app/home_page.t' )->spurt($content);
+path( $proj_dir . '/t/app/home_page.t' )->spew($content);
 
 local $YAML::XS::Indent = 4;
 
@@ -92,7 +92,7 @@ for my $type (
             cp( $src, $dest );
 
             ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
-            $file->spurt($content);
+            $file->spew($content);
 
             say $dest;
         } );
