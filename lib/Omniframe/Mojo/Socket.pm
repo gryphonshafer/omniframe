@@ -7,29 +7,27 @@ with qw( Omniframe::Role::Conf Omniframe::Role::Database Omniframe::Role::Loggin
 
 class_has sockets => {};
 
-sub setup ($self) {
-    $self->dq->sql(q{
-        CREATE TABLE IF NOT EXISTS socket (
-            socket_id     INTEGER PRIMARY KEY,
-            name          TEXT    NOT NULL CHECK( LENGTH(name) > 0 ) UNIQUE,
-            counter       INTEGER NOT NULL DEFAULT 0,
-            data          TEXT,
-            last_modified TEXT    NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' ) ),
-            created       TEXT    NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' ) )
-        );
-    })->run;
+my $table_sql = q{CREATE TABLE IF NOT EXISTS socket (
+    socket_id     INTEGER PRIMARY KEY,
+    name          TEXT    NOT NULL CHECK( LENGTH(name) > 0 ) UNIQUE,
+    counter       INTEGER NOT NULL DEFAULT 0,
+    data          TEXT,
+    last_modified TEXT    NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' ) ),
+    created       TEXT    NOT NULL DEFAULT ( STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' ) )
+);};
 
-    $self->dq->sql(q{
-        CREATE TRIGGER IF NOT EXISTS socket_after_update AFTER UPDATE OF
-            name,
-            counter,
-            data
-        ON socket
-        BEGIN
-            UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' )
-            WHERE socket_id = old.socket_id;
-        END;
-    })->run;
+my $trigger_sql = q{CREATE TRIGGER IF NOT EXISTS socket_after_update AFTER UPDATE OF
+    name,
+    counter,
+    data
+ON socket
+BEGIN
+    UPDATE socket SET last_modified = STRFTIME( '%Y-%m-%d %H:%M:%f', 'NOW', 'LOCALTIME' )
+    WHERE socket_id = old.socket_id;
+END;};
+
+sub setup ($self) {
+    $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
 
     $SIG{URG} = sub {
         for my $socket ( @{ $self->dq->sql('SELECT name, counter, data FROM socket')->run->all({}) } ) {
