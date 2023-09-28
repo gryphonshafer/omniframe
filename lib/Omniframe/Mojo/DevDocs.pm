@@ -15,7 +15,9 @@ class_has tt       => Template->new;
 
 sub setup ( $self, $app, $location ) {
     $app->routes->any( $location . '*pathinfo' => { pathinfo => '' } => sub ($c) {
-        my $data      = { title => 'DevDocs' };
+        ( my $app_name = ref $c->app ) =~ s/::.*//;
+
+        my $data      = { title => "$app_name DevDocs" };
         my $root_dirs = [
             map {
                 +{
@@ -29,24 +31,23 @@ sub setup ( $self, $app, $location ) {
                 $_->[1] = $self->conf->get( @{ $_->[1] } );
                 $_;
             } (
-                [ project   => [ qw( config_app root_dir ) ] ],
-                [ omniframe => [ 'omniframe'               ] ],
+                [ $app_name => [ qw( config_app root_dir ) ] ],
+                [ Omniframe => [ 'omniframe'               ] ],
             )
         ];
 
         if ( not $c->stash('pathinfo') or $c->stash('pathinfo') =~ m|^/+$| ) {
-            $data->{header} = 'DevDocs';
+            $data->{header} = "$app_name DevDocs";
             $data->{trees}  = [
                 map {
                     my $tree = $_;
 
-                    $tree->{label} = ucfirst( lc( $tree->{name} ) );
                     $tree->{files} = [
                         map {
                             my $node = $_->to_rel->to_string;
 
                             $node = substr( $node, length( $root_dirs->[-1]->{dir} ) + 1 )
-                                if ( $tree->{name} eq 'omniframe' );
+                                if ( $tree->{name} eq 'Omniframe' );
 
                             my $filename = $node;
                             my ($type)   = ( $filename =~ s:^(lib|tools)/:: ) ? $1 : '';
@@ -71,10 +72,13 @@ sub setup ( $self, $app, $location ) {
         }
         else {
             my ( $project, $path ) = $c->stash('pathinfo') =~ m|^/?([^/]+)/(.+)|;
-            my $file = $root_dirs->[ ( $project eq 'project' ) ? 0 : -1 ]->{path}->child($path);
+            my $file = $root_dirs->[ ( $project eq $app_name ) ? 0 : -1 ]->{path}->child($path);
 
             $data->{extname} = lc $file->extname;
             $data->{title} .= ': ' . $file->to_rel->to_string;
+
+            $data->{home_title}    = "$app_name DevDocs";
+            $data->{home_location} = $location;
 
             if ( $data->{extname} eq 'md' ) {
                 $data->{type}    = 'md';
@@ -96,6 +100,7 @@ sub setup ( $self, $app, $location ) {
                     } )->each( sub ( $anchor, @stuff ) {
                         my ($target) = $anchor->attr('href') =~ m|\bmetacpan.org/pod/(.+)|;
                         ( $target = url_unescape($target) ) =~ s|::|/|g;
+                        $target =~ s|#|/|;
 
                         DIR: for my $dir ( @$root_dirs ) {
                             for (
@@ -194,136 +199,147 @@ __DATA__
         <meta name="robots" content="noindex">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <link rel="preconnect" href="https://fonts.gstatic.com">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&family=Roboto+Mono:ital,wght@0,400;0,600;1,400;1,600&display=swap">
-
         <style type="text/css">
-
             body {
-                margin-left    : 3em;
-                margin-right   : 3em;
-                margin-top     : 2em;
-                margin-bottom  : 3em;
-                font-family    : 'Open Sans', sans-serif;
-                font-size      : 11pt;
-                line-height    : 1.5em;
-                letter-spacing : 0.01em;
+                margin-left  : 3em;
+                margin-right : 3em;
+                margin-top   : 3em;
+                margin-bottom: 3em;
+                font-family  : sans-serif;
+                font-size    : 14px;
+                line-height  : 1.5em;
             }
 
             section {
-                page-break-inside : avoid;
+                page-break-inside: avoid;
             }
 
             h1 {
-                margin         : 1em 0 0.7em -0.7em;
-                font-size      : 200%;
-                padding-bottom : 12pt;
-                border-bottom  : 1px solid gainsboro;
+                margin        : 1em 0 0.7em -0.7em;
+                font-size     : 150%;
+                padding-bottom: 12pt;
+                border-bottom : 1px solid gainsboro;
             }
 
             h2 {
-                margin         : 1.4em 0 0.7em -0.7em;
-                font-size      : 150%;
-                padding-bottom : 6pt;
+                margin        : 1.4em 0 0.7em -0.7em;
+                font-size     : 130%;
+                padding-bottom: 6pt;
             }
 
             h3 {
-                margin    : 1.4em 0 0.7em -0.7em;
-                font-size : 133%;
+                margin   : 1.4em 0 0.7em -0.7em;
+                font-size: 120%;
             }
 
             h4 {
-                margin    : 1.4em 0 0.7em -0.7em;
-                font-size : 110%;
+                margin   : 1.4em 0 0.7em -0.7em;
+                font-size: 110%;
             }
 
             h5 {
-                margin    : 1.4em 0 0.7em -0.7em;
-                font-size : 105%;
+                margin   : 1.4em 0 0.7em -0.7em;
+                font-size: 105%;
             }
 
             h6 {
-                margin    : 1.4em 0 0.7em -0.7em;
-                font-size : 95%;
+                margin   : 1.4em 0 0.7em -0.7em;
+                font-size: 100%;
             }
 
             dt {
-                margin-left : 1em;
+                margin-left: 1em;
+                font-weight: bold;
             }
 
             dd {
-                margin-bottom : 1em;
+                margin-bottom: 1em;
             }
 
             table {
-                border-collapse : collapse;
+                border-collapse: collapse;
             }
 
             table,
             table th,
             table td {
-                border : 1px solid gainsboro;
+                border: 1px solid gainsboro;
             }
 
             th, td {
-                padding : 0.35em 0.7em;
+                padding: 0.35em 0.7em;
             }
 
             tr:nth-child(even) td {
-                background-color : whitesmoke;
+                background-color: whitesmoke;
             }
 
             pre, code {
-                background-color : whitesmoke;
-                font-family      : 'Roboto Mono', monospace;
+                background-color: whitesmoke;
+                font-family     : monospace;
+                font-size       : 13px;
             }
 
             pre {
-                padding       : 1.0em 1.25em;
-                border-radius : 0.5em;
-                line-height   : 1.25em;
+                padding      : 1.0em 1.25em;
+                border-radius: 0.5em;
+                line-height  : 1.25em;
+                border       : 1px solid lightgray;
             }
 
             code {
-                border-radius  : 0.25em;
-                padding        : 0.02em 0.25em;
+                border-radius: 0.25em;
+                padding      : 0.02em 0.25em;
             }
 
             pre > code {
-                border-radius : 0;
-                padding       : 0;
-                white-space   : pre-wrap;
+                border-radius: 0;
+                padding      : 0;
+                white-space  : pre-wrap;
             }
 
             blockquote {
-                color        : gray;
-                border-left  : 0.3em solid lightgray;
-                padding-left : 1em;
-                margin-left  : 0;
+                color       : gray;
+                border-left : 0.3em solid lightgray;
+                padding-left: 1em;
+                margin-left : 0;
+            }
+
+            p.home_location {
+                float     : right;
+                margin-top: 0;
             }
 
             @media only print {
                 body {
-                    font-size     : 10pt;
-                    margin-left   : 1.3em;
-                    margin-right  : 0.2em;
-                    margin-top    : 0.2em;
-                    margin-bottom : 0.2em;
+                    font-size    : 10pt;
+                    margin-left  : 1.3em;
+                    margin-right : 0.2em;
+                    margin-top   : 0.2em;
+                    margin-bottom: 0.2em;
                 }
 
                 a {
-                    text-decoration : none;
-                    color           : black;
+                    text-decoration: none;
+                    color          : black;
+                }
+
+                p.home_location {
+                    display: none;
                 }
             }
-
         </style>
     </head>
     <body>
+        [% IF home_location %]
+            <p class="home_location"><a
+                href="[% home_location %]">[% home_title %]</a></p>
+        [% END %]
+
         [% IF header %]<h1>[% header %]</h1>[% END %]
 
         [% FOR tree IN trees %]
-            <h2>[% tree.label %]</h2>
+            <h2>[% tree.name %]</h2>
 
             [% IF tree.files.size %]
                 <ul>
