@@ -30,6 +30,7 @@ requires 'Template', '3.101';
 requires 'Term::ANSIColor', '5.01';
 requires 'Text::CSV_XS', '1.52';
 requires 'Text::MultiMarkdown', '1.001';
+requires 'Text::Table::Tiny', '1.03';
 requires 'Time::HiRes', '1.9764';
 requires 'YAML::XS', '0.88';
 requires 'exact', '1.23';
