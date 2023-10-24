@@ -5,7 +5,7 @@ requires 'DBIx::Query', '1.14';
 requires 'Data::Printer', '1.001001';
 requires 'Date::Format', '2.24';
 requires 'Date::Parse', '2.33';
-requires 'DateTime', '1.59';
+requires 'DateTime', '1.63';
 requires 'DateTime::TimeZone', '2.60';
 requires 'DateTime::TimeZone::Olson', '0.007';
 requires 'Digest::Bcrypt', '1.212';
@@ -38,12 +38,16 @@ requires 'exact::class', '1.19';
 requires 'exact::cli', '1.07';
 requires 'exact::conf', '1.08';
 requires 'exact::lib', '1.04';
+recommends 'EV', '4.34';
+recommends 'IO::Socket::SSL', '2.083';
+recommends 'IO::Socket::Socks', '0.74';
+recommends 'Net::DNS::Native', '0.22';
 
 on test => sub {
     requires 'ExtUtils::Manifest', '1.75';
     requires 'Pod::Coverage::TrustPod', '0.100006';
     requires 'Test2::MojoX', '0.07';
-    requires 'Test2::V0', '0.000156';
+    requires 'Test2::V0', '0.000158';
     requires 'Test::EOL', '2.02';
     requires 'Test::Mojibake', '1.3';
     requires 'Test::NoTabs', '2.02';
