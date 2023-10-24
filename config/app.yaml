@@ -51,6 +51,15 @@ default:
             cookie_name: omniframe_session
             default_expiration: 31557600 # 365.25 days
         ws_inactivity_timeout: 14400 # 4 hours
+        linda:
+            app: app.psgi
+            watch:
+                - app.psgi
+                - config/app.yaml
+                - config/assets
+                - lib
+                - templates
+                - ../omniframe
     email:
         from: Example <example@example.com>
         active: 1

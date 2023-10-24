@@ -41,6 +41,7 @@ requires 'exact::lib', '1.04';
 recommends 'EV', '4.34';
 recommends 'IO::Socket::SSL', '2.083';
 recommends 'IO::Socket::Socks', '0.74';
+recommends 'MojoX::Linda', '1.02';
 recommends 'Net::DNS::Native', '0.22';
 
 on test => sub {
