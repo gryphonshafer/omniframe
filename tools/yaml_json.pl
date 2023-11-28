@@ -4,10 +4,11 @@ use FindBin;
 BEGIN { $FindBin::Bin = cwd(); }
 
 use exact -cli, -conf;
-use Omniframe;
-use YAML::XS qw( Load Dump );
-use Mojo::JSON qw( encode_json decode_json );
+use DDP;
 use Mojo::File 'path';
+use Mojo::JSON qw( encode_json decode_json );
+use YAML::XS qw( Load Dump );
+use Omniframe;
 
 my $opt = options( qw{
     database|d=s
@@ -15,6 +16,7 @@ my $opt = options( qw{
     field|f=s
     where|w=s
     import|i=s
+    output|o=s
 } );
 
 pod2usage('Must specify table, field, where')
@@ -24,23 +26,33 @@ my $dq    = Omniframe->with_roles('+Database')->new->dq( $opt->{database} );
 my $where = decode_json( $opt->{where} );
 $where    = { $opt->{table} . '_id' => $where } unless ( ref $where );
 
+my ( $yaml, $data, $json );
+
 if ( $opt->{import} ) {
-    my $json = encode_json( Load( path( $opt->{import} )->slurp ) );
+    $data = Load( path( $opt->{import} )->slurp );
+    $yaml = Dump($data);
+    $json = encode_json($data);
 
     $dq->update(
         $opt->{table},
         { $opt->{field} => $json },
         $where,
     );
-
-    say $json;
 }
 else {
-    my @values =
-        map { decode_json($_) }
-        $dq->get( $opt->{table}, [ $opt->{field} ], $where )->run->value;
+    $json = $dq->get( $opt->{table}, [ $opt->{field} ], $where, { rows => 1 } )->run->value;
+    $data = decode_json($json);
+    $yaml = Dump($data);
+}
 
-    say Dump( ( @values > 1 ) ? \@values : $values[0] );
+if ( ( $opt->{output} // '' ) =~ /^d/i ) {
+    p $data;
+}
+elsif ( ( $opt->{output} // '' ) =~ /^j/i ) {
+    say $json;
+}
+elsif ( ( $opt->{output} // '' ) =~ /^y/i ) {
+    say $yaml;
 }
 
 =head1 NAME
@@ -50,14 +62,15 @@ yaml_json.pl - Export/import JSON as YAML to/from database
 =head1 SYNOPSIS
 
     yaml_json.pl OPTIONS
-        -d, --database DATABASE_LABEL
-        -t, --table    TABLE_NAME
-        -f, --field    FIELD_NAME
-        -w, --where    PID_OR_WHERE_CLAUSE_AS_JSON
-        -e, --export, -x
-        -i, --import
-        -h, --help
-        -m, --man
+        -d,     --database DATABASE_LABEL
+        -t,     --table    TABLE_NAME
+        -f,     --field    FIELD_NAME
+        -w,     --where    PID_OR_WHERE_CLAUSE_AS_JSON
+        -e, -x, --export,
+        -i,     --import
+        -o,     --output   OUTPUT_TYPE
+        -h,     --help
+        -m,     --man
 
 =head1 DESCRIPTION
 
@@ -79,10 +92,14 @@ Field name (containing JSON) to select from or update to.
 
 Primary key ID or a SQL where clause expressed as JSON.
 
-=head2 -e, --export
+=head2 -e, -x, --export
 
 Export to YAML file.
 
 =head2 -i, --import
 
 Export import from YAML file.
+
+=head2 -o, --output
+
+Output format. Can be: DDP, JSON, or YAML.
