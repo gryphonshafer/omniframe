@@ -19,16 +19,13 @@ class_has active  => 0;
 
 has 'id';
 has 'data';
-has 'saved_data';
+has '_frozen_saved_data';
 
 sub create ( $self, $data ) {
     $data = $self->data_merge($data);
     croak('create() data hashref contains no data') unless ( keys %$data );
 
-    if ( $self->can('validate') ) {
-        $self->data($data);
-        $self->validate;
-    }
+    $data = $self->validate($data) if ( $self->can('validate') );
     $data = $self->freeze($data) if ( $self->can('freeze') );
 
     eval { $self->load(
@@ -60,13 +57,13 @@ sub load ( $self, $search = undef, $skip_active_in_search_setup = 0 ) {
         $self->_setup_search( $search, $skip_active_in_search_setup )
     )->run->next;
 
-    croak('Failed to load ' . $self->name ) unless ($data);
+    croak( 'Failed to load ' . $self->name ) unless ($data);
 
     $data = $data->data;
+    $self->_frozen_saved_data({%$data});
     $data = $self->thaw($data) if ( $self->can('thaw') );
 
     $self->data($data);
-    $self->saved_data( { %{ $self->data } } );
     $self->id( $self->data->{ $self->id_name } );
 
     return $self;
@@ -77,21 +74,6 @@ sub dirty ($self) {
     return (wantarray) ? @changed_data_keys : (@changed_data_keys) ? 1 : 0;
 }
 
-sub _grep_for_data_changes ( $self, $data = undef ) {
-    $data //= { %{ $self->data // {} } };
-    $data = {%$data};
-
-    for ( grep { exists $self->saved_data->{$_} } keys %$data ) {
-        delete $data->{$_} if (
-            defined $data->{$_} and
-            defined $self->saved_data->{$_} and
-            $data->{$_} eq $self->saved_data->{$_}
-        );
-    }
-
-    return $data;
-}
-
 sub save ( $self, $data = undef ) {
     $data = $self->data_merge($data);
 
@@ -99,19 +81,26 @@ sub save ( $self, $data = undef ) {
         $self->create($data);
     }
     else {
-        if ( my $changes = $self->_grep_for_data_changes($data) ) {
-            if ( $self->can('validate') ) {
-                $self->data($data);
-                $self->validate;
-            }
-            $changes = $self->freeze($changes) if ( $self->can('freeze') );
+        $data = $self->validate($data) if $self->can('validate');
+        $data = $self->freeze($data) if $self->can('freeze');
 
-            eval {
-                $self->dq->update( $self->name, $changes, { $self->id_name => $self->id } );
-            } or croak $self->deat($@);
-
-            $self->load( $self->id );
+        for ( grep { exists $self->_frozen_saved_data->{$_} } keys %$data ) {
+            delete $data->{$_} if (
+                defined $data->{$_} and
+                defined $self->_frozen_saved_data->{$_} and
+                $data->{$_} eq $self->_frozen_saved_data->{$_} or
+                not defined $data->{$_} and
+                not defined $self->_frozen_saved_data->{$_}
+            );
         }
+
+        if ( keys %$data ) {
+            eval {
+                $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
+            } or croak $self->deat($@);
+        }
+
+        $self->load( $self->id );
     }
 
     return $self;
@@ -125,12 +114,15 @@ sub delete ( $self, $search = undef ) {
 
 sub every ( $self, $search = {} ) {
     my @objects = map {
+        my $data = {%$_};
+        $data = $self->thaw($data) if ( $self->can('thaw') );
+
         $self->new(
-            id         => $_->{ $self->id_name },
-            data       => $_,
-            saved_data => $_,
+            id                 => $data->{ $self->id_name },
+            data               => $data,
+            _frozen_saved_data => $_,
         );
-    } $self->every_data($search);
+    } @{ $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->all({}) };
 
     return (wantarray) ? @objects : \@objects;
 }
@@ -279,11 +271,6 @@ is either in the database or will be (prior to a C<save> call). It gets set
 automatically when the object loads a record from the database.  It can be
 manually set and overridden.
 
-=head2 saved_data
-
-This attribute contains a hashref of the original C<data> hashref with
-unchanged values relative to what should be stored in the database.
-
 =head1 METHODS
 
 =head2 create
@@ -406,8 +393,8 @@ object based on the class name.
 
 In classes with this role, you can optionally provide a C<validation> method
 that will be called prior to writing data within C<create> and C<save> calls.
-Return values are ignored. If you encounter a validation error, the expectation
-is that you throw an exception.
+If you encounter a validation error, the expectation is that you throw an
+exception.
 
     package Model;
 
@@ -415,10 +402,10 @@ is that you throw an exception.
 
     with 'Omniframe::Role::Model';
 
-    sub validate ($self) {
+    sub validate ( $self, $data ) {
         croak('"some_column_name_that_must_exist" does not exist')
-            unless ( exists $self->data->{some_column_name_that_must_exist} );
-        return;
+            unless ( exists $data->{some_column_name_that_must_exist} );
+        return $data;
     }
 
 =head1 DATA SERIALIZATION
