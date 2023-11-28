@@ -13,7 +13,7 @@ with 'Omniframe::Role::Conf';
 
 has hires   => 1;
 has formats => {
-    ansi   => '%Y-%m-%d %X',
+    ansi   => '%Y-%m-%d %T',
     log    => '%b %e %T %Y',
     common => '%d/%b/%Y:%T %z',
     ctime  => '%C',
@@ -23,7 +23,7 @@ has olson_zones => sub ($self) {
     my $olson_zones;
     my $country_population = LoadFile(
         (
-            $self->conf->get('omniframe') || $self->conf->get( qw( config_app root_dir ) )
+            $self->conf->get( qw( config_app root_dir ) ) . '/' . ( $self->conf->get('omniframe') // '' )
         ) . '/config/population.yaml'
     );
 
@@ -41,7 +41,7 @@ has olson_zones => sub ($self) {
 };
 
 sub datetime ( $self, $format = undef, $time = time(), $time_zone = 'UTC' ) {
-    $time = int($time);
+    $time = int($time) if ( $time =~ /^\d+\.\d+$/ );
     return time2str(
         ( ( ref($format) ) ? $$format : $self->formats->{ $format || 'ansi' } || $self->formats->{ansi} ),
         ( ( $time =~ /^\d+$/ ) ? $time : str2time( $time, $time_zone ) ),
@@ -468,7 +468,7 @@ The method can optionally be given an additional string with an Olson name.
 The method will return a L<DateTime> object set to the right time and Olson
 time zone.
 
-    my $dt = $time->parse('3/3/2021 3:14pm EST', 'America/Los_Angeles' );
+    my $dt = $time->parse( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
 
 An exception will be thrown if the Olson name input is neither a valid Olson
 name nor C<undef>. The date/time string will be parsed, and if it contains a
