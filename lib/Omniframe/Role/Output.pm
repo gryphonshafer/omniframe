@@ -12,7 +12,9 @@ sub dp ( $self, $params, @np_settings ) {
 }
 
 sub deat ( $self, $error ) {
-    $error =~ s/\s+at\s.+\sline\s\d+\.\s*$//g;
+    $error = reverse $error;
+    $error =~ s/^\s*\.\d+\s+enil\s+.+?\s+ta\s+//g;
+    $error = reverse $error;
     return $error;
 }
 
