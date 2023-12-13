@@ -66,7 +66,7 @@ yaml_json.pl - Export/import JSON as YAML to/from database
         -t,     --table    TABLE_NAME
         -f,     --field    FIELD_NAME
         -w,     --where    PID_OR_WHERE_CLAUSE_AS_JSON
-        -i,     --import
+        -i,     --import   IMPORT_YAML_FILE
         -o,     --output   OUTPUT_TYPE
         -h,     --help
         -m,     --man
@@ -93,7 +93,7 @@ Primary key ID or a SQL where clause expressed as JSON.
 
 =head2 -i, --import
 
-Export import from YAML file.
+YAML file to import from.
 
 =head2 -o, --output
 
