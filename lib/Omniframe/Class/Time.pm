@@ -193,29 +193,34 @@ sub parse ( $self, $time = undef, $time_zone = 'UTC' ) {
         $dt->add( nanoseconds => int( $nanosecond * 1_000_000_000 ) );
     }
     else {
-        my $check_tz_imprecision = sub ( $time, $tz ) {
-            my ( $second, $minute, $hour, $day, $month, $year, $offset, $century ) = strptime($time);
-            my ( $gm_second, $gm_minute, $gm_hour, $gm_day, $gm_month, $gm_year ) = gmtime;
-            my $zones = {
-                P => 'America/Los_Angeles',
-                M => 'America/Denver',
-                C => 'America/Chicago',
-                E => 'America/New_York',
+        try {
+            my $check_tz_imprecision = sub ( $time, $tz ) {
+                my ( $second, $minute, $hour, $day, $month, $year, $offset, $century ) = strptime($time);
+                my ( $gm_second, $gm_minute, $gm_hour, $gm_day, $gm_month, $gm_year ) = gmtime;
+                my $zones = {
+                    P => 'America/Los_Angeles',
+                    M => 'America/Denver',
+                    C => 'America/Chicago',
+                    E => 'America/New_York',
+                };
+
+                my $tzdt = DateTime->new(
+                    second     => int( $second // 0 ),
+                    minute     => $minute // 0,
+                    hour       => $hour   // 0,
+                    day        => $day,
+                    month      => ( $month // $gm_month ) + 1,
+                    year       => ( $year // $gm_year ) + 1900,
+                    time_zone  => DateTime::TimeZone->new( name => $zones->{ uc($tz) } ),
+                );
+
+                return ( $tzdt->is_dst ) ? uc($tz) . 'DT' : uc($tz) . 'ST';
             };
-
-            my $tzdt = DateTime->new(
-                second     => int( $second // 0 ),
-                minute     => $minute // 0,
-                hour       => $hour   // 0,
-                day        => $day,
-                month      => ( $month // $gm_month ) + 1,
-                year       => ( $year // $gm_year ) + 1900,
-                time_zone  => DateTime::TimeZone->new( name => $zones->{ uc($tz) } ),
-            );
-
-            return ( $tzdt->is_dst ) ? uc($tz) . 'DT' : uc($tz) . 'ST';
-        };
-        $time =~ s/\b([PMCE])[SD]T\b/$check_tz_imprecision->( $time, $1 )/ei;
+            $time =~ s/\b([PMCE])[SD]T\b/$check_tz_imprecision->( $time, $1 )/ei;
+        }
+        catch ($e) {
+            croak('failed to parse time input')
+        }
 
         my ( $second, $minute, $hour, $day, $month, $year, $offset, $century ) = strptime($time);
         croak('failed to parse time input') unless ($day);
