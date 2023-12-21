@@ -87,7 +87,7 @@ sub setup_mojo_logging ($self) {
             dispatch  => $self->log_dispatch,
             level     => $self->log_level,
             format_cb => sub ( $timestamp, $level, @messages ) { join( '',
-                $time->datetime( 'log', $timestamp ),
+                $time->set($timestamp)->format('log'),
                 ' [' . uc($level) . '] ',
                 join( "\n", $self->dp( [ @messages, '' ], colored => 0 ) ),
             ) },

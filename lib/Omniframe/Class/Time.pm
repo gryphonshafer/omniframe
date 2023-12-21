@@ -1,27 +1,31 @@
 package Omniframe::Class::Time;
 
 use exact 'Omniframe';
-use Date::Format 'time2str';
-use Date::Parse qw( str2time strptime );
-use DateTime::TimeZone::Olson 'olson_country_selection';
-use DateTime::TimeZone;
+use Date::Format ();
+use Date::Parse ();
 use DateTime;
-use Time::HiRes 'gettimeofday';
-use YAML::XS 'LoadFile';
+use DateTime::TimeZone;
+use DateTime::TimeZone::Olson 'olson_country_selection';
+use Time::HiRes ();
+use YAML::XS ();
 
 with 'Omniframe::Role::Conf';
 
-has hires   => 1;
-has formats => {
-    ansi   => '%Y-%m-%d %T',
-    log    => '%b %e %T %Y',
-    common => '%d/%b/%Y:%T %z',
-    ctime  => '%C',
+has time_zone => 'local';
+has locale    => 'en-US';
+has datetime  => undef;
+
+class_has formats => {
+    ansi    => '%Y-%m-%d %T',
+    log     => '%b %e %T %Y',
+    common  => '%d/%b/%Y:%T %z',
+    rfc822  => '%a, %d %b %Y %H:%M:%S %z',
+    rfc1123 => '%a, %d %b %Y %H:%M:%S GMT',
 };
 
-has olson_zones => sub ($self) {
+class_has olson_zones => sub ($self) {
     my $olson_zones;
-    my $country_population = LoadFile(
+    my $country_population = YAML::XS::LoadFile(
         (
             $self->conf->get( qw( config_app root_dir ) ) . '/' . ( $self->conf->get('omniframe') // '' )
         ) . '/config/population.yaml'
@@ -40,80 +44,143 @@ has olson_zones => sub ($self) {
     return $olson_zones;
 };
 
-sub datetime ( $self, $format = undef, $time = time(), $time_zone = 'UTC' ) {
-    $time = int($time) if ( $time =~ /^\d+\.\d+$/ );
-    return time2str(
-        ( ( ref($format) ) ? $$format : $self->formats->{ $format || 'ansi' } || $self->formats->{ansi} ),
-        ( ( $time =~ /^\d+$/ ) ? $time : str2time( $time, $time_zone ) ),
+sub set ( $self, $epoch = Time::HiRes::time, $time_zone = $self->time_zone ) {
+    $epoch = Time::HiRes::time if ( $epoch eq 'now' );
+
+    $self->datetime(
+        ( $epoch isa DateTime )
+            ? $epoch
+            : DateTime->from_epoch(
+                epoch     => $epoch,
+                time_zone => $time_zone,
+            )
     );
+
+    return $self;
 }
 
-sub zulu ( $self, $time = undef, $time_zone = 'UTC' ) {
-    $time = str2time( $time, $time_zone ) if ( $time and $time !~ /^\d+(?:\.\d+)?$/ );
-    $time //= ( $self->hires ) ? gettimeofday() : time();
+sub format ( $self, $format = 'ansi' ) {
+    return $self->datetime->rfc3339 if ( lc($format) eq 'rfc3339' );
+    return $self->datetime->iso8601 if ( lc($format) eq 'iso8601' );
 
-    my $micro = ( $self->hires ) ? substr( $time - int($time), 1, 7 ) : '';
-    $time     = int($time);
-
-    try {
-        $time_zone = DateTime::TimeZone->new( name => 'local' )->name;
-    }
-    catch ($e) {}
-
-    my $dt = DateTime->from_epoch(
-        epoch     => $time,
-        time_zone => $time_zone,
-    );
-    $dt->set_time_zone('UTC');
-
-    return $dt->stringify . $micro . 'Z';
-}
-
-sub zones ( $self, $time = time() ) {
-    my $dt = ( eval { $time->isa('DateTime') } ) ? $time : DateTime->from_epoch( epoch => $time );
-
-    return [
-        sort {
-            $a->{offset} <=> $b->{offset} or
-            $a->{name} cmp $b->{name}
+    return $self->datetime->strftime(
+        ( lc($format) eq 'sqlite_min' ) ? '%F %H:%M' : '%F %T.%3N'
+    ) . (
+        ( $self->datetime->time_zone->name eq 'UTC' ) ? 'Z' : do {
+            my $offset  = $self->datetime->offset;
+            my $hours   = int( abs($offset) / 60 / 60 );
+            my $minutes = int( ( abs($offset) - $hours * 60 * 60 ) / 60 );
+            sprintf( '%1s%02d:%02d', ( ( $offset > 0 ) ? '+' : '-' ), $hours, $minutes );
         }
-        grep { defined }
-        map {
-            my $offset;
+    ) if ( lc($format) eq 'sqlite' or lc($format) eq 'sqlite_min' );
+
+    return $self->datetime->strftime( $self->formats->{ lc $format } // $format );
+}
+
+sub split ( $self, $text ) {
+    my $parts;
+    @$parts{ qw( second minute hour day month year offset ) } = Date::Parse::strptime($text);
+
+    if ( defined $parts->{offset} ) {
+        my $hours   = int( abs( $parts->{offset} ) / 60 / 60 );
+        my $minutes = int( ( abs( $parts->{offset} ) - $hours * 60 * 60 ) / 60 );
+
+        $parts->{offset} =
+            sprintf( '%1s%02d:%02d', ( ( $parts->{offset} > 0 ) ? '+' : '-' ), $hours, $minutes );
+    }
+
+    if ( defined $parts->{year} ) {
+        $parts->{year} += 100 if ( $parts->{year} < 45 );
+        $parts->{year} += 1900;
+    }
+
+    $parts->{month}++ if ( defined $parts->{month} );
+
+    if ( $parts->{hour} ) {
+        $parts->{year}  = (localtime)[5] + 1900 if ( not defined $parts->{year}  );
+        $parts->{month} = (localtime)[4] + 1    if ( not defined $parts->{month} );
+        $parts->{day}   = (localtime)[3]        if ( not defined $parts->{day}   );
+    }
+
+    return $parts;
+}
+
+my $usian_zones = {
+    P => 'America/Los_Angeles',
+    M => 'America/Denver',
+    C => 'America/Chicago',
+    E => 'America/New_York',
+};
+
+sub parse ( $self, $text ) {
+    $text =~ s/\r?\n/ /g;
+
+    my $time_zone;
+    $time_zone = $1 while ( $text =~ s/
+        \b(
+            [A-z_]+\/[A-z_]+ |
+            L(?:ocal)        |
+            Z(?:ulu)?        |
+            ([PMCE])[SD]?T   |
+            ([PMCE])(?:acific|ountain|entral|astern)\s*(?:[A-z]+\s+)?(?:Time)?
+        )\b
+    //gix );
+    if ($time_zone) {
+        if ( $time_zone =~ /z(?:ulu)?/i ) {
+            $time_zone = 'UTC';
+        }
+        elsif ( $time_zone =~ /\b([PMCE])[DS]?T\b/i ) {
+            my $letter = uc($1);
+            $time_zone = $usian_zones->{$letter};
+
+            my $parse = $self->split($text);
+            delete $parse->{$_} for ( qw( second offset ) );
+            $parse->{time_zone} = $time_zone;
+            $parse->{locale} //= $self->locale;
+
+            my $is_dst = 0;
             try {
-                $offset = DateTime::TimeZone->new( name => $_ )->offset_for_datetime($dt);
+                $is_dst = DateTime->new(%$parse)->is_dst
             }
             catch ($e) {}
 
-            if ($offset) {
-                my $description   = $self->olson_zones->{$_}{olson_description};
-                my $offset_string = DateTime::TimeZone->offset_as_string( $offset, ':' );
-                my $name_parts    = [
-                    map { s/_/ /gr }
-                    split( '/', $self->olson_zones->{$_}{timezone_name} )
-                ];
-
-                +{
-                    name          => $self->olson_zones->{$_}{timezone_name},
-                    name_parts    => $name_parts,
-                    description   => $description,
-                    offset        => $offset,
-                    offset_string => $offset_string,
-                    label         => '(GMT' . $offset_string . ') ' .
-                        join( ' - ', @$name_parts ) .
-                        ( ($description) ? ' [' . $description . ']' : '' )
-                };
-            }
-            else {
-                undef;
-            }
+            $text .= ' ' . $letter . ( ($is_dst) ? 'D' : 'S' ) . 'T';
         }
-        keys %{ $self->olson_zones }
-    ];
+    }
+
+    my $parts = $self->split($text);
+    $parts->{time_zone} //= $time_zone // $parts->{offset} // $self->time_zone;
+
+    if ( not defined $parts->{year} ) {
+        $self->datetime( DateTime->from_epoch(
+            maybe time_zone => $parts->{time_zone},
+            epoch           => (
+                ( $text =~ s/^\s*(\-?\d{5,}(?:[.,]\d+)?)\s*// ) ? $1                :
+                ( $text =~ s/^\s*\b(now)\b\s*//i              ) ? Time::HiRes::time :
+                    Date::Parse::str2time($text),
+            ),
+        ) );
+    }
+    else {
+        $parts->{nanosecond} = ( $parts->{second} )
+            ? int( ( $parts->{second} - int( $parts->{second} ) ) )
+            : undef;
+        $parts->{second} = int( $parts->{second} ) if ( $parts->{second} );
+        $parts->{nanosecond} = $1 if ( not $parts->{nanosecond} and $text =~ /(\.\d+)/ );
+        $parts->{nanosecond} *= 1_000_000_000 if ( $parts->{nanosecond} );
+
+        delete $parts->{offset};
+        $parts->{locale} //= $self->locale;
+        $parts = { map { $_ => $parts->{$_} } grep { defined $parts->{$_} } keys %$parts };
+
+        $self->datetime( DateTime->new(%$parts) );
+    }
+
+    return $self;
 }
 
-sub olson ( $self, $offset, $time = time() ) {
-    my $dt = ( eval { $time->isa('DateTime') } ) ? $time : DateTime->from_epoch( epoch => $time );
+sub olson ( $self, $offset, $time = Time::HiRes::time ) {
+    my $dt = ( $time isa DateTime ) ? $time : DateTime->from_epoch( epoch => $time );
     $offset = int $offset;
 
     my ($time_zone) =
@@ -155,122 +222,6 @@ sub olson ( $self, $offset, $time = time() ) {
     return $time_zone->{timezone_name};
 }
 
-sub format_offset ( $self, $offset = 0 ) {
-    my $hours   = int( abs($offset) / 60 / 60 );
-    my $minutes = int( ( abs($offset) - $hours * 60 * 60 ) / 60 );
-
-    return ( $hours + $minutes == 0 )
-        ? 'Z'
-        : sprintf( '%1s%02d:%02d', ( ( $offset > 0 ) ? '+' : '-' ), $hours, $minutes );
-};
-
-sub parse ( $self, $time = undef, $time_zone = 'UTC' ) {
-    try {
-        $time_zone = DateTime::TimeZone->new( name => $time_zone );
-        die unless ( $time_zone->is_olson or $time_zone->is_utc );
-    }
-    catch ($e) {
-        croak('failed to match time zone input to Olson name');
-    }
-
-    my $dt;
-
-    if (
-        not defined $time or
-        $time =~ /^\d+(?:\.\d+)?$/ or
-        grep { lc $time eq $_ } qw( now time date datetime )
-    ) {
-        $time = ( $self->hires ) ? gettimeofday() : time()
-            unless ( $time =~ /^\d+(?:\.\d+)?$/ );
-
-        my $nanosecond = $time - int($time);
-        $time = int($time);
-
-        $dt = DateTime->from_epoch(
-            epoch     => $time,
-            time_zone => $time_zone,
-        );
-        $dt->add( nanoseconds => int( $nanosecond * 1_000_000_000 ) );
-    }
-    else {
-        try {
-            my $check_tz_imprecision = sub ( $time, $tz ) {
-                my ( $second, $minute, $hour, $day, $month, $year, $offset, $century ) = strptime($time);
-                my ( $gm_second, $gm_minute, $gm_hour, $gm_day, $gm_month, $gm_year ) = gmtime;
-                my $zones = {
-                    P => 'America/Los_Angeles',
-                    M => 'America/Denver',
-                    C => 'America/Chicago',
-                    E => 'America/New_York',
-                };
-
-                my $tzdt = DateTime->new(
-                    second     => int( $second // 0 ),
-                    minute     => $minute // 0,
-                    hour       => $hour   // 0,
-                    day        => $day,
-                    month      => ( $month // $gm_month ) + 1,
-                    year       => ( $year // $gm_year ) + 1900,
-                    time_zone  => DateTime::TimeZone->new( name => $zones->{ uc($tz) } ),
-                );
-
-                return ( $tzdt->is_dst ) ? uc($tz) . 'DT' : uc($tz) . 'ST';
-            };
-            $time =~ s/\b([PMCE])[SD]T\b/$check_tz_imprecision->( $time, $1 )/ei;
-        }
-        catch ($e) {
-            croak('failed to parse time input')
-        }
-
-        my ( $second, $minute, $hour, $day, $month, $year, $offset, $century ) = strptime($time);
-        croak('failed to parse time input') unless ($day);
-
-        $second //= 0;
-        my $nanosecond = $second - int($second);
-        $second = int($second);
-
-        if ( not defined $offset and $time_zone->name ne 'UTC' ) {
-            my ( $gm_second, $gm_minute, $gm_hour, $gm_day, $gm_month, $gm_year ) = gmtime;
-
-            try {
-                $dt = DateTime->new(
-                    nanosecond => int( $nanosecond * 1_000_000_000 ),
-                    second     => $second // 0,
-                    minute     => $minute // 0,
-                    hour       => $hour   // 0,
-                    day        => $day,
-                    month      => ( $month // $gm_month ) + 1,
-                    year       => ( $year // $gm_year ) + 1900,
-                    time_zone  => $time_zone->name,
-                );
-            }
-            catch ($e) {
-                croak('failed to parse time input')
-            }
-        }
-        else {
-            $dt = DateTime->from_epoch( epoch => str2time( $time, 'UTC' ) );
-            $dt->add( nanoseconds => $nanosecond );
-        }
-
-        $dt->set_time_zone( ( defined $offset ) ? $self->format_offset($offset) : $time_zone->name );
-
-        $dt->set_time_zone( $self->olson( $offset, $dt ) )
-            unless ( $dt->time_zone->is_olson or $dt->time_zone->is_utc );
-    }
-
-    return $dt;
-}
-
-sub canonical ( $self, $dt ) {
-    return $dt->strftime('%Y-%m-%dT%T.%3N') . $self->format_offset( $dt->offset );
-}
-
-sub validate ( $self, $time = undef, $time_zone = 'UTC' ) {
-    my $dt = $self->parse( $time, $time_zone );
-    return $self->canonical($dt), $dt->time_zone->name;
-}
-
 1;
 
 =head1 NAME
@@ -285,58 +236,32 @@ Omniframe::Class::Time
     my $time = Omniframe::Class::Time->new;
 
     # print something like "2020-05-06 18:02:31"
-    say $time->datetime; # defaults to using time()
+    say $time->set->format('ansi');
 
-    # print something like "2020-05-06 18:02:31"
-    say $time->datetime('ansi');
+    # print something like "2023-12-21 12:48:32.126-08:00"
+    say $time->set->format('sqlite');
 
-    # print something like "May  6 18:02:31 2020"
-    say $time->datetime('log');
+    # print an RFC822-conformant string
+    say $time->set->format('%a, %d %b %Y %H:%M:%S %z');
 
-    # print something like "06/May/2020:18:02:31 -0700"
-    say $time->datetime('common');
+    # print something like "2023-12-21 20:48:32.126Z"
+    $time->set->datetime->set_time_zone('UTC');
+    say $time->format('sqlite');
 
-    # print something like "05/06/20 18:02:31"
-    say $time->datetime( \'%c' );
+    # hashref of the parts of a time string
+    my $parts_hashref = $time->split('Tue Jul 11 09:30:00 2023');
 
-    # provide a specific time instead of relying on time() internally
-    say $time->datetime( 'log', 1588813351 );
-
-    say $time->datetime( 'log', 1588813351, 'PST' );
-    say $time->datetime( 'log', '05/06/20 18:02:31', 'PST' );
-
-    # print something like "2020-05-07T01:02:31.157612Z"
-    say $time->zulu; # defaults to using time()
-    say $time->zulu(1588813351.157612);
-
-    # print something like "2020-05-07T01:02:31Z"
-    $time->hires(0);
-    say $time->zulu(1588813351.157612);
-
-    say $time->zulu('2020-05-06 18:02:31');
-    say $time->zulu('2020-05-06 18:02:31 PST');
-    say $time->zulu( '2020-05-06 18:02:31', 'PST' );
-
-    my $zones_1 = $time->zones;
-    my $zones_2 = $time->zones(time);
+    # parse a time string and format it
+    say $time->parse('Tue Jul 11 09:30:00 2023 PDT')->format('ansi');
 
     my $olson_name_1 = $time->olson(-18000);
     my $olson_name_2 = $time->olson( -18000, time );
 
-    my $formatted_offset = $time->format_offset(-18000);
-
-    my $dt = $time->parse( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
-
-    my $string = $time->canonical($dt);
-
-    my ( $canonical_date_time, $olson_time_zone ) =
-        $time->validate( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
-
 =head1 DESCRIPTION
 
-This class provides methods for handling date/time parsing and canonicalization
-of date/time output. It also handles Olson time zone identification from "fuzzy"
-time zones. For example, it can determine that "EST" is "America/New_York".
+This class provides methods for handling date/time parsing and formatting.
+It also handles Olson time zone identification from "fuzzy" time zones.
+For example, it can determine that "EST" is "America/New_York".
 
 Ideally, it's best to pick up an accurate Olson time zone. From a web browser,
 this can be done in Javascript with:
@@ -349,20 +274,25 @@ From Linux, this can be done from the command line with:
 
 =head1 ATTRIBUTES
 
-=head2 hires
+=head2 time_zone
 
-Boolean value that determines if C<zulu> will return microseconds or not. It's
-true by default.
+This is the default time zone to use when understanding dates/times. If not set
+explicitly, it defaults to the local time zone.
+
+=head2 locale
+
+This is the locale to use when understanding dates/times. If not set explicitly,
+it defaults to "en-US".
+
+=head2 datetime
+
+This is a container for the last L<DateTime> object created via C<set> or
+C<parse>.
 
 =head2 formats
 
-Hashref of format names to formats. The following formats are available by
-default:
-
-    ansi   = '%Y-%m-%d %X'
-    log    = '%b %e %T %Y'
-    common = '%d/%b/%Y:%T %z'
-    ctime  = '%C'
+This is a hashref of some C<strftime> formats by name. Note that this attribute
+is a class-level attribute.
 
 =head2 olson_zones
 
@@ -372,70 +302,38 @@ keys of C<timezone_name> (which is the same as the key), C<olson_description>,
 C<location_coords> (as found in an Olson database), and C<population>, which is
 the population of the country in which the time zone exists.
 
+Note that this attribute is a class-level attribute.
+
 =head1 METHODS
 
-=head2 datetime
+=head2 set
 
-This method will accept an optional format and an optional epoch. If no epoch
-is provided, it will assume now. If no format is provided, it will assume you
-want "ansi".
+Set a time, likely to run C<format> against. Accepts either an epoch,
+L<DateTime> object, or "now" string (and defaults to "now" if not set) plus an
+optional time zone to use (which defaults to the class's time zone attribute if
+not provided).
 
-    say $time->datetime;
-    say $time->datetime('ansi')
-    say $time->datetime('log');
+Returns the class object.
 
-If you want to specify your own format using the syntax defined in
-L<Date::Format>, pass a reference to a string.
+=head2 format
 
-    $time->datetime( \'%c' );
+Given a class object with a C<datetime> attribute set, it will return a
+formatted string of the date/time value. This method accepts a C<strftime>
+format or a named format (like "ANSI" or "RFC3339" or "ISO8601"). If nothing is
+provided, the method will assume the "ANSI" format.
 
-You can also pass an epoch to use instead of having C<datetime> internally call
-C<time>.
+=head2 split
 
-    $time->datetime( 'log', 1588813351 );
+Given a date/time string, this method will attempt to split the string into its
+parts and return a hashref of the named parts.
 
-It's possible also to provide a third, optional parameter to suggest a time zone
-if one is not in the time input string (or if you provide an epoch integer).
+=head2 parse
 
-    $time->datetime( 'log', 1588813351, 'PST' );
-    $time->datetime( 'log', '05/06/20 18:02:31', 'PST' );
+This method accepts a date/time string and will parse it into a L<DateTime>
+object stored in the C<datetime> attribute. It should handle a wide range of
+inputs correctly.
 
-=head2 zulu
-
-This method prints a Javascript-consumable date/time string corrected to the
-Zulu time zone:
-
-    2020-05-07T01:02:31.157612Z
-
-It can optionally accept an epoch. If no epoch is provided, it will assume now.
-
-    say $time->zulu;
-    say $time->zulu(1588813351.157612);
-
-By default, this will include microseconds, but this can be switched off by
-setting C<hires> to a false value.
-
-=head2 zones
-
-This method accepts an epoch (or will use now if none is provided). It
-will return an arrayref of hashrefs, with each hashref representing an Olson
-time zone.
-
-    my $zones_1 = $time->zones;
-    my $zones_2 = $time->zones(time);
-
-The keys of these hashrefs are:
-
-    {
-        name          => '', # Olson time zone name
-        name_parts    => [], # Olson time zone name components
-        description   => '', # Olson time zone description
-        offset        => 0,  # Offset in seconds from UTC
-        offset_string => '', # Offset string
-        label         => '', # Label for user interfaces
-    }
-
-The arrayref will be sorted by offset and name.
+Returns the class object.
 
 =head2 olson
 
@@ -452,53 +350,6 @@ Olson name.
 It does this by finding all time zone that would render the offset, then
 selecting the most probable based on country population size and simplicity of
 the Olson name.
-
-=head2 format_offset
-
-This method accepts an offset as an integer representing the seconds offset
-from UTC. It will return a time zone offset in the form "[+-]HH:MM" for all
-non-UTC zones and "Z" for UTC.
-
-    my $formatted_offset = $time->format_offset(-18000);
-
-=head2 parse
-
-This method requires a scalar containing some representation of a date/time.
-Typically, this is a string that looks like a date/time, but it could also be
-an epoch or the string "now", "time", "date", or "datetime" to mean the current
-date/time.
-
-The method can optionally be given an additional string with an Olson name.
-
-The method will return a L<DateTime> object set to the right time and Olson
-time zone.
-
-    my $dt = $time->parse( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
-
-An exception will be thrown if the Olson name input is neither a valid Olson
-name nor C<undef>. The date/time string will be parsed, and if it contains a
-timezone, that will be used; otherwise, the Olson name provided will be used.
-
-=head2 canonical
-
-This method requires a L<DateTime> object. It will return a canonical string for
-that date/time.
-
-    my $string = $time->canonical($dt);
-
-Zulu times will be represented with a "Z", and non-Zulu times will be
-represented with an offset in the form "[+-]HH:MM". Seconds can have
-microseconds if that data is provided in the epoch input.
-
-=head2 validate
-
-This method accepts the same inputs as C<parse> and will return a string like
-what would be returned from C<canonical> plus a valid Olson time zone name.
-
-    my ( $canonical_date_time, $olson_time_zone ) =
-        $time->validate( '3/3/2021 3:14pm EST', 'America/Los_Angeles' );
-
-Internally, this method calls C<parse> and C<canonical>.
 
 =head1 WITH ROLES
 

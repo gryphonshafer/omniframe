@@ -146,7 +146,7 @@ sub emergency ( $self, @params ) { return $self->log_dispatch->emergency( $self-
 sub emerg     ( $self, @params ) { return $self->log_dispatch->emerg    ( $self->dp( \@params ) ) }
 
 sub _log_cb_time (%msg) {
-    return $time->datetime('log') . ' ' . $msg{message};
+    return $time->set->format('log') . ' ' . $msg{message};
 }
 
 sub _log_cb_label (%msg) {
@@ -301,7 +301,7 @@ application's configuration file. See L<Omniframe::Role::Conf>.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>.
+L<Omniframe::Role::Conf>, L<Omniframe::Role::Output>.
 
 =begin Pod::Coverage
 
