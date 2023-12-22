@@ -30,4 +30,10 @@ is( $time->parse('Tue Jul 11 09:30:00 2023 PDT')->format('ansi'), '2023-07-11 09
 
 like( $time->olson(-18000), qr\America/(?:Chicago|New_York)\, 'olson(-18000)' );
 
+is(
+    $time->parse('Dec 20 15:56:33.123 2023 -08:00')->olsonize->datetime->time_zone->name,
+    'America/Los_Angeles',
+    'olsonize',
+);
+
 done_testing;

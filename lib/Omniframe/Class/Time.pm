@@ -20,7 +20,6 @@ class_has formats => {
     log     => '%b %e %T %Y',
     common  => '%d/%b/%Y:%T %z',
     rfc822  => '%a, %d %b %Y %H:%M:%S %z',
-    rfc1123 => '%a, %d %b %Y %H:%M:%S GMT',
 };
 
 class_has olson_zones => sub ($self) {
@@ -222,6 +221,18 @@ sub olson ( $self, $offset, $time = Time::HiRes::time ) {
     return $time_zone->{timezone_name};
 }
 
+sub olsonize ($self) {
+    return $self unless (
+        $self->datetime and
+        not $self->datetime->time_zone->is_olson
+    );
+
+    my $olson = $self->olson( $self->datetime->offset, $self->datetime->epoch );
+    $self->datetime->set_time_zone($olson) if $olson;
+
+    return $self;
+}
+
 1;
 
 =head1 NAME
@@ -256,6 +267,12 @@ Omniframe::Class::Time
 
     my $olson_name_1 = $time->olson(-18000);
     my $olson_name_2 = $time->olson( -18000, time );
+
+    # print "America/Los_Angeles"
+    say $time
+        ->set('Dec 20 15:56:33.123 2023 -08:00')
+        ->olsonize
+        ->datetime->time_zone->name;
 
 =head1 DESCRIPTION
 
@@ -350,6 +367,13 @@ Olson name.
 It does this by finding all time zone that would render the offset, then
 selecting the most probable based on country population size and simplicity of
 the Olson name.
+
+=head2 olsonize
+
+Given a class object where C<datetime> has a L<DateTime> value that itself has
+an offset value but no Olson time zone, this method will attempt to use the
+C<olson> method to set the time zone of the L<DateTime> object to an Olson time
+zone.
 
 =head1 WITH ROLES
 
