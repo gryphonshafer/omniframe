@@ -47,7 +47,7 @@ sub set ( $self, $epoch = Time::HiRes::time, $time_zone = $self->time_zone ) {
     $epoch = Time::HiRes::time if ( $epoch eq 'now' );
 
     $self->datetime(
-        ( $epoch isa DateTime )
+        ( $epoch->isa('DateTime') )
             ? $epoch
             : DateTime->from_epoch(
                 epoch     => $epoch,
@@ -138,10 +138,9 @@ sub parse ( $self, $text ) {
             $parse->{locale} //= $self->locale;
 
             my $is_dst = 0;
-            try {
+            eval {
                 $is_dst = DateTime->new(%$parse)->is_dst
-            }
-            catch ($e) {}
+            };
 
             $text .= ' ' . $letter . ( ($is_dst) ? 'D' : 'S' ) . 'T';
         }
@@ -179,7 +178,7 @@ sub parse ( $self, $text ) {
 }
 
 sub olson ( $self, $offset, $time = Time::HiRes::time ) {
-    my $dt = ( $time isa DateTime ) ? $time : DateTime->from_epoch( epoch => $time );
+    my $dt = ( $time->isa('DateTime') ) ? $time : DateTime->from_epoch( epoch => $time );
     $offset = int $offset;
 
     my ($time_zone) =
