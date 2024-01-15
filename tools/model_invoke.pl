@@ -5,11 +5,21 @@ BEGIN { $FindBin::Bin = cwd(); }
 
 use exact -cli, -conf;
 use Data::Printer;
+use Mojo::JSON 'encode_json';
 use Mojo::Util 'camelize';
+use YAML::XS 'Dump';
 
 my $opt = options(
-    'model|m=s', 'action|a=s', 'id|i=s', 'hash|h=s{,}', 'params|p=s{,}', 'namespace|n=s', 'silent|s',
+    'model|m=s',
+    'action|a=s',
+    'id|i=s',
+    'hash|h=s{,}',
+    'params|p=s{,}',
+    'namespace|n=s',
+    'silent|s',
+    'output|o=s',
 );
+
 ( $opt->{namespace} = conf->get('mojo_app_lib') ) =~ s/::Control// unless ( $opt->{namespace} );
 pod2usage('Must provide at least a model and action') unless ( $opt->{model} and $opt->{action} );
 
@@ -41,7 +51,18 @@ catch ($e) {
     die $obj->deat($e) . "\n";
 }
 
-p $rv unless ( $opt->{silent} );
+unless ( $opt->{silent} ) {
+    $opt->{output} //= 'data';
+    if ( uc $opt->{output} eq 'YAML' ) {
+        say Dump $rv;
+    }
+    elsif ( uc $opt->{output} eq 'JSON' ) {
+        say encode_json($rv);
+    }
+    else {
+        say np( $rv, colored => 1 );
+    }
+}
 
 =head1 NAME
 
@@ -57,6 +78,7 @@ model_invoke.pl - Invoke model methods
         -p, --params    LIST OF PARAMS
         -n, --namespace MODEL_CLASS_NAMESPACE
         -s, --silent
+        -o, --output    OUTPUT_TYPE # "data" (default), "YAML", or "JSON"
         -h, --help
         -m, --man
 
@@ -75,7 +97,7 @@ along with either a hash or parameters to pass.
 =head2 -m, --model
 
 A model class name suffix is something like "user" or "special_thing" which will
-be used as Struph::Model::User and Struph::Model::SpecialThing respectively.
+be used as Project::Model::User and Project::Model::SpecialThing respectively.
 
 =head2 -a, --action
 
@@ -108,6 +130,15 @@ application's configuration will be used as the basis to determine the model's
 namespace. However, you can explicitly set it.
 
     ./model_invoke.pl -n Project::Model -m class_name_suffix -a method
+
+=head2 -s, --silent
+
+Don't print any output. (Will still display errors if any.)
+
+=head2 -o, --output
+
+Specify output type. Defaults to "data" which is data printing. Other options
+are "YAML" and "JSON".
 
 =head1 OBJECTS
 

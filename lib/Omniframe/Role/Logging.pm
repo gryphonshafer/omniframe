@@ -1,13 +1,12 @@
 package Omniframe::Role::Logging;
 
 use exact -role;
-use Data::Printer return_value => 'dump', colored => 1;
 use Log::Dispatch;
 use Mojo::File 'path';
 use Term::ANSIColor;
 use Omniframe::Class::Time;
 
-with 'Omniframe::Role::Conf';
+with qw( Omniframe::Role::Conf Omniframe::Role::Output );
 
 my $log_levels_definitions = {
     debug => 1,
@@ -146,21 +145,8 @@ sub alert     ( $self, @params ) { return $self->log_dispatch->alert    ( $self-
 sub emergency ( $self, @params ) { return $self->log_dispatch->emergency( $self->dp( \@params ) ) }
 sub emerg     ( $self, @params ) { return $self->log_dispatch->emerg    ( $self->dp( \@params ) ) }
 
-sub dp ( $self, $params, @np_settings ) {
-    return map {
-        ( ref $_         ) ? "\n" . np( $_, @np_settings ) . "\n" :
-        ( not defined $_ ) ? '>undef<'                            :
-        ( $_ eq ''       ) ? '""'                                 : $_
-    } @$params;
-}
-
-sub deat ( $self, $error ) {
-    $error =~ s/\s+at\s.+\sline\s\d+\.\s*$//g;
-    return $error;
-}
-
 sub _log_cb_time (%msg) {
-    return $time->datetime('log') . ' ' . $msg{message};
+    return $time->set->format('log') . ' ' . $msg{message};
 }
 
 sub _log_cb_label (%msg) {
@@ -217,8 +203,6 @@ Omniframe::Role::Logging
         $self->alert(     'repeating serious error'                            );
         $self->emergency( 'subsystem unresponsive or functionally broken'      );
 
-        say $self->dp( { answer => 42 } );
-
         return;
     }
 
@@ -273,20 +257,6 @@ methods:
     fatal = alert
     emerg = emergency
 
-=head1 SUPPORTING METHODS
-
-=head2 dp
-
-This method accepts data along with an optional set of settings useful for
-L<Data::Printer>'s C<np> method.
-
-    say $self->dp( { answer => 42 }, @np_settings );
-
-=head2 deat
-
-This method removes any "at /some/place.pl line 42." instances from the end of
-any string passed in.
-
 =head1 CLASS ATTRIBUTES
 
 Typically, you won't need to use the class attributes in normal use of this
@@ -331,7 +301,7 @@ application's configuration file. See L<Omniframe::Role::Conf>.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>.
+L<Omniframe::Role::Conf>, L<Omniframe::Role::Output>.
 
 =begin Pod::Coverage
 

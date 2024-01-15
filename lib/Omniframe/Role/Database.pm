@@ -86,7 +86,7 @@ sub dq ( $self, $shard = undef ) {
                 } keys %{ $conf->{log} } };
 
                 $dq->sqlite_trace( sub ($sql) {
-                    my $time = ($self) ? $self->time->zulu : time;
+                    my $time = ($self) ? $self->time->set->format('sqlite') : time;
 
                     my $write = (
                         $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(

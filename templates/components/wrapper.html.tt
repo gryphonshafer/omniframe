@@ -18,16 +18,38 @@
         page.js.module    = [],
         page.js.inline    = [],
         page.js.post      = [],
-        page.body_classes = [];
+        page.body_classes = [],
+        page.body_attrs   = [];
 
-    DEFAULT page.vue = 0;
+    DEFAULT
+        page.vue        = 0,
+        page.demi       = 0,
+        page.pinia      = 0,
+        page.vue_router = 0;
 
     content = BLOCK;
         PROCESS $template;
     END;
 
-    IF page.vue;
-        page.js.defer.push( 'vue/lib/vue.global' _ ( ( c.app.mode == 'production' ) ? '.prod' : '' ) );
+    IF NOT page.vue AND ( page.demi OR page.pinia OR page.vue_router );
+        page.vue = 1;
+    END;
+
+    IF page.pinia AND NOT page.demi;
+        page.demi = 1;
+    END;
+
+    FOR vue_lib IN [ 'vue', 'demi', 'pinia', 'vue_router' ];
+        IF page.$vue_lib;
+            vue_lib_name = vue_lib _ ( ( vue_lib == 'demi' OR vue_lib == 'pinia' ) ? '.iife' : '.global' );
+            vue_lib_name = vue_lib_name.replace( '_', '-' );
+
+            IF ( c.app.mode == 'production' AND vue_lib != 'demi' );
+                vue_lib_name = vue_lib_name _ '.prod';
+            END;
+
+            page.js.defer.push( 'vue/lib/' _ vue_lib_name );
+        END;
     END;
 
     WHILE page.wrappers.size;
@@ -145,6 +167,7 @@
     </head>
     <body
         [%- IF page.body_classes.size %] class="[% page.body_classes.join(' ') %]"[% END -%]
+        [%- IF page.body_attrs.size %][% page.body_attrs.join(' ') %][% END -%]
     >
         [% content %]
         [% FOR code IN page.js.inline %]<script>[% code %]</script>[% END %]

@@ -17,18 +17,14 @@ class_has name => sub ($self) {
 class_has id_name => sub ($self) { $self->name . '_id' };
 class_has active  => 0;
 
-has 'id';
-has 'data';
-has 'saved_data';
+has id         => undef;
+has data       => {};
+has saved_data => {};
 
 sub create ( $self, $data ) {
     $data = $self->data_merge($data);
     croak('create() data hashref contains no data') unless ( keys %$data );
 
-    if ( $self->can('validate') ) {
-        $self->data($data);
-        $self->validate;
-    }
     $data = $self->freeze($data) if ( $self->can('freeze') );
 
     eval { $self->load(
@@ -60,36 +56,32 @@ sub load ( $self, $search = undef, $skip_active_in_search_setup = 0 ) {
         $self->_setup_search( $search, $skip_active_in_search_setup )
     )->run->next;
 
-    croak('Failed to load ' . $self->name ) unless ($data);
+    croak( 'Failed to load ' . $self->name ) unless ($data);
 
     $data = $data->data;
+    $self->saved_data({%$data});
     $data = $self->thaw($data) if ( $self->can('thaw') );
 
     $self->data($data);
-    $self->saved_data( { %{ $self->data } } );
     $self->id( $self->data->{ $self->id_name } );
 
     return $self;
 }
 
-sub dirty ($self) {
-    my @changed_data_keys = keys %{ $self->_data_changes };
-    return (wantarray) ? @changed_data_keys : (@changed_data_keys) ? 1 : 0;
+sub is_dirty ( $self, $name, $data = $self->data ) {
+    return (
+        not exists $data->{$name} and not exists $self->saved_data->{$name} or
+        exists $data->{$name} and exists $self->saved_data->{$name} and
+            not defined $data->{$name} and not defined $self->saved_data->{$name} or
+        defined $data->{$name} and defined $self->saved_data->{$name} and
+            $data->{$name} eq $self->saved_data->{$name}
+    ) ? 0 : 1;
 }
 
-sub _grep_for_data_changes ( $self, $data = undef ) {
-    $data //= { %{ $self->data // {} } };
-    $data = {%$data};
-
-    for ( grep { exists $self->saved_data->{$_} } keys %$data ) {
-        delete $data->{$_} if (
-            defined $data->{$_} and
-            defined $self->saved_data->{$_} and
-            $data->{$_} eq $self->saved_data->{$_}
-        );
-    }
-
-    return $data;
+sub dirty ($self) {
+    my %keys = map { $_ => 1 } map { keys %$_ } $self->data, $self->saved_data;
+    my @dirty_keys = grep { $self->is_dirty($_) } sort keys %keys;
+    return (wantarray) ? @dirty_keys : (@dirty_keys) ? 1 : 0;
 }
 
 sub save ( $self, $data = undef ) {
@@ -99,19 +91,25 @@ sub save ( $self, $data = undef ) {
         $self->create($data);
     }
     else {
-        if ( my $changes = $self->_grep_for_data_changes($data) ) {
-            if ( $self->can('validate') ) {
-                $self->data($data);
-                $self->validate;
-            }
-            $changes = $self->freeze($changes) if ( $self->can('freeze') );
+        $data = $self->freeze($data) if $self->can('freeze');
 
-            eval {
-                $self->dq->update( $self->name, $changes, { $self->id_name => $self->id } );
-            } or croak $self->deat($@);
-
-            $self->load( $self->id );
+        for ( grep { exists $self->saved_data->{$_} } keys %$data ) {
+            delete $data->{$_} if (
+                defined $data->{$_} and
+                defined $self->saved_data->{$_} and
+                $data->{$_} eq $self->saved_data->{$_} or
+                not defined $data->{$_} and
+                not defined $self->saved_data->{$_}
+            );
         }
+
+        if ( keys %$data ) {
+            eval {
+                $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
+            } or croak $self->deat($@);
+        }
+
+        $self->load( $self->id );
     }
 
     return $self;
@@ -125,12 +123,15 @@ sub delete ( $self, $search = undef ) {
 
 sub every ( $self, $search = {} ) {
     my @objects = map {
+        my $data = {%$_};
+        $data = $self->thaw($data) if ( $self->can('thaw') );
+
         $self->new(
-            id         => $_->{ $self->id_name },
-            data       => $_,
+            id                 => $data->{ $self->id_name },
+            data               => $data,
             saved_data => $_,
         );
-    } $self->every_data($search);
+    } @{ $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->all({}) };
 
     return (wantarray) ? @objects : \@objects;
 }
@@ -275,14 +276,15 @@ can be manually set and overridden.
 =head2 data
 
 When loaded, this object attribute will be a hashref containing the record that
-is either in the database or will be (prior to a C<save> call). It gets set
-automatically when the object loads a record from the database.  It can be
-manually set and overridden.
+is either in the database or will be (prior to a C<save> call) independent of
+any freezing changes. It gets set automatically when the object loads a record
+from the database. It can be manually set and overridden.
 
 =head2 saved_data
 
-This attribute contains a hashref of the original C<data> hashref with
-unchanged values relative to what should be stored in the database.
+When loaded, this object attribute will be a hashref containing the record that
+is frozen in the database. It gets set automatically when the object loads a
+record from the database.
 
 =head1 METHODS
 
@@ -310,6 +312,14 @@ hashref representing a SQL WHERE clause. The method will return the object.
     my $obj_0 = Model->new->load(42);
     my $obj_1 = Model->new->load( { model_id => 42 } );
 
+=head2 is_dirty
+
+This method accepts a key name (and an optional hashref of alternative data to
+use in place of object data), and it will return a 1 or 0 indicating true/false
+if the value of the key has changed relative to what's saved.
+
+Note that C<freeze>/C<thaw> operations may cause inaccurate results.
+
 =head2 dirty
 
 This method will, in a scalar context, return a 1 or 0 representing the
@@ -321,6 +331,8 @@ it has been changed but not saved to the database).
 In list context, it will return the keys/names of data that is "dirty".
 
     my @dirty_key_names = $obj->dirty;
+
+Note that C<freeze>/C<thaw> operations may cause inaccurate results.
 
 =head2 save
 
@@ -401,25 +413,6 @@ object based on the class name.
 
     my $obj_42      = $obj->resolve_obj( 42, 'SomeClassName' );
     my $also_obj_42 = $obj->resolve_obj( $obj_42, 'SomeClassName' );
-
-=head1 DATA VALIDATION
-
-In classes with this role, you can optionally provide a C<validation> method
-that will be called prior to writing data within C<create> and C<save> calls.
-Return values are ignored. If you encounter a validation error, the expectation
-is that you throw an exception.
-
-    package Model;
-
-    use exact -class;
-
-    with 'Omniframe::Role::Model';
-
-    sub validate ($self) {
-        croak('"some_column_name_that_must_exist" does not exist')
-            unless ( exists $self->data->{some_column_name_that_must_exist} );
-        return;
-    }
 
 =head1 DATA SERIALIZATION
 

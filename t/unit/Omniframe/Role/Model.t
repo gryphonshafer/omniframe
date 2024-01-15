@@ -17,7 +17,8 @@ my $obj;
 ok( lives { $obj = Omniframe->with_roles('+Model')->new }, q{with_roles('+Model')->new} ) or note $@;
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Database Logging Model ) );
 can_ok( $obj, $_ ) for ( qw(
-    name id_name id data saved_data create load dirty save delete every every_data data_merge resolve_id
+    name id_name active id data saved_data
+    create load is_dirty dirty save delete every every_data data_merge resolve_id resolve_obj
 ) );
 
 like( dies { $obj->create(undef) }, qr/create\(\) data hashref contains no data/, 'create() sans data' );
