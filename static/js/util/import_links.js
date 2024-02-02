@@ -1,7 +1,7 @@
 'use strict';
-if ( ! window.js ) window.js = {};
+if ( ! window.omniframe ) window.omniframe = {};
 
-window.js.import_links = {
+window.omniframe.import_links = {
     status        : 'start',
     link_elements : [],
     oncomplete    : []
@@ -14,10 +14,10 @@ window.js.import_links = {
     } );
 
     for ( var i = 0; i < link_elements.length; i++ ) {
-        window.js.import_links.link_elements[ link_elements[i].href ] = 'initiate';
+        window.omniframe.import_links.link_elements[ link_elements[i].href ] = 'initiate';
     }
 
-    window.js.import_links.status = 'initiate';
+    window.omniframe.import_links.status = 'initiate';
 
     for ( var i = 0; i < link_elements.length; i++ ) {
         initiate( link_elements[i].href );
@@ -71,17 +71,17 @@ window.js.import_links = {
             }
         }
 
-        window.js.import_links.link_elements[url] = 'complete';
+        window.omniframe.import_links.link_elements[url] = 'complete';
 
         var found_incomplete = false;
-        for ( var i in window.js.import_links.link_elements ) {
-            if ( window.js.import_links.link_elements[i] != 'complete' ) found_incomplete = true;
+        for ( var i in window.omniframe.import_links.link_elements ) {
+            if ( window.omniframe.import_links.link_elements[i] != 'complete' ) found_incomplete = true;
         }
         if ( ! found_incomplete ) {
-            window.js.import_links.status = 'complete';
+            window.omniframe.import_links.status = 'complete';
 
-            for ( var i = 0; i < window.js.import_links.oncomplete.length; i++ ) {
-                window.js.import_links.oncomplete[i]();
+            for ( var i = 0; i < window.omniframe.import_links.oncomplete.length; i++ ) {
+                window.omniframe.import_links.oncomplete[i]();
             }
 
             window.dispatchEvent( new CustomEvent('import_links_status_complete') );
@@ -96,7 +96,7 @@ import_links
 
 =head1 SYNOPSIS
 
-    <link rel="import" href="/vuec/file_to_import.html">
+    <link rel="import" href="file_to_import.html">
     <script type="text/javascript" src="/js/util/import_links.js"></script>
 
 =head1 DESCRIPTION
@@ -121,7 +121,7 @@ import if HTML can look something like:
 
 =head2 Loading Status
 
-Loading this library will cause C<window.js.import_links> to be filled with an
+Loading this library will cause C<window.omniframe.import_links> to be filled with an
 object. This object will contain a C<status> string, a C<link_elements> array,
 and an C<oncomplete> array.
 
@@ -135,10 +135,8 @@ Then it will dispatch a "import_links_status_complete" event.
 
 Thus, you can:
 
-    window.js.import_links.oncomplete.push( () => {
-        new Vue({
-            el: "#app"
-        });
+    window.omniframe.import_links.oncomplete.push( () => {
+        console.log('import links complete');
     } );
 
 =cut
