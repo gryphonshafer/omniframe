@@ -99,45 +99,47 @@ sub event_handler ($self) {
 }
 
 sub message ( $self, $socket_name, $data ) {
-    $self->dq->sql(q{
-        UPDATE socket SET counter = counter + 1, data = ? WHERE name = ?
-    })->run( encode_json($data), $socket_name );
+    if ( $self->dq->sql('SELECT COUNT(*) FROM socket WHERE name = ?')->run($socket_name)->value ) {
+        $self->dq->sql(q{
+            UPDATE socket SET counter = counter + 1, data = ? WHERE name = ?
+        })->run( encode_json($data), $socket_name );
 
-    my $table = Proc::ProcessTable->new( enable_ttys => 0 )->table;
-    my $ppid  = $self->ppid;
-
-    unless ($ppid) {
-        my $pid_file = path(
-            $self->conf->get( qw( config_app root_dir ) ) . '/' .
-            $self->conf->get( qw( mojolicious config hypnotoad pid_file ) )
-        );
-        $ppid = trim( $pid_file->slurp ) if ( -r $pid_file );
+        my $table = Proc::ProcessTable->new( enable_ttys => 0 )->table;
+        my $ppid  = $self->ppid;
 
         unless ($ppid) {
-            my @pses  = grep { $_->uid == $< } @$table;
-            my @ppses =
-                grep {
-                    defined;
-                }
-                map {
-                    my $this_ppid = $_->ppid;
-                    my ($parent_ps)   = grep { $_->pid  eq $this_ppid } @pses;
-                    my @children_pses = grep { $_->ppid eq $this_ppid } @pses;
-                    (
-                        $parent_ps and
-                        $parent_ps->cmndline eq $_->cmndline and
-                        $parent_ps->fname =~ /\.(psgi|pl|cgi)$/i and
-                        @children_pses == 1
-                    ) ? $parent_ps : undef;
-                } @pses;
+            my $pid_file = path(
+                $self->conf->get( qw( config_app root_dir ) ) . '/' .
+                $self->conf->get( qw( mojolicious config hypnotoad pid_file ) )
+            );
+            $ppid = trim( $pid_file->slurp ) if ( -r $pid_file );
 
-            $ppid = $ppses[0]->pid if ( @ppses == 1 );
+            unless ($ppid) {
+                my @pses  = grep { $_->uid == $< } @$table;
+                my @ppses =
+                    grep {
+                        defined;
+                    }
+                    map {
+                        my $this_ppid = $_->ppid;
+                        my ($parent_ps)   = grep { $_->pid  eq $this_ppid } @pses;
+                        my @children_pses = grep { $_->ppid eq $this_ppid } @pses;
+                        (
+                            $parent_ps and
+                            $parent_ps->cmndline eq $_->cmndline and
+                            $parent_ps->fname =~ /\.(psgi|pl|cgi)$/i and
+                            @children_pses == 1
+                        ) ? $parent_ps : undef;
+                    } @pses;
+
+                $ppid = $ppses[0]->pid if ( @ppses == 1 );
+            }
+
+            $self->ppid($ppid) if ($ppid);
         }
 
-        $self->ppid($ppid) if ($ppid);
+        kill( 'URG', $_ ) for ( map { $_->pid } grep { $_->ppid == $ppid } $table->@* );
     }
-
-    kill( 'URG', $_ ) for ( map { $_->pid } grep { $_->ppid == $ppid } $table->@* );
     return $self;
 }
 
