@@ -32,7 +32,6 @@ END;};
 
 sub setup ($self) {
     $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
-    $self->ppid( getppid() );
 
     $SIG{URG} = sub {
         for my $socket ( @{ $self->dq->sql('SELECT name, counter FROM socket')->run->all({}) } ) {
@@ -44,12 +43,19 @@ sub setup ($self) {
                 $self->sockets->{ $socket->{name} }{counter} = $socket->{counter};
                 $self->debug( 'Socket messaged; ' . $$ . ' responding: ' . $socket->{name} );
 
-                $_->send({
-                    json => decode_json(
-                        $self->dq->sql('SELECT data FROM socket WHERE name = ?')
-                            ->run( $socket->{name} )->value
-                    ),
-                }) for ( values %{ $self->sockets->{ $socket->{name} }{transactions} } );
+                for ( values %{ $self->sockets->{ $socket->{name} }{transactions} } ) {
+                    my $json;
+                    try {
+                        $json = decode_json(
+                            $self->dq->sql('SELECT data FROM socket WHERE name = ?')
+                                ->run( $socket->{name} )->value
+                        );
+                    }
+                    catch ($e) {
+                    }
+
+                    $_->send({ json => $json });
+                }
             }
         }
     };
@@ -100,9 +106,12 @@ sub event_handler ($self) {
 
 sub message ( $self, $socket_name, $data ) {
     if ( $self->dq->sql('SELECT COUNT(*) FROM socket WHERE name = ?')->run($socket_name)->value ) {
+        $data = encode_json($data);
+        undef $data if ( $data eq '{}' or $data eq 'null' );
+
         $self->dq->sql(q{
             UPDATE socket SET counter = counter + 1, data = ? WHERE name = ?
-        })->run( encode_json($data), $socket_name );
+        })->run( $data, $socket_name );
 
         my $table = Proc::ProcessTable->new( enable_ttys => 0 )->table;
         my $ppid  = $self->ppid;
