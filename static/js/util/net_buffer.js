@@ -1,6 +1,6 @@
 'use strict';
-if ( ! window.js ) window.js = {};
-window.js.net_buffer = ( function () {
+if ( ! window.omniframe ) window.omniframe = {};
+window.omniframe.net_buffer = ( function () {
     let queue_name      = 'net_buffer_queue';
     let queue_callbacks = {};
 
@@ -96,7 +96,7 @@ window.js.net_buffer = ( function () {
 /*
 =head1 NAME
 
-window.js.net_buffer
+window.omniframe.net_buffer
 
 =head1 SYNOPSIS
 
@@ -110,7 +110,7 @@ window.js.net_buffer
 
 =head1 DESCRIPTION
 
-Loading this library will cause C<window.js.net_buffer> to be filled with an
+Loading this library will cause C<window.omniframe.net_buffer> to be filled with an
 object. This object manages a send buffer. When offline or over a slow network,
 you can send messages via this object, which will be placed in a buffer, and
 then each message will be sent until all are handled.

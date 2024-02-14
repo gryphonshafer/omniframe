@@ -1,11 +1,15 @@
 package Omniframe::Mojo::Socket;
 
 use exact 'Omniframe';
+use Mojo::File 'path';
 use Mojo::JSON qw( decode_json encode_json );
+use Mojo::Util 'trim';
+use Proc::ProcessTable;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Database Omniframe::Role::Logging );
 
 class_has sockets => {};
+class_has ppid    => undef;
 
 my $table_sql = q{CREATE TABLE IF NOT EXISTS socket (
     socket_id     INTEGER PRIMARY KEY,
@@ -30,18 +34,27 @@ sub setup ($self) {
     $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
 
     $SIG{URG} = sub {
-        for my $socket ( @{ $self->dq->sql('SELECT name, counter, data FROM socket')->run->all({}) } ) {
+        for my $socket ( @{ $self->dq->sql('SELECT name, counter FROM socket')->run->all({}) } ) {
             if (
-                $self->sockets->{ $socket->{name} } and
-                $self->sockets->{ $socket->{name} }{counter} and $socket->{counter} and
+                exists $self->sockets->{ $socket->{name} } and
+                defined $self->sockets->{ $socket->{name} }{counter} and defined $socket->{counter} and
                 $self->sockets->{ $socket->{name} }{counter} < $socket->{counter}
             ) {
                 $self->sockets->{ $socket->{name} }{counter} = $socket->{counter};
-                $self->debug( 'Socket ' . $socket->{name} . ' was messaged; ' . $$ . ' responding' );
+                $self->debug( 'Socket messaged; ' . $$ . ' responding: ' . $socket->{name} );
 
                 for ( values %{ $self->sockets->{ $socket->{name} }{transactions} } ) {
-                    try { $socket->{data} = decode_json( $socket->{data} ) } catch ($e) {}
-                    $_->send({ json => $socket->{data} });
+                    my $json;
+                    try {
+                        $json = decode_json(
+                            $self->dq->sql('SELECT data FROM socket WHERE name = ?')
+                                ->run( $socket->{name} )->value
+                        );
+                    }
+                    catch ($e) {
+                    }
+
+                    $_->send({ json => $json });
                 }
             }
         }
@@ -57,44 +70,86 @@ sub event_handler ($self) {
 
         if ( $command eq 'setup' ) {
             return $c->redirect_to('/') unless ( $c->tx->is_websocket );
-            $c->inactivity_timeout( $self->conf->get( qw( mojolicious ws_inactivity_timeout ) ) );
+
+            Mojo::IOLoop->stream( $c->tx->connection )->timeout(
+                $self->conf->get( qw( mojolicious ws_inactivity_timeout ) )
+            );
+
             $c->on( finish => sub { $c->socket( finish => $socket_name ) } );
 
-            $self->dq->sql('INSERT OR REPLACE INTO socket (name) VALUES (?)')->run($socket_name);
+            $self->dq->sql(q{
+                INSERT INTO socket (name) VALUES (?) ON CONFLICT(name) DO NOTHING
+            })->run($socket_name);
+
             $self->sockets->{$socket_name}{counter} = $self->dq->sql(q{
                 SELECT counter FROM socket WHERE name = ?
             })->run($socket_name)->value;
 
             $self->sockets->{$socket_name}{transactions}{ sprintf( '%s', $c->tx ) } = $c->tx;
-            $self->info("Socket $socket_name setup");
+            $self->info("Socket setup: $socket_name");
         }
         elsif ( $command eq 'message' ) {
-            $self->dq->sql(q{
-                UPDATE socket SET counter = counter + 1, data = ? WHERE name = ?
-            })->run(
-                ( ( ref $data ) ? encode_json($data) : $data ),
-                $socket_name,
-            );
-
-            my $ppid = getppid();
-            kill( 'URG', $_ ) for (
-                map { $_->[0] }
-                grep { $_->[1] == $ppid }
-                map {
-                    /(\d+)\D+(\d+)/;
-                    [ $1, $2 ];
-                }
-                grep { index( $_, $ppid ) != -1 }
-                `/bin/ps xa -o pid,ppid`
-            );
+            $self->message( $socket_name, $data );
         }
         elsif ( $command eq 'finish' ) {
             delete $self->sockets->{$socket_name}{transactions}{ sprintf( '%s', $c->tx ) };
-            $self->info("Socket $socket_name finished");
+            if ( not keys $self->sockets->{$socket_name}{transactions}->%* ) {
+                delete $self->sockets->{$socket_name};
+                $self->dq->sql('DELETE FROM socket WHERE name = ?')->run($socket_name);
+            }
+            $self->info("Socket finished: $socket_name");
         }
 
         return $c;
     };
+}
+
+sub message ( $self, $socket_name, $data ) {
+    if ( $self->dq->sql('SELECT COUNT(*) FROM socket WHERE name = ?')->run($socket_name)->value ) {
+        $data = encode_json($data);
+        undef $data if ( $data eq '{}' or $data eq 'null' );
+
+        $self->dq->sql(q{
+            UPDATE socket SET counter = counter + 1, data = ? WHERE name = ?
+        })->run( $data, $socket_name );
+
+        my $table = Proc::ProcessTable->new( enable_ttys => 0 )->table;
+        my $ppid  = $self->ppid;
+
+        unless ($ppid) {
+            my $pid_file = path(
+                $self->conf->get( qw( config_app root_dir ) ) . '/' .
+                $self->conf->get( qw( mojolicious config hypnotoad pid_file ) )
+            );
+            $ppid = trim( $pid_file->slurp ) if ( -r $pid_file );
+
+            unless ($ppid) {
+                my @pses  = grep { $_->uid == $< } @$table;
+                my @ppses =
+                    grep {
+                        defined;
+                    }
+                    map {
+                        my $this_ppid = $_->ppid;
+                        my ($parent_ps)   = grep { $_->pid  eq $this_ppid } @pses;
+                        my @children_pses = grep { $_->ppid eq $this_ppid } @pses;
+                        (
+                            $parent_ps and
+                            $parent_ps->cmndline eq $_->cmndline and
+                            $parent_ps->fname =~ /\.(psgi|pl|cgi)$/i and
+                            @children_pses == 1
+                        ) ? $parent_ps : undef;
+                    } @pses;
+
+                $ppid = $ppses[0]->pid if ( @ppses == 1 );
+            }
+
+            $self->ppid($ppid) if ($ppid);
+        }
+
+        kill( 'URG', $_ ) for ( map { $_->pid } grep { $_->ppid == $ppid } $table->@* );
+    }
+    return $self;
 }
 
 1;
@@ -185,6 +240,13 @@ data payload provided as the third argument:
     $c->socket( message => 'example_ws', { time => time() } );
 
 The "message" action is called automatically for you.
+
+=head2 message
+
+This method performs the work of processing a message (i.e. saving to the
+database and sending a signal to application children to read and send the data
+over open sockets). The method is available/exposed so that it can if desired
+be called from outside the Mojolicious application.
 
 =head1 CONFIGURATION
 

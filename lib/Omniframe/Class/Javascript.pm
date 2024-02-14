@@ -58,7 +58,8 @@ sub run ( $self, $module, $window = {} ) {
         );
 
     try {
-        $js->eval_module($module)->await;
+        $js->eval_module($module);
+        $js->await;
     }
     catch ($e) {
         croak( $self->deat($e) );

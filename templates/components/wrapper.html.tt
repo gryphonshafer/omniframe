@@ -14,7 +14,7 @@
         page.links        = [],
         page.rss          = '',
         page.js.defer     = [],
-        page.js.import    = {},
+        page.js.importmap = {},
         page.js.module    = [],
         page.js.inline    = [],
         page.js.post      = [],
@@ -138,12 +138,12 @@
 
         [% FOR file IN page.js.defer %][% PROCESS js file = file, type = 'defer' %][% END %]
 
-        [% IF page.js.import.keys.size %]
+        [% IF page.js.importmap.keys.size %]
             <script type="importmap">
                 {
                     "imports" : {
-                        [% FOR name IN page.js.import.keys -%]
-                            "[% name %]" : "[% PROCESS js_src file = page.js.import.$name %]"[%
+                        [% FOR name IN page.js.importmap.keys.sort -%]
+                            "[% name %]" : "[% PROCESS js_src file = page.js.importmap.$name %]"[%
                                 UNLESS loop.last %],[% END %]
                         [% END %]
                     }

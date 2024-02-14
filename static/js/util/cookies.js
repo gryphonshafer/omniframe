@@ -1,6 +1,6 @@
 'use strict';
-if ( ! window.js ) window.js = {};
-window.js.cookies = ( () => {
+if ( ! window.omniframe ) window.omniframe = {};
+window.omniframe.cookies = ( () => {
     let suffix = '; path=/; SameSite=Strict';
 
     return {
@@ -62,7 +62,7 @@ window.js.cookies = ( () => {
 /*
 =head1 NAME
 
-window.js.cookies
+window.omniframe.cookies
 
 =head1 SYNOPSIS
 
@@ -79,7 +79,7 @@ window.js.cookies
 
 =head1 DESCRIPTION
 
-Loading this library will cause C<window.js.cookies> to be filled with an
+Loading this library will cause C<window.omniframe.cookies> to be filled with an
 object useful for handling cookie data.
 
 =head1 METHODS

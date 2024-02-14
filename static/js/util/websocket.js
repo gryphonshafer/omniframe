@@ -1,48 +1,44 @@
 'use strict';
-if ( ! window.js ) window.js = {};
-window.js.websocket = ( function () {
+if ( ! window.omniframe ) window.omniframe = {};
+window.omniframe.websocket = ( function () {
     function restarting_websocket(settings) {
         this.settings = settings;
         this.ws       = undefined;
         this.restart  = true;
-        this.start    = function () {
-            let that = this;
-            that.ws  = new WebSocket(
+        this.start    = () => {
+            this.ws = new WebSocket(
                 ( ( window.location.protocol.match('s') ) ? 'wss' : 'ws' ) + '://' +
-                window.location.hostname +
-                ( ( window.location.port ) ? ':' + window.location.port : '' ) +
-                ( ( that.settings.path.indexOf('/') != 0 ) ? window.location.pathname + '/' : '' ) +
-                that.settings.path
+                    window.location.hostname +
+                    ( ( window.location.port ) ? ':' + window.location.port : '' ) +
+                    ( ( this.settings.path.indexOf('/') != 0 ) ? window.location.pathname + '/' : '' ) +
+                    this.settings.path
             );
 
-            that.ws.onopen = function (e) {
-                if ( that.settings.onopen ) that.settings.onopen( that, e );
+            this.ws.onopen = (event) => {
+                if ( this.settings.onopen ) this.settings.onopen( this, event );
             };
 
-            that.ws.onmessage = function (e) {
-                if ( that.settings.onmessage ) {
-                    that.settings.onmessage( JSON.parse( e.data ), that, e );
-                }
+            this.ws.onmessage = (event) => {
+                if ( this.settings.onmessage )
+                    this.settings.onmessage( JSON.parse( event.data ), this, event );
             };
 
-            that.ws.onclose = function (e) {
-                if ( that.settings.onclose ) that.settings.onclose( that, e );
-                if ( that.restart ) setTimeout( that.start, 1000 );
-            };
-
-            that.ws.onerror = function (error) {
-                if ( that.settings.onerror ) {
-                    that.settings.onerror( e, that );
+            this.ws.onerror = (error) => {
+                if ( this.settings.onerror ) {
+                    this.settings.onerror( this, error );
                 }
                 else {
-                    console.error(error);
+                    console.log(error);
                 }
+            };
 
-                if ( that.restart ) setTimeout( that.start, 1000 );
+            this.ws.onclose = (event) => {
+                if ( this.settings.onclose ) this.settings.onclose( this, event );
+                if ( this.restart ) setTimeout( this.start, 1000 );
             };
         };
 
-        this.stop = function () {
+        this.stop = () => {
             this.restart = false;
             this.ws.close();
         };
@@ -60,7 +56,7 @@ window.js.websocket = ( function () {
 /*
 =head1 NAME
 
-window.js.websocket
+window.omniframe.websocket
 
 =head1 SYNOPSIS
 
@@ -79,7 +75,7 @@ window.js.websocket
 
 =head1 DESCRIPTION
 
-Loading this library will cause C<window.js.websocket> to be filled with an
+Loading this library will cause C<window.omniframe.websocket> to be filled with an
 object that exposes the a C<start> method for creating and starting websockets
 that automatically restart on disconnect.
 

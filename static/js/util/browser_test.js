@@ -1,6 +1,6 @@
 'use strict';
-if ( ! window.js ) window.js = {};
-window.js.browser_test = ( function () {
+if ( ! window.omniframe ) window.omniframe = {};
+window.omniframe.browser_test = ( function () {
     var run_tests = function () {
         var results = new Array;
 
@@ -160,7 +160,7 @@ window.js.browser_test = ( function () {
 /*
 =head1 NAME
 
-window.js.browser_test
+window.omniframe.browser_test
 
 =head1 SYNOPSIS
 
@@ -189,7 +189,7 @@ window.js.browser_test
 =head1 DESCRIPTION
 
 Loading this library will run a lengthy set of Javascript functionality tests
-and ultimately will cause C<window.js.browser_test> to be filled with an
+and ultimately will cause C<window.omniframe.browser_test> to be filled with an
 object. This object contains the results of the tests in the C<results>
 attribute.
 
