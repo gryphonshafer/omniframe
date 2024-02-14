@@ -16,7 +16,7 @@ requires 'FindBin', '1.54';
 requires 'HTML::Packer', '2.10';
 requires 'IPC::Run3', '0.049';
 requires 'JavaScript::Packer', '2.11';
-requires 'JavaScript::QuickJS', '0.19';
+requires 'JavaScript::QuickJS', '0.20';
 requires 'Linux::Inotify2', '2.3';
 requires 'Log::Dispatch', '2.71';
 requires 'Log::Dispatch::Email::Mailer', '1.13';
