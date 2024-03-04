@@ -9,9 +9,20 @@ use YAML::XS;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Time );
 
-class_has default_shard => undef;
-class_has dq_shards     => undef;
-class_has dq_logs       => {};
+my $globals = {
+    default_shard => undef,
+    dq_shards     => undef,
+    dq_logs       => {},
+};
+
+sub _global_accessor ( $key, $value ) {
+    $globals->{$key} = ( ref $value eq 'SCALAR' and not defined $$value ) ? undef : $value if ($value);
+    return $globals->{$key};
+}
+
+sub default_shard ( $self, $data = undef ) { _global_accessor( 'default_shard', $data ) }
+sub dq_shards     ( $self, $data = undef ) { _global_accessor( 'dq_shards',     $data ) }
+sub dq_logs       ( $self, $data = undef ) { _global_accessor( 'dq_logs',       $data ) }
 
 sub dq ( $self, $shard = undef ) {
     my $return_shard = sub {
@@ -181,13 +192,12 @@ nothing happens.
 Finally, using the L<DBIx::Query> C<connect> method, the database object is
 instantiated, and then specific SQLite pragmas are set.
 
-=head1 CLASS ATTRIBUTES
+=head1 GLOBAL ATTRIBUTES
 
 =head2 default_shard
 
-This attribute represents what the object of this class will consider to be the
-default "shard" (which SQLite database) to return the singleton of if not
-specified in the C<dq> call.
+This attribute represents the default "shard" (which SQLite database) to return
+the singleton of if not specified in the C<dq> call.
 
 If not set explicitly and there's only a single database without a shard name,
 the C<default_shard> value will be set to "default_shard", which will be the
