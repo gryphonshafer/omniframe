@@ -50,11 +50,14 @@ sub setup ( $self, $app, $location ) {
                                 if ( $tree->{name} eq 'Omniframe' );
 
                             my $filename = $node;
-                            my ($type)   = ( $filename =~ s:^(lib|tools)/:: ) ? $1 : '';
+                            my ($type)   = ( $filename =~ s:^(lib)/:: ) ? $1 : '';
 
                             if ( $type eq 'lib' ) {
                                 $filename =~ s|/+|::|g;
                                 $filename =~ s|\.pm$||;
+                            }
+                            else {
+                                $filename = [ split( m|/+|, $filename ) ];
                             }
 
                             +{
@@ -344,7 +347,20 @@ __DATA__
             [% IF tree.files.size %]
                 <ul>
                     [% FOR file IN tree.files %]
-                        <li><a href="[% file.url %]">[% file.name %]</a></li>
+                        [%
+                            name = '';
+                            path = [];
+
+                            IF file.name.ref;
+                                name = file.name.pop;
+                                path = file.name;
+                            ELSE;
+                                name = file.name;
+                            END;
+                        %]
+                        <li>
+                            [% FOR part IN path %][% part %]/[% END %]<a href="[% file.url %]">[% name %]</a>
+                        </li>
                     [% END %]
                 </ul>
             [% END %]
