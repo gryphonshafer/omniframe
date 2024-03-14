@@ -114,7 +114,7 @@ sub exists ( $self, $scss ) {
             '_' . $scss . '.' . $_,
             $scss . '/index.' . $_,
             $scss . '/_index.' . $_;
-        } qw( css scss cass );
+        } qw( css scss sass );
 }
 
 1;
