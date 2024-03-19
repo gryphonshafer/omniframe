@@ -168,10 +168,12 @@ window.omniframe.browser_test
     <script type="text/javascript">
         window.addEventListener( 'load', () => {
 
-            if ( js.browser_test.check( 'ES6', 'Promise' ) ) console.log('Promise functionality available');
-            console.log( js.browser_test.test( 'ES6', 'Promise' ).pass );
+            if ( omniframe.browser_test.check( 'ES6', 'Promise' ) )
+                console.log('Promise functionality available');
 
-            let results = js.browser_test.results;
+            console.log( omniframe.browser_test.test( 'ES6', 'Promise' ).pass );
+
+            let results = omniframe.browser_test.results;
 
             document.writeln('<table>');
             for ( var i = 0; i < results.length; i++ ) {

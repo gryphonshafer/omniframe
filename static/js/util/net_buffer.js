@@ -103,8 +103,8 @@ window.omniframe.net_buffer
     <script type="text/javascript" src="/js/util/net_buffer.js" async></script>
     <script type="text/javascript">
         window.addEventListener( 'load', () => {
-            js.net_buffer.send( '/api', { answer: 1138 }, (data) => console.log(data) );
-            console.log( js.net_buffer.usage() );
+            omniframe.net_buffer.send( '/api', { answer: 1138 }, (data) => console.log(data) );
+            console.log( omniframe.net_buffer.usage() );
         } );
     </script>
 
