@@ -75,7 +75,7 @@ sub table (@input) {
 
 =head1 NAME
 
-Omniframe::Role::Table
+Omniframe::Util::Table
 
 =head1 SYNOPSIS
 
