@@ -8,7 +8,7 @@ can_ok( $obj, qw( setup teardown run ) );
 
 is(
     $obj->run(
-        'console.log( window.answer * 2 )',
+        'OCJS.out( OCJS.in.answer * 2 )',
         { answer => 42 },
     ),
     [[84]],

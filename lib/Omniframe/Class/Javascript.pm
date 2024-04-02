@@ -3,6 +3,7 @@ package Omniframe::Class::Javascript;
 use exact 'Omniframe';
 use JavaScript::QuickJS;
 use Mojo::File qw( path tempdir );
+use Mojo::JSON 'encode_json';
 
 with 'Omniframe::Role::Output';
 
@@ -33,7 +34,11 @@ sub setup ( $self, $basepath = $self->basepath, $importmap = $self->importmap ) 
 
     for ( values $self->mapping->%* ) {
         $_->{target}->dirname->make_path;
-        $_->{target}->spew( $self->_import_re( $_->{source}->slurp ) );
+        $_->{target}->spew(
+            $self->_import_re(
+                $_->{source}->slurp,
+            )
+        );
     }
 
     return $self;
@@ -44,17 +49,20 @@ sub teardown ($self) {
     return $self;
 }
 
-sub run ( $self, $module, $window = {} ) {
+sub run ( $self, $module, $in = undef ) {
     my $output;
 
     $module = path($module)->slurp if ( -f $module );
     $module = $self->_import_re($module) if ( $self->mapping->%* );
+    $module =~ s/^\s*(?!import\b)/\nOCJS.in = JSON.parse( OCJS.in );\n/im;
 
     my $js = JavaScript::QuickJS
         ->new
         ->set_globals(
-            console => { log => sub { push( @$output, \@_ ) } },
-            window  => $window // {},
+            OCJS => {
+                in  => encode_json($in),
+                out => sub { push( @$output, \@_ ) },
+            },
         );
 
     try {
@@ -62,22 +70,22 @@ sub run ( $self, $module, $window = {} ) {
         $js->await;
     }
     catch ($e) {
-        croak( $self->deat($e) );
+        croak( 'OCJS eval error: { ' . $self->deat($e) . ' }' );
     }
 
     return $output;
 }
 
-sub _import_re ( $self, $js ) {
-    $js =~ s/^(\s*import\b[^;]*?)("[^"]+"|'[^']+')(\s*;)/ $self->_import_remap( $1, $2, $3 ) /imge;
+sub _import_re ( $self, $js, $cb = sub {} ) {
+    my $_import_remap = sub ( $pre, $from, $post ) {
+        my $quote = substr( $from, 0, 1 );
+        $from = substr( $from, 1, length($from) - 2 );
+        return $pre . $quote . $self->mapping->{$from}{target}->to_string . $quote . $post;
+    };
+
+    $js =~ s/^(\s*import\b[^;]*?)("[^"]+"|'[^']+')(\s*;)/ $_import_remap->( $1, $2, $3 ) /imge;
     return $js;
 };
-
-sub _import_remap ( $self, $pre, $from, $post ) {
-    my $quote = substr( $from, 0, 1 );
-    $from = substr( $from, 1, length($from) - 2 );
-    return $pre . $quote . $self->mapping->{$from}{target}->to_string . $quote . $post;
-}
 
 1;
 
@@ -91,19 +99,19 @@ Omniframe::Class::Javascript
     use Omniframe::Class::Javascript;
 
     my $js = Omniframe::Class::Javascript->new(
-        basepath  => '../quizsage/static/js/',
+        basepath  => '../project/static/js/',
         importmap => {
             'modules/distribution' => 'path/to/modules/distribution/file',
         },
     );
 
-    my $output_0 = $js->run( 'test.js', { teams => 3 } );
+    my $output_0 = $js->run( 'test.js', { value => 3 } );
     my $output_1 = $js->run(
         q{
             import distribution from 'modules/distribution';
-            console.log( distribution( window.teams ) );
+            OCJS.out( distribution( OCJS.in.value ) );
         },
-        { teams => 3 },
+        { value => 3 },
     );
 
 =head1 DESCRIPTION
@@ -141,7 +149,7 @@ C<target> (a L<Mojo::File> of the target).
 This method internally calls C<setup>.
 
     my $js = Omniframe::Class::Javascript->new(
-        basepath  => '../quizsage/static/js/',
+        basepath  => '../project/static/js/',
         importmap => {
             'modules/distribution' => 'path/to/modules/distribution/file',
         },
@@ -162,18 +170,18 @@ object destruction.
 
 Accepts either a string representing a path to a file of Javascript or
 Javascript source itself. Optionally also accepts a hashref of data to be
-injected as the C<window> value inside the Javascript.
+injected as the C<OCJS.in> value inside the Javascript.
 
-    my $output_0 = $js->run( 'test.js', { teams => 3 } );
+    my $output_0 = $js->run( 'test.js', { value => 3 } );
     my $output_1 = $js->run(
         q{
             import distribution from 'modules/distribution';
-            console.log( distribution( window.teams ) );
+            OCJS.out( distribution( OCJS.in.value ) );
         },
-        { teams => 3 },
+        { value => 3 },
     );
 
-Any data in all calls to C<console.log> in the Javascript will be returned as
+Any data in all calls to C<OCJS.out> in the Javascript will be returned as
 output from C<run>.
 
 =head1 WITH ROLES
