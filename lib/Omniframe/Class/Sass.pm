@@ -20,11 +20,10 @@ has scss_src => sub ($self) {
     return join( "\n",
         map { "\@use '$_';" }
         map {
-            my $scss_file = join( '/', $root_dir, $_ );
-            $scss_file = join( '/', $root_dir, $omniframe, $_ )
-                if ( $omniframe and not $self->exists($scss_file) );
-
-            croak( 'Unable to locate SCSS file: ' . $scss_file ) if ( not $self->exists($scss_file) );
+            my ($scss_file) = $self->exists( join( '/', $root_dir, $_ ) );
+            ($scss_file) //= $self->exists( join( '/', $root_dir, $omniframe, $_ ) ) if ($omniframe);
+            croak( 'Unable to locate SCSS file: ' . $scss_file ) unless ($scss_file);
+            ( $scss_file = path($scss_file)->basename ) =~ s/\.[^.]+$//;
             $scss_file;
         }
         @$scss_src
