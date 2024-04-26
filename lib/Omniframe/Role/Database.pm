@@ -93,6 +93,7 @@ sub dq ( $self, $shard = undef ) {
                     my $log_file = $root_dir . '/' . $conf->{log}{$_};
                     open( my $fh, '>>', $log_file )
                         or croak( 'failed to open SQL log file for appending: ' . $log_file );
+                    $fh->autoflush(1);
                     $_ => $fh;
                 } keys %{ $conf->{log} } };
 
