@@ -2,7 +2,6 @@ package Omniframe::Control;
 
 use exact 'Omniframe', 'Mojolicious';
 use HTML::Packer;
-use JavaScript::Packer;
 use Mojo::File 'path';
 use Mojo::Loader qw( find_modules load_class );
 use MojoX::Log::Dispatch::Simple;
@@ -169,11 +168,14 @@ sub setup_config ($self) {
     return;
 }
 
-sub setup_packer ( $self, $opts = {} ) {
+sub setup_packer ($self) {
     my $packer = HTML::Packer->init;
 
     $self->hook( after_render => sub ( $c, $output, $format ) {
-        $packer->minify( $output, $opts ) if ( $format eq 'html' );
+        if ( $format eq 'html' and not $c->stash('skip_packer') ) {
+            my $opts = $self->conf->get( 'packer', $self->mode ) // {};
+            $packer->minify( $output, $opts ) unless ( $opts->{skip} );
+        }
         return;
     } );
 
@@ -376,8 +378,13 @@ configuration keys. See L</"CONFIGURATION"> below.
 =head2 setup_packer
 
 This method sets up dynamic HTML content output packing via use of
-L<HTML::Packer> and L<JavaScript::Packer>. The method will accept an optional
-hashref containing options for L<HTML::Packer>.
+L<HTML::Packer>. The application configuration can be set with hashes in either
+or both C<packer/development> and C<packer/production>, which if set will be
+passed as options hashes to L<HTML::Packer>.
+
+If either application configuration key includes a subkey C<skip> with a true
+value, then packing will be skipped entirely. If there's a stash value of
+C<skip_packer> set to a true value, then packing will be skipped entirely.
 
 =head2 setup_compressor
 
