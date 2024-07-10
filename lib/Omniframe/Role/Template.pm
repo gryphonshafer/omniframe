@@ -82,9 +82,17 @@ sub tt_settings ( $self, $type = 'web' ) {
     };
 }
 
-sub tt_html ( $self, $tt, $data = {}, $opts = {} ) {
+sub tt_html ( $self, $tt, $data = {}, $wrapper = undef ) {
+    $data->{c} //= $self->app;
+    $self->tt->service->{WRAPPER} = $wrapper if $wrapper;
     $self->tt->process( $tt, $data, \ my $output ) or croak $self->tt->error;
-    return $self->html_packer->minify( \$output, $opts );
+
+    unless ( $self->app->stash('skip_packer') ) {
+        my $opts = $self->conf->get( 'packer', $self->mode ) // {};
+        $self->html_packer->minify( \$output, $opts ) unless ( $opts->{skip} );
+    }
+
+    return $output;
 }
 
 1;
@@ -156,9 +164,14 @@ below. These types are: web and email. The default type is "web".
 =head2 tt_html
 
 This method accepts a template filename as a string scalar or a template itself
-as a scalar reference, then some optional data as a hashref, and then an
-optional hashref of options for L<HTML::Packer>. The method will then generate
-HTML and return it.
+as a scalar reference, then some optional data as a hashref. The method will
+generate HTML and return it.
+
+    $obj->tt_html(
+        \'THX [% thx%]',
+        { thx => 1138 },
+        [], # optionally provide an arrayref to set as WRAPPERS
+    );
 
 =head1 CONFIGURATION
 
