@@ -2,7 +2,14 @@ package Omniframe::Util::Text;
 
 use exact;
 
-exact->exportable('trim');
+exact->exportable( qw{ deat trim } );
+
+sub deat ($error) {
+    $error = reverse $error;
+    $error =~ s/^\s*\.\d+\s+enil\s+.+?\s+ta\s+//g;
+    $error = reverse $error;
+    return $error;
+}
 
 sub trim (@input) {
     for (@input) {
@@ -24,15 +31,24 @@ Omniframe::Role::Text
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Text 'trim';
+    use Omniframe::Util::Text qw( deat trim );
 
-    say trim(' Stuff   and things '); # prints "Stuff and things"
+    say deat('Something bad happened at /some/place.pl line 42.');
+    # prints "Something bad happened"
+
+    say trim(' Stuff   and things ');
+    # prints "Stuff and things"
 
 =head1 DESCRIPTION
 
 This package provides exportable utility functions for text.
 
 =head1 FUNCTION
+
+=head2 deat
+
+This method removes any "at /some/place.pl line 42." instances from the end of
+any string passed in.
 
 =head2 trim
 

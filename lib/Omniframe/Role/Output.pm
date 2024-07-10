@@ -2,6 +2,7 @@ package Omniframe::Role::Output;
 
 use exact -role;
 use Data::Printer return_value => 'dump', colored => 1;
+use Omniframe::Util::Text;
 
 sub dp ( $self, $params, @np_settings ) {
     return map {
@@ -12,10 +13,7 @@ sub dp ( $self, $params, @np_settings ) {
 }
 
 sub deat ( $self, $error ) {
-    $error = reverse $error;
-    $error =~ s/^\s*\.\d+\s+enil\s+.+?\s+ta\s+//g;
-    $error = reverse $error;
-    return $error;
+    return Omniframe::Util::Text::deat($error);
 }
 
 1;
