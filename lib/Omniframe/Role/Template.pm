@@ -9,12 +9,9 @@ BEGIN {
     Template->import;
 }
 
-use HTML::Packer;
-
 with 'Omniframe::Role::Conf';
 
-class_has tt_version  => time;
-class_has html_packer => HTML::Packer->init;
+class_has tt_version => time;
 
 my $tt;
 sub tt ( $self, $type = 'web' ) {
@@ -86,12 +83,6 @@ sub tt_html ( $self, $tt, $data = {}, $wrapper = undef ) {
     $data->{c} //= $self->app;
     $self->tt->service->{WRAPPER} = $wrapper if $wrapper;
     $self->tt->process( $tt, $data, \ my $output ) or croak $self->tt->error;
-
-    unless ( $self->app->stash('skip_packer') ) {
-        my $opts = $self->conf->get( 'packer', $self->mode ) // {};
-        $self->html_packer->minify( \$output, $opts ) unless ( $opts->{skip} );
-    }
-
     return $output;
 }
 
@@ -135,10 +126,6 @@ setup includes a number of TT vmethods, variables, and other TT settings.
 =head2 tt_version
 
 This class attribute defaults to the current timestamp.
-
-=head2 html_packer
-
-This class attribute contains an instantiated L<HTML::Packer> object.
 
 =head1 METHODS
 
