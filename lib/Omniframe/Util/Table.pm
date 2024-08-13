@@ -43,7 +43,7 @@ sub table (@input) {
     ];
 
     for ( my $i = 0; $i < $input->{rows}[0]->@*; $i++ ) {
-        $input->{align}[$i] //= ( $input->{rows}[0][$i] =~ /^[\d,.]+$/ ) ? 'r' : 'l';
+        $input->{align}[$i] //= ( ( $input->{rows}[0][$i] // '' ) =~ /^[\d,.]+$/ ) ? 'r' : 'l';
     }
 
     my $table = generate_table(
