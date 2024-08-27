@@ -11,6 +11,7 @@ requires 'DateTime::TimeZone::Olson', '0.007';
 requires 'Digest::Bcrypt', '1.212';
 requires 'Email::Mailer', '1.19';
 requires 'File::Copy';
+requires 'File::Glob';
 requires 'File::Copy::Recursive', '0.45';
 requires 'FindBin', '1.54';
 requires 'HTML::Packer', '2.10';

@@ -9,7 +9,9 @@ my $mock = mock 'DBIx::Query' => (
         data  => sub { { model_id => 42, thx => 1138 } },
         all   => sub { [ { model_id => 42, thx => 1138 }, { model_id => 43, thx => 1139 } ] },
         quote => sub { shift; DBD::SQLite::db->quote(@_) },
-        map { $_ => sub { $_[0] } } qw( _connect do get where run next update rm ),
+        map { $_ => sub { $_[0] } } qw(
+            _connect do get where run next update rm sqlite_enable_load_extension sqlite_load_extension
+        ),
     ],
 );
 

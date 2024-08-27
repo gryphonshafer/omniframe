@@ -13,6 +13,8 @@ default:
             foreign_keys: ON
             recursive_triggers: ON
             temp_store: MEMORY
+        # extensions:
+        #     - sqlean
     logging:
         log_file: local/app.log
         log_level:

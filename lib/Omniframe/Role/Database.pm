@@ -4,6 +4,7 @@ use exact -role;
 use App::Dest;
 use Cwd 'cwd';
 use DBIx::Query;
+use File::Glob ':bsd_glob';
 use Mojo::File 'path';
 use YAML::XS;
 
@@ -33,6 +34,7 @@ sub dq ( $self, $shard = undef ) {
     };
     return $return_shard->() if ( ref $self->dq_shards eq 'HASH' );
 
+    my $omniframe = $self->conf->get('omniframe');
     my $conf_full = $self->conf->get('database');
     my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
 
@@ -84,6 +86,31 @@ sub dq ( $self, $shard = undef ) {
                 undef,
                 $conf->{settings},
             );
+
+            if ( $conf->{extensions} and $conf->{extensions}->@* ) {
+                $dq->sqlite_enable_load_extension(1);
+                for my $extension ( $conf->{extensions}->@* ) {
+                    my ($library) = grep { -f $_ } map { bsd_glob( $_ . '.{so,dll}' ) } grep { defined } (
+                        ($omniframe) ? $omniframe . '/' . $root_dir . '/' . $extension : undef,
+                        $root_dir . '/' . $extension,
+                        '/usr/lib/sqlite3/' . $extension,
+                    );
+
+                    try {
+                        $dq->sqlite_load_extension( $library // '' );
+                    }
+                    catch ($e) {
+                        die join( ' ',
+                            'Failure of SQLite to load',
+                            '"' . $extension . '"',
+                            '--',
+                            ( $library // '>>undef<<' ),
+                            '--',
+                            $e,
+                        ) . "\n";
+                    }
+                }
+            }
 
             $dq->do("PRAGMA $_->[0] = $_->[1]")
                 for ( map { [ $_, $dq->quote( $conf->{pragmas}{$_} ) ] } keys %{ $conf->{pragmas} } );
