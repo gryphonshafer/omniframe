@@ -109,7 +109,7 @@ sub save ( $self, $data = undef ) {
             } or croak $self->deat($@);
         }
 
-        $self->load( $self->id );
+        $self->load( $self->id ) unless ( $self->active and not $self->data->{active} );
     }
 
     return $self;
@@ -117,7 +117,15 @@ sub save ( $self, $data = undef ) {
 
 sub delete ( $self, $search = undef ) {
     croak('Cannot delete() an object without loaded data') unless ( $self->id or $search );
-    $self->dq->rm( $self->name, $self->_setup_search($search) );
+
+    unless ( $self->active ) {
+        $self->dq->rm( $self->name, $self->_setup_search($search) );
+    }
+    else {
+        $self->data->{active} = 0;
+        $self->save;
+    }
+
     return $self;
 }
 
