@@ -12,10 +12,6 @@ sub dp ( $self, $params, @np_settings ) {
     } @$params;
 }
 
-sub deat ( $self, $error ) {
-    return Omniframe::Util::Text::deat($error);
-}
-
 1;
 
 =head1 NAME
@@ -32,7 +28,6 @@ Omniframe::Role::Output
 
     sub method ($self) {
         say $self->dp( { answer => 42 } );
-        say $self->deat('Something bad happened at /some/place.pl line 42.');
 
         return;
     }
@@ -49,8 +44,3 @@ This method accepts data along with an optional set of settings useful for
 L<Data::Printer>'s C<np> method.
 
     say $self->dp( { answer => 42 }, @np_settings );
-
-=head2 deat
-
-This method removes any "at /some/place.pl line 42." instances from the end of
-any string passed in.

@@ -30,7 +30,7 @@ sub create ( $self, $data ) {
     eval { $self->load(
         $self->dq->add( $self->name, $data ),
         'skip_active_in_search_setup',
-    ) } or croak $self->deat($@);
+    ) } or croak deat $@;
 
     return $self;
 }
@@ -106,7 +106,7 @@ sub save ( $self, $data = undef ) {
         if ( keys %$data ) {
             eval {
                 $self->dq->update( $self->name, $data, { $self->id_name => $self->id } );
-            } or croak $self->deat($@);
+            } or croak deat $@;
         }
 
         $self->load( $self->id ) unless ( $self->active and not $self->data->{active} );
