@@ -12,7 +12,7 @@ requires 'Digest::Bcrypt', '1.212';
 requires 'Email::Mailer', '1.21';
 requires 'File::Copy';
 requires 'File::Copy::Recursive', '0.45';
-requires 'File::Glob', '1.42';
+requires 'File::Glob';
 requires 'FindBin', '1.54';
 requires 'HTML::Packer', '2.10';
 requires 'IPC::Run3', '0.049';
