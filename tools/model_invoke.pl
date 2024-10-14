@@ -48,7 +48,7 @@ try {
     );
 }
 catch ($e) {
-    die deat $e;
+    die deat $e, "\n";
 }
 
 unless ( $opt->{silent} ) {

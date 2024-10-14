@@ -70,9 +70,7 @@ sub run ( $self, $module, $in = undef ) {
         $js->await;
     }
     catch ($e) {
-        $e = deat $e;
-        chomp $e;
-        croak( 'OCJS eval error: { ' . $e . ' }' );
+        croak 'OCJS eval error: { ' . deat($e) . ' }';
     }
 
     return $output;
