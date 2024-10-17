@@ -13,6 +13,7 @@
         page.style        = [],
         page.links        = [],
         page.rss          = '',
+        page.header_html  = '',
         page.js.defer     = [],
         page.js.importmap = {},
         page.js.module    = [],
@@ -110,6 +111,8 @@
         [% IF page.rss %]
             <link rel="alternate" type="application/rss+xml" title="RSS" href="[% page.rss %]">
         [% END %]
+
+        [% page.header_html %]
 
         [%
             BLOCK js_src;
