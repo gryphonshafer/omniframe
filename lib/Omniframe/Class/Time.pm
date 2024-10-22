@@ -65,7 +65,7 @@ sub format ( $self, $format = 'ansi' ) {
     return $self->datetime->strftime(
         ( lc($format) eq 'sqlite_min' ) ? '%F %H:%M' : '%F %T.%3N'
     ) . (
-        ( $self->datetime->time_zone->name eq 'UTC' ) ? 'Z' : do {
+        ( $self->datetime->time_zone->name eq 'UTC' ) ? '+00:00' : do {
             my $offset  = $self->datetime->offset;
             my $hours   = int( abs($offset) / 60 / 60 );
             my $minutes = int( ( abs($offset) - $hours * 60 * 60 ) / 60 );

@@ -12,8 +12,8 @@ can_ok( $time, qw(
 ok( lives { $time->set(1689093000.12345) }, 'set' ) or note $@;
 
 is( $time->format('ansi'), '2023-07-11 16:30:00', 'ansi' );
-is( $time->format('sqlite'), '2023-07-11 16:30:00.123Z', 'sqlite' );
-is( $time->format('sqlite_min'), '2023-07-11 16:30Z', 'sqlite_min' );
+is( $time->format('sqlite'), '2023-07-11 16:30:00.123+00:00', 'sqlite' );
+is( $time->format('sqlite_min'), '2023-07-11 16:30+00:00', 'sqlite_min' );
 is( $time->format('%a, %d %b %Y %H:%M:%S %z'), 'Tue, 11 Jul 2023 16:30:00 +0000', 'strftime' );
 
 is( $time->split('Tue Jul 11 09:30:00 2023'), {
