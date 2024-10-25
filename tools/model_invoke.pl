@@ -17,6 +17,7 @@ my $opt = options(
     'params|p=s{,}',
     'namespace|n=s',
     'silent|s',
+    'verbose|v',
     'output|o=s',
 );
 
@@ -48,7 +49,7 @@ try {
     );
 }
 catch ($e) {
-    die deat $e, "\n";
+    die '', ( $opt->{verbose} ) ? $e : ( deat $e, "\n" );
 }
 
 unless ( $opt->{silent} ) {
@@ -78,6 +79,7 @@ model_invoke.pl - Invoke model methods
         -p, --params    LIST OF PARAMS
         -n, --namespace MODEL_CLASS_NAMESPACE
         -s, --silent
+        -v, --verbose
         -o, --output    OUTPUT_TYPE # "data" (default), "YAML", or "JSON"
         -h, --help
         -m, --man
@@ -134,6 +136,11 @@ namespace. However, you can explicitly set it.
 =head2 -s, --silent
 
 Don't print any output. (Will still display errors if any.)
+
+=head2 -v, --verbose
+
+If there any errors, these will be printed with a line number (whereas otherwise
+by default the line numbers are surpressed).
 
 =head2 -o, --output
 
