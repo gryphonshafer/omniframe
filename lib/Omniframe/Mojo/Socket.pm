@@ -1,9 +1,7 @@
 package Omniframe::Mojo::Socket;
 
 use exact 'Omniframe';
-use Mojo::File 'path';
 use Mojo::JSON qw( decode_json encode_json );
-use Mojo::Util 'trim';
 use Proc::ProcessTable;
 
 with qw( Omniframe::Role::Conf Omniframe::Role::Database Omniframe::Role::Logging );
@@ -113,41 +111,13 @@ sub message ( $self, $socket_name, $data ) {
             UPDATE socket SET counter = counter + 1, data = ? WHERE name = ?
         })->run( $data, $socket_name );
 
-        my $table = Proc::ProcessTable->new( enable_ttys => 0 )->table;
-        my $ppid  = $self->ppid;
+        $self->ppid( getppid() ) unless ( $self->ppid );
 
-        unless ($ppid) {
-            my $pid_file = path(
-                $self->conf->get( qw( config_app root_dir ) ) . '/' .
-                $self->conf->get( qw( mojolicious config hypnotoad pid_file ) )
-            );
-            $ppid = trim( $pid_file->slurp ) if ( -r $pid_file );
-
-            unless ($ppid) {
-                my @pses  = grep { $_->uid == $< } @$table;
-                my @ppses =
-                    grep {
-                        defined;
-                    }
-                    map {
-                        my $this_ppid = $_->ppid;
-                        my ($parent_ps)   = grep { $_->pid  eq $this_ppid } @pses;
-                        my @children_pses = grep { $_->ppid eq $this_ppid } @pses;
-                        (
-                            $parent_ps and
-                            $parent_ps->cmndline eq $_->cmndline and
-                            $parent_ps->fname =~ /\.(psgi|pl|cgi)$/i and
-                            @children_pses == 1
-                        ) ? $parent_ps : undef;
-                    } @pses;
-
-                $ppid = $ppses[0]->pid if ( @ppses == 1 );
-            }
-
-            $self->ppid($ppid) if ($ppid);
-        }
-
-        kill( 'URG', $_ ) for ( map { $_->pid } grep { $_->ppid == $ppid } $table->@* );
+        kill( 'URG', $_ ) for (
+            map { $_->pid }
+            grep { $_->ppid == $self->ppid }
+            Proc::ProcessTable->new( enable_ttys => 0 )->table->@*
+        );
     }
     return $self;
 }
