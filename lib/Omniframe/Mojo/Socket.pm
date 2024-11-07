@@ -32,6 +32,7 @@ sub setup ($self) {
     $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
 
     $SIG{URG} = sub {
+        $self->debug("URG received by $$");
         for my $socket ( @{ $self->dq->sql('SELECT name, counter FROM socket')->run->all({}) } ) {
             if (
                 exists $self->sockets->{ $socket->{name} } and
@@ -112,12 +113,16 @@ sub message ( $self, $socket_name, $data ) {
         })->run( $data, $socket_name );
 
         $self->ppid( getppid() ) unless ( $self->ppid );
+        my $ppid = $self->ppid;
 
-        kill( 'URG', $_ ) for (
+        for (
             map { $_->pid }
-            grep { $_->ppid == $self->ppid }
+            grep { $_->ppid == $ppid }
             Proc::ProcessTable->new( enable_ttys => 0 )->table->@*
-        );
+        ) {
+            $self->debug("URG to be sent to $_ (parent: $ppid)");
+            kill( 'URG', $_ );
+        }
     }
     return $self;
 }
