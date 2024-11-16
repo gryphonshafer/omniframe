@@ -39,7 +39,7 @@ default:
     packer:
         production:
             remove_comments: 1
-            remove_newlines: 1
+            # remove_newlines: 1
     sass:
         scss_src: config/assets/sass/app
         compile_to: static/app.css
