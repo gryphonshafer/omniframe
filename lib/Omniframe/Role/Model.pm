@@ -129,7 +129,7 @@ sub delete ( $self, $search = undef ) {
     return $self;
 }
 
-sub every ( $self, $search = {} ) {
+sub every ( $self, $search = {}, $meta = {} ) {
     my @objects = map {
         my $data = {%$_};
         $data = $self->thaw($data) if ( $self->can('thaw') );
@@ -139,13 +139,13 @@ sub every ( $self, $search = {} ) {
             data               => $data,
             saved_data => $_,
         );
-    } @{ $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->all({}) };
+    } @{ $self->dq->get( $self->name )->where( $self->_setup_search( $search, $meta ) )->run->all({}) };
 
     return (wantarray) ? @objects : \@objects;
 }
 
-sub every_data ( $self, $search = {} ) {
-    my $objects = $self->dq->get( $self->name )->where( $self->_setup_search($search) )->run->all({});
+sub every_data ( $self, $search = {}, $meta = {} ) {
+    my $objects = $self->dq->get( $self->name, undef, $self->_setup_search($search), $meta )->run->all({});
 
     if ( $self->can('thaw') ) {
         $_ = $self->thaw($_) for (@$objects);
@@ -374,6 +374,10 @@ clause. The method will return either an array or arrayref based on context.
     my @hhgttg_rows = Model->new->every({ answer => 42 });
     my $hhgttg_rows = Model->new->every({ answer => 42 });
 
+You can optionally include a meta hashref:
+
+    my $rows = Model->new->every( { answer => 42 }, { limit => 10 } );
+
 =head2 every_data
 
 This method is the same as C<every> except that instead of returning an array or
@@ -382,6 +386,10 @@ representing one database record.
 
     my @hhgttg_rows = Model->new->every_data({ answer => 42 });
     my $hhgttg_rows = Model->new->every_data({ answer => 42 });
+
+You can optionally include a meta hashref:
+
+    my $rows = Model->new->every_data( { answer => 42 }, { limit => 10 } );
 
 =head2 data_merge
 
