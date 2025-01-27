@@ -6,10 +6,12 @@ use Cwd 'cwd';
 use DBIx::Query;
 use File::Glob ':bsd_glob';
 use Mojo::File 'path';
+use Omniframe::Class::Time;
 use YAML::XS;
 
-with qw( Omniframe::Role::Conf Omniframe::Role::Time );
+with 'Omniframe::Role::Conf';
 
+my $time    = Omniframe::Class::Time->new;
 my $globals = {
     default_shard => undef,
     dq_shards     => undef,
@@ -125,7 +127,7 @@ sub dq ( $self, $shard = undef ) {
                 } keys %{ $conf->{log} } };
 
                 $dq->sqlite_trace( sub ($sql) {
-                    my $time = ($self) ? $self->time->set->format('sqlite') : time;
+                    my $time = ($self) ? $time->set->format('sqlite') : time;
 
                     my $write = (
                         $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
@@ -294,6 +296,6 @@ to indicate which shard is the default.
             recursive_triggers: ON
             temp_store: MEMORY
 
-=head1 WITH ROLES
+=head1 WITH ROLE
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Time>.
+L<Omniframe::Role::Conf>.
