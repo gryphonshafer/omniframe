@@ -13,12 +13,12 @@ has time_zone => 'local';
 has locale    => 'en-US';
 has datetime  => undef;
 
-class_has formats => {
+class_has formats => sub { {
     ansi    => '%Y-%m-%d %T',
     log     => '%b %e %T %Y',
     common  => '%d/%b/%Y:%T %z',
     rfc822  => '%a, %d %b %Y %H:%M:%S %z',
-};
+} };
 
 class_has olson_zones => sub ($self) {
     my $olson_zones;

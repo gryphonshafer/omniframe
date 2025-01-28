@@ -10,7 +10,7 @@ with 'Omniframe::Role::Output';
 has basepath  => undef;
 has importmap => undef;
 has tempdir   => undef;
-has mapping   => {};
+has mapping   => sub { {} };
 
 sub new ( $self, @params ) {
     $self = $self->SUPER::new(@params);

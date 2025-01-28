@@ -6,7 +6,7 @@ use Proc::ProcessTable;
 
 with qw( Omniframe::Role::Database Omniframe::Role::Logging );
 
-class_has sockets => {};
+class_has sockets => sub { {} };
 class_has ppid    => undef;
 
 my $table_sql = q{CREATE TABLE IF NOT EXISTS socket (
