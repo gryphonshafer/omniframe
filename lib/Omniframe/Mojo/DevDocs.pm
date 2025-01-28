@@ -11,7 +11,7 @@ use Text::MultiMarkdown 'markdown';
 with 'Omniframe::Role::Conf';
 
 class_has template => join( '', <DATA> );
-class_has tt       => Template->new;
+class_has tt       => sub { Template->new };
 
 sub setup ( $self, $app, $location ) {
     $app->routes->any( $location . '*pathinfo' => { pathinfo => '' } => sub ($c) {
