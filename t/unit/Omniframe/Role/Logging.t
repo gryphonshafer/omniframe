@@ -5,7 +5,7 @@ use Omniframe;
 
 my $obj;
 ok( lives { $obj = Omniframe->with_roles('+Logging')->new }, q{with_roles('+Logging')->new} ) or note $@;
-DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Output Logging ) );
+DOES_ok( $obj, 'Omniframe::Role::Logging' );
 can_ok( $obj, qw(
     log_file log_level log_levels log_dispatch
     debug info notice warning warn error err critical crit alert emergency emerg

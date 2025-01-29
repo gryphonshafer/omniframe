@@ -1,9 +1,18 @@
-package Omniframe::Util::Table;
+package Omniframe::Util::Output;
 
 use exact;
+use Data::Printer return_value => 'dump', colored => 1;
 use Text::Table::Tiny 'generate_table';
 
-exact->exportable('table');
+exact->exportable( qw( dp table trim ) );
+
+sub dp ( $params, @np_settings ) {
+    return map {
+        ( ref $_         ) ? "\n" . np( $_, @np_settings ) . "\n" :
+        ( not defined $_ ) ? '>undef<'                            :
+        ( $_ eq ''       ) ? '""'                                 : $_
+    } @$params;
+}
 
 sub table (@input) {
     croak 'table() input missing or malformed' if ( not @input or @input > 1 and @input % 2 );
@@ -71,16 +80,30 @@ sub table (@input) {
     return join( "\n", @table );
 }
 
+sub trim (@input) {
+    for (@input) {
+        s/\s{2,}/ /g;
+        s/(^\s+|\s+$)//g;
+    }
+
+    return
+        (wantarray) ? @input :
+        ( @input > 1 ) ? \@input : $input[0];
+}
+
 1;
 
 =head1 NAME
 
-Omniframe::Util::Table
+Omniframe::Util::Output
 
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Table 'table';
+    use Omniframe::Util::Output qw( dp table trim );
+
+    say dp( { answer => 42 } );
+    # prints data
 
     # simple table no header
     say table( [ [ 1, 2, 3 ], [ 4, 5, 6 ] ] );
@@ -115,11 +138,21 @@ Omniframe::Util::Table
     # |    1138 | Thing 1  |        Stuff | 2048 |
     # |    1024 | Thing 16 |       Things |  16  |
 
+    say trim(' Stuff   and things ');
+    # prints "Stuff and things"
+
 =head1 DESCRIPTION
 
-This package provides exportable utility functions for tables.
+This package provides exportable utility functions for output.
 
-=head1 FUNCTION
+=head1 METHODS
+
+=head2 dp
+
+This method accepts data along with an optional set of settings useful for
+L<Data::Printer>'s C<np> method.
+
+    say $self->dp( { answer => 42 }, @np_settings );
 
 =head2 table
 
@@ -172,3 +205,8 @@ default, "ID" is the only acronym set.
 You can also optionally add a C<style>. If no style is set, the output is in
 Markdown table format. The 3 supported styles are: C<classic>, C<boxrule>, and
 C<norule>.
+
+=head2 trim
+
+This function accepts a string and returns that string after collapsing all
+multiple spaces within to single spaces and removing spacing on the edges.

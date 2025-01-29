@@ -5,8 +5,7 @@ use Log::Dispatch;
 use Mojo::File 'path';
 use Term::ANSIColor;
 use Omniframe::Class::Time;
-
-with 'Omniframe::Role::Output';
+use Omniframe::Util::Output 'dp';
 
 my $log_levels_definitions = {
     debug => 1,
@@ -132,18 +131,18 @@ class_has log_dispatch => sub ($self) {
     return $log_dispatch;
 };
 
-sub debug     ( $self, @params ) { return $self->log_dispatch->debug    ( $self->dp( \@params ) ) }
-sub info      ( $self, @params ) { return $self->log_dispatch->info     ( $self->dp( \@params ) ) }
-sub notice    ( $self, @params ) { return $self->log_dispatch->notice   ( $self->dp( \@params ) ) }
-sub warning   ( $self, @params ) { return $self->log_dispatch->warning  ( $self->dp( \@params ) ) }
-sub warn      ( $self, @params ) { return $self->log_dispatch->warn     ( $self->dp( \@params ) ) }
-sub error     ( $self, @params ) { return $self->log_dispatch->error    ( $self->dp( \@params ) ) }
-sub err       ( $self, @params ) { return $self->log_dispatch->err      ( $self->dp( \@params ) ) }
-sub critical  ( $self, @params ) { return $self->log_dispatch->critical ( $self->dp( \@params ) ) }
-sub crit      ( $self, @params ) { return $self->log_dispatch->crit     ( $self->dp( \@params ) ) }
-sub alert     ( $self, @params ) { return $self->log_dispatch->alert    ( $self->dp( \@params ) ) }
-sub emergency ( $self, @params ) { return $self->log_dispatch->emergency( $self->dp( \@params ) ) }
-sub emerg     ( $self, @params ) { return $self->log_dispatch->emerg    ( $self->dp( \@params ) ) }
+sub debug     ( $self, @params ) { return $self->log_dispatch->debug    ( dp( \@params ) ) }
+sub info      ( $self, @params ) { return $self->log_dispatch->info     ( dp( \@params ) ) }
+sub notice    ( $self, @params ) { return $self->log_dispatch->notice   ( dp( \@params ) ) }
+sub warning   ( $self, @params ) { return $self->log_dispatch->warning  ( dp( \@params ) ) }
+sub warn      ( $self, @params ) { return $self->log_dispatch->warn     ( dp( \@params ) ) }
+sub error     ( $self, @params ) { return $self->log_dispatch->error    ( dp( \@params ) ) }
+sub err       ( $self, @params ) { return $self->log_dispatch->err      ( dp( \@params ) ) }
+sub critical  ( $self, @params ) { return $self->log_dispatch->critical ( dp( \@params ) ) }
+sub crit      ( $self, @params ) { return $self->log_dispatch->crit     ( dp( \@params ) ) }
+sub alert     ( $self, @params ) { return $self->log_dispatch->alert    ( dp( \@params ) ) }
+sub emergency ( $self, @params ) { return $self->log_dispatch->emergency( dp( \@params ) ) }
+sub emerg     ( $self, @params ) { return $self->log_dispatch->emerg    ( dp( \@params ) ) }
 
 sub _log_cb_time (%msg) {
     return $time->set->format('log') . ' ' . $msg{message};
