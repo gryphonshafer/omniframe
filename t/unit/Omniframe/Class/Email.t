@@ -14,7 +14,7 @@ like(
 );
 ok( lives { $obj = Omniframe::Class::Email->new( type => 'example' ) }, 'new( type => $type )' ) or note $@;
 isa_ok( $obj, $_ ) for ( qw( Omniframe::Class::Email Omniframe ) );
-DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Template Logging ) );
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Logging Template ) );
 can_ok( $obj, qw( type subject html new send ) );
 ok( lives { $obj->send({}) }, 'send()' ) or note $@;
 

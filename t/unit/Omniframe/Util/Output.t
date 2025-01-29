@@ -1,8 +1,18 @@
 use Test2::V0;
 use exact;
-use Omniframe::Util::Table 'table';
+use Omniframe::Util::Output qw( dp table trim );
 
-imported_ok('table');
+imported_ok( qw( dp table trim ) );
+
+my @dp = dp( [ { answer => 42 } ] );
+is( @dp, 1, 'dp results count');
+like( $dp[0], qr/
+    \n
+    \e\[0;38;5;81m\{\e\[m\n[ ]*
+    [ ]*\e\[0;38;5;104manswer\e\[m\e\[0;38;5;81m[ ]*\e\[m\e\[0;38;
+    5;209m42\e\[m\n
+    \e\[0;38;5;81m\}\e\[m\n
+/x, 'dp content' );
 
 like( dies { table() },               qr/\binput missing or malformed\b/, 'input missing'   );
 like( dies { table( 1, 2, 3 ) },      qr/\binput missing or malformed\b/, 'input malformed' );
@@ -52,5 +62,7 @@ is(
     ),
     'table with header and defined columns',
 );
+
+is( trim(' Stuff   and things '), 'Stuff and things', 'trim' );
 
 done_testing;

@@ -5,8 +5,6 @@ use JavaScript::QuickJS;
 use Mojo::File qw( path tempdir );
 use Mojo::JSON 'encode_json';
 
-with 'Omniframe::Role::Output';
-
 has basepath  => undef;
 has importmap => undef;
 has tempdir   => undef;
@@ -183,10 +181,6 @@ injected as the C<OCJS.in> value inside the Javascript.
 
 Any data in all calls to C<OCJS.out> in the Javascript will be returned as
 output from C<run>.
-
-=head1 WITH ROLE
-
-L<Omniframe::Role::Output>.
 
 =head1 INHERITANCE
 

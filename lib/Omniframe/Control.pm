@@ -7,6 +7,7 @@ use Mojo::Loader qw( find_modules load_class );
 use MojoX::Log::Dispatch::Simple;
 use Omniframe::Class::Sass;
 use Omniframe::Class::Time;
+use Omniframe::Util::Output 'dp';
 
 with qw( Omniframe::Role::Logging Omniframe::Role::Template );
 
@@ -88,14 +89,14 @@ sub setup_mojo_logging ($self) {
             format_cb => sub ( $timestamp, $level, @messages ) { join( '',
                 $time->set($timestamp)->format('log'),
                 ' [' . uc($level) . '] ',
-                join( "\n", $self->dp( [ @messages, '' ], colored => 0 ) ),
+                join( "\n", dp( [ @messages, '' ], colored => 0 ) ),
             ) },
         )
     );
 
     for my $level ( @{ $self->log_levels } ) {
         $self->helper( $level => sub ( $c, @messages ) {
-            $self->log->$level($_) for ( $self->dp(\@messages) );
+            $self->log->$level($_) for ( dp(\@messages) );
             return;
         } );
     }
