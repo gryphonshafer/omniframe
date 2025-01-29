@@ -1,12 +1,10 @@
 package Omniframe::Role::Bcrypt;
 
-use exact -role;
+use exact -role, -conf;
 use Digest;
 
-with 'Omniframe::Role::Conf';
-
 sub bcrypt ( $self, $input ) {
-    return Digest->new( 'Bcrypt', %{ $self->conf->get('bcrypt') } )->add($input)->hexdigest;
+    return Digest->new( 'Bcrypt', %{ conf->get('bcrypt') } )->add($input)->hexdigest;
 }
 
 1;
@@ -42,12 +40,8 @@ result. It does this via L<Digest::Bcrypt>.
 =head1 CONFIGURATION
 
 The following is the default configuration, which should be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     bcrypt:
         cost: 5
         salt: 0123456789abcdef
-
-=head1 WITH ROLES
-
-L<Omniframe::Role::Conf>.

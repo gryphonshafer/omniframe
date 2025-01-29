@@ -1,15 +1,16 @@
 use Test2::V0;
+use exact -conf;
 use Omniframe;
 
 my $obj;
 ok( lives { $obj = Omniframe->with_roles('+Template')->new }, q{with_roles('+Template')->new} ) or note $@;
-DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Template ) );
+DOES_ok( $obj, 'Omniframe::Role::Template' );
 can_ok( $obj, qw( tt_version tt tt_settings tt_html ) );
 
-my $tt_conf = $obj->conf->get('template') || {};
+my $tt_conf = conf->get('template') || {};
 $tt_conf->{web} ||= {};
 $tt_conf->{web}{wrapper} = undef;
-$obj->conf->put( template => $tt_conf );
+conf->put( template => $tt_conf );
 
 is(
     $obj->tt_settings->{config}{VARIABLES}{version},

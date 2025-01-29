@@ -1,6 +1,6 @@
 package Omniframe::Control;
 
-use exact 'Omniframe', 'Mojolicious';
+use exact -conf, 'Omniframe', 'Mojolicious';
 use HTML::Packer;
 use Mojo::File 'path';
 use Mojo::Loader qw( find_modules load_class );
@@ -8,7 +8,7 @@ use MojoX::Log::Dispatch::Simple;
 use Omniframe::Class::Sass;
 use Omniframe::Class::Time;
 
-with qw( Omniframe::Role::Conf Omniframe::Role::Logging Omniframe::Role::Template );
+with qw( Omniframe::Role::Logging Omniframe::Role::Template );
 
 my $time = Omniframe::Class::Time->new;
 
@@ -106,8 +106,8 @@ sub setup_mojo_logging ($self) {
 
 sub setup_access_log ($self) {
     my $access_log = join( '/',
-        $self->conf->get( qw( config_app root_dir ) ),
-        $self->conf->get( qw( mojolicious access_log ) ),
+        conf->get( qw( config_app root_dir ) ),
+        conf->get( qw( mojolicious access_log ) ),
     );
 
     path($access_log)->dirname->make_path;
@@ -122,7 +122,7 @@ sub setup_access_log ($self) {
 }
 
 sub setup_templating ($self) {
-    push( @INC, $self->conf->get( 'config_app', 'root_dir' ) );
+    push( @INC, conf->get( 'config_app', 'root_dir' ) );
     $self->plugin( 'ToolkitRenderer', $self->tt_settings );
     $self->renderer->default_handler('tt');
 
@@ -131,17 +131,17 @@ sub setup_templating ($self) {
 }
 
 sub setup_static_paths ($self) {
-    my $root_dir = $self->conf->get( qw( config_app root_dir ) );
+    my $root_dir = conf->get( qw( config_app root_dir ) );
     my $paths    = [ map {
         join( '/', $root_dir, $_ )
-    } @{ $self->conf->get( qw( mojolicious static_paths ) ) } ];
+    } @{ conf->get( qw( mojolicious static_paths ) ) } ];
 
-    if ( my $omniframe = $self->conf->get('omniframe') ) {
+    if ( my $omniframe = conf->get('omniframe') ) {
         push(
             @$paths,
             map {
                 join( '/', $root_dir, $omniframe, $_ )
-            } @{ $self->conf->get( qw( mojolicious static_paths ) ) }
+            } @{ conf->get( qw( mojolicious static_paths ) ) }
         );
     }
 
@@ -152,17 +152,17 @@ sub setup_static_paths ($self) {
 }
 
 sub setup_config ($self) {
-    my $config = $self->conf->get( 'mojolicious', 'config' );
+    my $config = conf->get( 'mojolicious', 'config' );
 
     path( $config->{hypnotoad}{pid_file} )->dirname->make_path;
 
     $self->config($config);
 
-    my $secrets = $self->conf->get( 'mojolicious', 'secrets' );
+    my $secrets = conf->get( 'mojolicious', 'secrets' );
     $self->secrets($secrets) if ($secrets);
 
-    $self->sessions->cookie_name( $self->conf->get( qw( mojolicious session cookie_name ) ) );
-    $self->sessions->default_expiration( $self->conf->get( qw( mojolicious session default_expiration ) ) );
+    $self->sessions->cookie_name( conf->get( qw( mojolicious session cookie_name ) ) );
+    $self->sessions->default_expiration( conf->get( qw( mojolicious session default_expiration ) ) );
 
     $self->info('Setup config');
     return;
@@ -173,7 +173,7 @@ sub setup_packer ($self) {
 
     $self->hook( after_render => sub ( $c, $output, $format ) {
         if ( $format eq 'html' and not $c->stash('skip_packer') ) {
-            my $opts = $self->conf->get( 'packer', $self->mode ) // {};
+            my $opts = conf->get( 'packer', $self->mode ) // {};
             $packer->minify( $output, $opts ) unless ( $opts->{skip} );
         }
         return;
@@ -415,7 +415,7 @@ controller subclasses and load them using L<Mojo::Loader>.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     mojolicious:
         access_log: local/access.log
@@ -441,8 +441,7 @@ found (although not directly if the YAML will be made public).
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Logging>,
-L<Omniframe::Role::Template>.
+L<Omniframe::Role::Logging>, L<Omniframe::Role::Template>.
 
 =head1 INHERITANCE
 

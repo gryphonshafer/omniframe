@@ -15,7 +15,7 @@ sub setup {
 
     my $obj = Omniframe->with_roles('+Database')->new;
     $obj->dq->begin_work;
-    $obj->conf->put( qw( email active ) => 0 );
+    conf->put( qw( email active ) => 0 );
 
     ( my $username = lc( crypt( $$ . ( time + rand ), 'gs' ) ) ) =~ s/[^a-z0-9]+//g;
 
@@ -24,7 +24,7 @@ sub setup {
     );
 
     $stuff->{$$} = {
-        mojo  => Test2::MojoX->new( $obj->conf->get('mojo_app_lib') ),
+        mojo  => Test2::MojoX->new( conf->get('mojo_app_lib') ),
         obj   => $obj,
         dq    => $obj->dq,
         email => $username . '@example.com',

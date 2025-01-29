@@ -1,4 +1,5 @@
 use Test2::V0;
+use exact;
 use Omniframe::Util::Table 'table';
 
 imported_ok('table');

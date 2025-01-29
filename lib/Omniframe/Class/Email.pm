@@ -1,11 +1,11 @@
 package Omniframe::Class::Email;
 
-use exact 'Omniframe';
+use exact -conf, 'Omniframe';
 use Email::Mailer;
 use Mojo::File 'path';
 use Mojo::Util 'decode';
 
-with qw( Omniframe::Role::Template Omniframe::Role::Logging );
+with qw( Omniframe::Role::Logging Omniframe::Role::Template );
 
 has type    => undef;
 has subject => undef;
@@ -21,9 +21,9 @@ sub new ( $self, @params ) {
     croak('Failed new() because "type" must be defined') unless ( $self->type );
 
     $settings ||= $self->tt_settings('email');
-    $root_dir ||= $self->conf->get( 'config_app', 'root_dir' );
+    $root_dir ||= conf->get( 'config_app', 'root_dir' );
     $mailer   ||= Email::Mailer->new(
-        from    => $self->conf->get( qw( email from ) ),
+        from    => conf->get( qw( email from ) ),
         process => sub {
             my ( $template, $data ) = @_;
             my $content;
@@ -55,7 +55,7 @@ sub send ( $self, $data ) {
     $data->{subject} = \$self->subject;
     $data->{html}    = \$self->html;
 
-    return undef unless ( $self->conf->get( 'email', 'active' ) );
+    return undef unless ( conf->get( 'email', 'active' ) );
     $self->info(
         'Sent email "' . $self->type . '"' . (
             ( $data->{to} and not ref $data->{to} ) ? ' to: ' . $data->{to}               :
@@ -123,7 +123,7 @@ template processor.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     email:
         from: Example <example@example.com>
@@ -131,7 +131,7 @@ application's configuration file. See L<Omniframe::Role::Conf>.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Template>, L<Omniframe::Role::Logging>.
+L<Omniframe::Role::Logging>, L<Omniframe::Role::Template>.
 
 =head1 INHERITANCE
 

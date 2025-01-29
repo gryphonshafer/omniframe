@@ -1,19 +1,17 @@
 package Omniframe::Class::Sass;
 
-use exact 'Omniframe';
+use exact -conf, 'Omniframe';
 use IPC::Run3 'run3';
 use Mojo::File 'path';
-
-with 'Omniframe::Role::Conf';
 
 has mode => sub ($self) {
     return $ENV{MOJO_MODE} || $ENV{PLACK_ENV} || 'development';
 };
 
 has scss_src => sub ($self) {
-    my $omniframe = $self->conf->get('omniframe');
-    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
-    my $scss_src  = $self->conf->get( qw( sass scss_src ) );
+    my $omniframe = conf->get('omniframe');
+    my $root_dir  = conf->get( qw( config_app root_dir ) );
+    my $scss_src  = conf->get( qw( sass scss_src ) );
 
     $scss_src = [$scss_src] unless ( ref $scss_src eq 'ARRAY' );
 
@@ -32,8 +30,8 @@ has scss_src => sub ($self) {
 
 has compile_to => sub ($self) {
     my $compile_to = join( '/',
-        $self->conf->get( qw( config_app root_dir ) ),
-        $self->conf->get( qw( sass compile_to ) ),
+        conf->get( qw( config_app root_dir ) ),
+        conf->get( qw( sass compile_to ) ),
     );
 
     path($compile_to)->dirname->make_path;
@@ -54,7 +52,7 @@ sub build (
         return;
     }
 
-    my $scss_src = $self->conf->get( qw( sass scss_src ) );
+    my $scss_src = conf->get( qw( sass scss_src ) );
     $scss_src = [$scss_src] unless ( ref $scss_src eq 'ARRAY' );
 
     my ( $output, $error );
@@ -81,8 +79,8 @@ sub build (
                         } @$scss_src;
                     }
                     grep { $_ }
-                        $self->conf->get( qw( config_app root_dir ) ),
-                        $self->conf->get('omniframe')
+                        conf->get( qw( config_app root_dir ) ),
+                        conf->get('omniframe')
                 ),
             ],
             \$self->scss_src,
@@ -220,7 +218,7 @@ within Omniframe's scope.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     sass:
         scss_src: config/assets/sass/app
@@ -231,10 +229,6 @@ object on first call to C<build> or on first call to any of the attributes.
 
 Note that C<scss_src> can be either a scalar string or an arrayref of scalar
 strings. Each will be assumed to be the relative location of a file to import.
-
-=head1 WITH ROLES
-
-L<Omniframe::Role::Conf>.
 
 =head1 INHERITANCE
 

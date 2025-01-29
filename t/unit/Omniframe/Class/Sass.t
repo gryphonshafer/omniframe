@@ -7,7 +7,6 @@ my $mock = mock 'Mojo::File' => ( override => [ spew => sub { $spew = $_[1] } ] 
 
 ok( lives { $obj = Omniframe::Class::Sass->new }, 'new' ) or note $@;
 isa_ok( $obj, 'Omniframe::Class::Sass' );
-DOES_ok( $obj, 'Omniframe::Role::Conf' );
 can_ok( $obj, qw( mode scss_src compile_to report_cb error_cb build exists ) );
 
 ok( lives { $obj->build }, 'build succeeeds' ) or note $@;
@@ -20,7 +19,7 @@ isnt( substr( $spew, 0, 3 ), '/* ', 'CSS rendered not in dev mode' );
 ok(
     $obj->exists(
         join( '/',
-            $obj->conf->get( qw( config_app root_dir ) ),
+            conf->get( qw( config_app root_dir ) ),
             'config/assets/sass/base',
         )
     ),
@@ -30,7 +29,7 @@ ok( ( not $obj->exists('does_not_exist') ), 'exists() failure' );
 
 $obj->scss_src(
     join( '/',
-        $obj->conf->get( qw( config_app root_dir ) ),
+        conf->get( qw( config_app root_dir ) ),
         'cpanfile',
     )
 );

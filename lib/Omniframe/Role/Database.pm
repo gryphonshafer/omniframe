@@ -1,6 +1,6 @@
 package Omniframe::Role::Database;
 
-use exact -role;
+use exact -role, -conf;
 use App::Dest;
 use Cwd 'cwd';
 use DBIx::Query;
@@ -8,8 +8,6 @@ use File::Glob ':bsd_glob';
 use Mojo::File 'path';
 use Omniframe::Class::Time;
 use YAML::XS;
-
-with 'Omniframe::Role::Conf';
 
 my $time    = Omniframe::Class::Time->new;
 my $globals = {
@@ -36,9 +34,9 @@ sub dq ( $self, $shard = undef ) {
     };
     return $return_shard->() if ( ref $self->dq_shards eq 'HASH' );
 
-    my $omniframe = $self->conf->get('omniframe');
-    my $conf_full = $self->conf->get('database');
-    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
+    my $omniframe = conf->get('omniframe');
+    my $conf_full = conf->get('database');
+    my $root_dir  = conf->get( qw( config_app root_dir ) );
 
     my @shards;
     if ( $conf_full->{shards} ) {
@@ -250,7 +248,7 @@ L</"CONFIGURATION"> below.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     database:
         file: local/app.sqlite
@@ -295,7 +293,3 @@ to indicate which shard is the default.
             foreign_keys: ON
             recursive_triggers: ON
             temp_store: MEMORY
-
-=head1 WITH ROLE
-
-L<Omniframe::Role::Conf>.

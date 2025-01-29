@@ -1,4 +1,5 @@
 use Test2::V0;
+use exact;
 use Omniframe::Util::Text 'trim';
 
 imported_ok('trim');
