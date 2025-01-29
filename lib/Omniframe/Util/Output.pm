@@ -145,7 +145,7 @@ Omniframe::Util::Output
 
 This package provides exportable utility functions for output.
 
-=head1 METHODS
+=head1 FUNCTIONS
 
 =head2 dp
 
