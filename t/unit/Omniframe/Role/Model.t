@@ -1,7 +1,7 @@
 use Test2::V0;
-use exact;
 use DBD::SQLite;
 use DBIx::Query;
+use exact -conf;
 use Omniframe;
 
 my $mock = mock 'DBIx::Query' => (

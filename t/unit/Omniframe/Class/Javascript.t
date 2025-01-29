@@ -1,5 +1,5 @@
 use Test2::V0;
-use exact;
+use exact -conf;
 use Omniframe::Class::Javascript;
 
 my $obj;
