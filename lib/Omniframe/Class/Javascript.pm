@@ -184,7 +184,7 @@ injected as the C<OCJS.in> value inside the Javascript.
 Any data in all calls to C<OCJS.out> in the Javascript will be returned as
 output from C<run>.
 
-=head1 WITH ROLES
+=head1 WITH ROLE
 
 L<Omniframe::Role::Output>.
 

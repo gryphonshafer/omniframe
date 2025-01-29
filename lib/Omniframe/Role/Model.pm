@@ -4,7 +4,6 @@ use exact -role;
 use Mojo::Util 'decamelize';
 
 with qw(
-    Omniframe::Role::Conf
     Omniframe::Role::Database
     Omniframe::Role::Logging
 );
@@ -472,5 +471,4 @@ which will result in "active" playing no factor in the record search.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Database>,
-L<Omniframe::Role::Logging>.
+L<Omniframe::Role::Database>, L<Omniframe::Role::Logging>.

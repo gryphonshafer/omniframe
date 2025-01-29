@@ -1,6 +1,6 @@
 package Omniframe::Role::Template;
 
-use exact -role;
+use exact -role, -conf;
 use Mojo::File 'path';
 
 BEGIN {
@@ -8,8 +8,6 @@ BEGIN {
     require Template;
     Template->import;
 }
-
-with 'Omniframe::Role::Conf';
 
 class_has tt_version => time;
 
@@ -24,15 +22,15 @@ sub tt ( $self, $type = 'web' ) {
 }
 
 sub tt_settings ( $self, $type = 'web' ) {
-    my $root_dir = $self->conf->get( 'config_app', 'root_dir' );
-    my $tt_conf  = $self->conf->get('template');
+    my $root_dir = conf->get( 'config_app', 'root_dir' );
+    my $tt_conf  = conf->get('template');
 
     my $compile_dir = $root_dir . '/' . $tt_conf->{compile_dir};
     path($compile_dir)->dirname->make_path;
 
     my $include_path = [ map { $root_dir . '/' . $_ } @{ $tt_conf->{$type}{include_path} } ];
 
-    my $omniframe = $self->conf->get('omniframe');
+    my $omniframe = conf->get('omniframe');
     if ($omniframe) {
         $omniframe = path($omniframe)->to_abs;
         push( @$include_path, map { $omniframe . '/' . $_ } @{ $tt_conf->{$type}{include_path} } );
@@ -163,7 +161,7 @@ generate HTML and return it.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     template:
         compile_ext: .ttc
@@ -176,7 +174,3 @@ application's configuration file. See L<Omniframe::Role::Conf>.
         email:
             include_path:
                 - templates/emails
-
-=head1 WITH ROLES
-
-L<Omniframe::Role::Conf>.

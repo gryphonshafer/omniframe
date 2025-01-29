@@ -1,4 +1,5 @@
 use Test2::V0;
+use exact;
 use Omniframe;
 
 my $obj;

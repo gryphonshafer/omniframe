@@ -1,12 +1,12 @@
 package Omniframe::Role::Logging;
 
-use exact -role;
+use exact -role, -conf;
 use Log::Dispatch;
 use Mojo::File 'path';
 use Term::ANSIColor;
 use Omniframe::Class::Time;
 
-with qw( Omniframe::Role::Conf Omniframe::Role::Output );
+with 'Omniframe::Role::Output';
 
 my $log_levels_definitions = {
     debug => 1,
@@ -60,8 +60,8 @@ class_has log_file => sub ($self) {
     return $log_file if ($log_file);
 
     $log_file = join( '/',
-        $self->conf->get( qw( config_app root_dir ) ),
-        $self->conf->get( qw( logging log_file ) ),
+        conf->get( qw( config_app root_dir ) ),
+        conf->get( qw( logging log_file ) ),
     );
 
     path($log_file)->dirname->make_path;
@@ -71,7 +71,7 @@ class_has log_file => sub ($self) {
 class_has log_level => sub ($self) {
     return $log_level if ($log_level);
 
-    my $log_level_conf = $self->conf->get( 'logging', 'log_level' );
+    my $log_level_conf = conf->get( 'logging', 'log_level' );
 
     my $env = (
         ( $ENV{CONFIGAPPENV} || $ENV{MOJO_MODE} || $ENV{PLACK_ENV} || 'development' ) eq 'production'
@@ -118,13 +118,13 @@ class_has log_dispatch => sub ($self) {
                 'Email::Mailer',
                 name      => 'email',
                 min_level => _highest_level( $self->log_level, 'alert' ),
-                to        => $self->conf->get( 'logging', 'alert_email' ),
-                subject   => $self->conf->get( 'logging', 'alert_email_subject' ),
+                to        => conf->get( 'logging', 'alert_email' ),
+                subject   => conf->get( 'logging', 'alert_email_subject' ),
             ],
         ],
     );
 
-    my $filter = $self->conf->get( 'logging', 'filter' );
+    my $filter = conf->get( 'logging', 'filter' );
     $filter = ( ref $filter ) ? $filter : ($filter) ? [$filter] : [];
     $filter = [ map { $_->{name} } $log_dispatch->outputs ] if ( grep { lc($_) eq 'all' } @$filter );
 
@@ -286,7 +286,7 @@ the log level methods).
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     logging:
         log_file: local/app.log
@@ -299,9 +299,9 @@ application's configuration file. See L<Omniframe::Role::Conf>.
         filter:
             - email
 
-=head1 WITH ROLES
+=head1 WITH ROLE
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Output>.
+L<Omniframe::Role::Output>.
 
 =begin Pod::Coverage
 
