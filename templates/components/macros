@@ -1,0 +1,4 @@
+[% USE date %]
+
+[% MACRO time( time, format ) BLOCK -%]<time
+    datetime="[% time %]">[% date.format( time, format ) %]</time>[%- END %]
