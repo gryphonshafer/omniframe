@@ -1,9 +1,11 @@
-package Omniframe::Role::Bcrypt;
+package Omniframe::Util::Bcrypt;
 
-use exact -role, -conf;
+use exact -conf;
 use Digest;
 
-sub bcrypt ( $self, $input ) {
+exact->exportable('bcrypt');
+
+sub bcrypt ($input) {
     return Digest->new( 'Bcrypt', %{ conf->get('bcrypt') } )->add($input)->hexdigest;
 }
 
@@ -11,26 +13,20 @@ sub bcrypt ( $self, $input ) {
 
 =head1 NAME
 
-Omniframe::Role::Bcrypt
+Omniframe::Util::Bcrypt
 
 =head1 SYNOPSIS
 
-    package Package;
+    use exact;
+    use Omniframe::Util::Data 'bcrypt';
 
-    use exact -class;
-
-    with 'Omniframe::Role::Bcrypt';
-
-    sub method ( $self, $input ) {
-        return $self->bcrypt($input);
-    }
+    my $encrypted_input = bcrypt('input');
 
 =head1 DESCRIPTION
 
-This role provides a single C<bcrypt> method which expects a value and will
-return an encrypted output.
+This package provides an exportable utility function for encryption.
 
-=head1 METHOD
+=head1 FUNCTION
 
 =head2 bcrypt
 
