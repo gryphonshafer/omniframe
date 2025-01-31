@@ -8,6 +8,22 @@ has mode => sub ($self) {
     return $ENV{MOJO_MODE} || $ENV{PLACK_ENV} || 'development';
 };
 
+has sass_exe => sub ($self) {
+    my $exe = path( conf->get( qw( config_app root_dir ) ) )
+        ->child( conf->get( qw( sass exe ) ) );
+
+    return $exe if ( $exe and -f $exe );
+
+    $exe = path( conf->get( qw( config_app root_dir ) ) )
+        ->child( conf->get('omniframe') )
+        ->child( conf->get( qw( sass exe ) ) )
+        if ( conf->get('omniframe') );
+
+    return $exe if ( $exe and -f $exe );
+
+    return;
+};
+
 has scss_src => sub ($self) {
     my $omniframe = conf->get('omniframe');
     my $root_dir  = conf->get( qw( config_app root_dir ) );
@@ -47,6 +63,8 @@ sub build (
     $report_cb = $self->report_cb,
     $error_cb  = $self->error_cb,
 ) {
+    return unless ( $self->sass_exe and -f $self->sass_exe );
+
     unless ( $self->scss_src ) {
         $error_cb->('scss_src is empty');
         return;
@@ -59,7 +77,7 @@ sub build (
     try {
         run3(
             [
-                'sass',
+                $self->sass_exe,
                 '--stdin',
                 '--no-source-map',
                 '--no-error-css',
@@ -157,6 +175,10 @@ variable, then just defaulted to "development".
 
 This attribute is used to determine if the CSS output is human-readble with
 comments or tightly formed for production purposes.
+
+=head2 sass_exe
+
+This is the path to the Dart-Sass executable, typically C<sass>.
 
 =head2 scss_src
 

@@ -3,9 +3,9 @@ package Omniframe::Util::File;
 use exact -conf;
 use Mojo::File;
 
-exact->exportable('path');
+exact->exportable('opath');
 
-sub path (@parts) {
+sub opath (@parts) {
     my ($settings) = grep { ref $_ eq 'HASH' } @parts;
     $settings //= {};
     my $file = join( '/', grep { defined and not ref $_ } @parts );
@@ -36,24 +36,24 @@ Omniframe::Util::File
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::File 'path';
+    use Omniframe::Util::File 'opath';
 
-    my $css = path('static/build/app.css')->slurp;
+    my $css = opath('static/build/app.css')->slurp;
 
 =head1 DESCRIPTION
 
-This package provides exportable utility function C<path> that acts somewhat
+This package provides exportable utility function C<opath> that acts somewhat
 like C<path> from L<Mojo::File>.
 
 =head1 FUNCTIONS
 
-=head2 path
+=head2 opath
 
 This function acts like somewhat like the C<path> function from L<Mojo::File>,
 but behind the scenes, it does some L<Omniframe>-specific work by default.
 
-    my $css_0 = path('static/build/app.css')->slurp;
-    my $css_1 = path( qw( static build app.css ) )->slurp;
+    my $css_0 = opath('static/build/app.css')->slurp;
+    my $css_1 = opath( qw( static build app.css ) )->slurp;
 
 Globs are supported. If multiple files are matched, only the first (that's
 readable, unless C<no_check> is set) is used:
@@ -67,7 +67,7 @@ throw an error.
 
 The behavior can be modified by providing a settings hashref.
 
-    my $icon = path( qw( static favicon.ico ), { no_check => 1 } )->slurp;
+    my $icon = opath( qw( static favicon.ico ), { no_check => 1 } )->slurp;
 
 These are the supported keys:
 

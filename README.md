@@ -17,15 +17,6 @@ are available:
 - Perl (5.22 minimum version required; newest stable version recommended)
 - CPANminus (`cpanm`)
 
-### Development or Build Environments
-
-For a development or build environment, you will likely also want:
-
-- Dart Sass (`sass`)
-
-*(If you don't install Dart Sass, the build of sass code will be silently
-skipped.)*
-
 ### Project Clone and Module Dependencies
 
 Clone this project to a desired location. Then perform the following from
@@ -58,6 +49,11 @@ the dependent project's root. If you change where the relative location of the
 dependent project's root from this project's root, you will need to change the
 paths to `libs`, `omniframe`, and `preinclude` along with any other pointers
 to this projects resources.
+
+If the dependent project includes a `cpanfile` in its root directory, you will
+need to (from the project's root directory) run the following:
+
+    cpanm -n -f --installdeps .
 
 ### External Resources
 

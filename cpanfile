@@ -28,6 +28,7 @@ requires 'Mojolicious', '9.38';
 requires 'Mojolicious::Plugin::AccessLog', '0.010001';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '1.12';
+requires 'POSIX';
 requires 'Pod::Simple::HTML', '3.45';
 requires 'Proc::ProcessTable', '0.636';
 requires 'SQL::Abstract::Complete', '1.09';
