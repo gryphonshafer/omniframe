@@ -9,7 +9,7 @@
         page.viewport     = ( NOT page.no_defaults ) ? 1 : '',
         page.favicon      = ( NOT page.no_defaults ) ? '/favicon.ico' : '',
         page.font_awesome = 0,
-        page.css          = ( NOT page.no_defaults ) ? ['/app.css'] : [],
+        page.css          = ( NOT page.no_defaults ) ? ['/build/app.css'] : [],
         page.style        = [],
         page.links        = [],
         page.rss          = '',
@@ -49,7 +49,7 @@
                 vue_lib_name = vue_lib_name _ '.prod';
             END;
 
-            page.js.defer.push( 'vue/lib/' _ vue_lib_name );
+            page.js.defer.push( '/externals/vue/' _ vue_lib_name );
         END;
     END;
 
@@ -82,7 +82,7 @@
         [% IF page.font_awesome %]
             <link rel="stylesheet" type="text/css" href="[%
                 c.url_for(
-                    '/font-awesome/css/all' _ (
+                    '/externals/font_awesome/css/all' _ (
                         ( c.app.mode == 'production' ) ? '.min' : ''
                     ) _ '.css'
                 ).query( version => version )

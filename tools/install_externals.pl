@@ -22,6 +22,8 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
     my $dest_fonts = $target_path->child( $google_fonts->{dest}{fonts} );
     my $dest_css   = $target_path->child( $google_fonts->{dest}{css}   );
 
+    ( my $dest_fonts_rel_path = $google_fonts->{dest}{fonts} ) =~ s/^static\b/../;
+
     $dest_css->make_path;
 
     if ( my $fonts = $google_fonts->{fonts} ) {
@@ -70,7 +72,8 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                             (
                                 ( grep { $_ eq 'eot' } @{ $font_set->{formats} } ) ? (
                                     sprintf(
-                                        q\    src         : url('fonts/%s/%s-%s-%s-%s.%s');\,
+                                        q\    src         : url('\ . $dest_fonts_rel_path .
+                                            q\/%s/%s-%s-%s-%s.%s');\,
                                         $font_key,
                                         $font_key,
                                         $version,
@@ -83,7 +86,8 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                             q\    src         : local(''),\,
                             join( ",\n", map {
                                 sprintf(
-                                    ' ' x 8 . q\url('fonts/%s/%s-%s-%s-%s.%s') format('%s')\,
+                                    ' ' x 8 . q\url('\ . $dest_fonts_rel_path .
+                                        q\/%s/%s-%s-%s-%s.%s') format('%s')\,
                                     $font_key,
                                     $font_key,
                                     $version,
@@ -148,7 +152,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                     (
                         ( grep { $_ eq 'eot' } @{ $icons->{formats} || [] } ) ? (
                             sprintf(
-                                q\    src         : url('fonts/%s/%s-%s.%s');\,
+                                q\    src         : url('\ . $dest_fonts_rel_path . q\/%s/%s-%s.%s');\,
                                 $icon_key,
                                 $version,
                                 'eot',
@@ -158,7 +162,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                     q\    src         : local(''),\,
                     join( ",\n", map {
                         sprintf(
-                            ' ' x 8 . q\url('fonts/%s/%s-%s.%s') format('%s')\,
+                            ' ' x 8 . q\url('\ . $dest_fonts_rel_path . q\/%s/%s-%s.%s') format('%s')\,
                             'material-icons',
                             $icon_key,
                             $version,

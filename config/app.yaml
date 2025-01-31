@@ -42,7 +42,7 @@ default:
             # remove_newlines: 1
     sass:
         scss_src: config/assets/sass/app
-        compile_to: static/app.css
+        compile_to: static/build/app.css
     mojolicious:
         access_log: local/access.log
         static_paths:
