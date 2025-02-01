@@ -72,3 +72,13 @@ default:
     bcrypt:
         cost: 5
         salt: 0123456789abcdef
+    crypt:
+        pass: passphrase
+        salt: 0123456789a
+        pbkdf: pbkdf2
+        chain_mode: cbc
+        cipher: Cipher::AES
+        iter: 10000
+        hasher: HMACSHA2
+        header: salt
+        padding: standard
