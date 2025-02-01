@@ -18,7 +18,7 @@ Omniframe::Util::Bcrypt
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Data 'bcrypt';
+    use Omniframe::Util::Bcrypt 'bcrypt';
 
     my $encrypted_input = bcrypt('input');
 

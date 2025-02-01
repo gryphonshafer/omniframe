@@ -1,4 +1,5 @@
 requires 'App::Dest', '1.33';
+requires 'Crypt::CBC';
 requires 'Cwd', '3.75';
 requires 'DBD::SQLite', '1.74';
 requires 'DBIx::Query', '1.15';
@@ -20,6 +21,7 @@ requires 'JavaScript::QuickJS', '0.21';
 requires 'Linux::Inotify2', '2.3';
 requires 'Log::Dispatch', '2.71';
 requires 'Log::Dispatch::Email::Mailer', '1.13';
+requires 'MIME::Base64';
 requires 'MojoX::ConfigAppStart', '1.03';
 requires 'MojoX::Log::Dispatch::Simple', '1.12';
 requires 'Mojolicious', '9.38';
