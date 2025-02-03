@@ -97,12 +97,20 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                 },
             )->result->save_to( $save_to->to_string );
 
-            $save_to->dirname->list->grep( sub { $_->basename ne 'download.zip'} )->each('remove');
-
             my $target = $save_to->to_abs->dirname;
             print `unzip -o -a $save_to -d $target`;
-
             unlink( $save_to->to_string );
+
+            $save_to->to_abs->dirname->list->each( sub {
+                my ( $pre, $version, $post ) = $_->basename =~ /^(.+)\-v(\d+)\-(.+)$/;
+                $_->remove if (
+                    $save_to->to_abs->dirname->list->first( sub {
+                        my ( $this_pre, $this_version, $this_post ) = $_->basename =~ /^(.+)\-v(\d+)\-(.+)$/;
+                        $this_pre eq $pre and $this_post eq $post and $this_version > $version;
+                    } )
+                );
+            } );
+
             my ($version) = substr(
                 $save_to->to_abs->dirname->list->first->basename,
                 length $font_key,
@@ -195,10 +203,15 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
             $ua->transactor->name($ua_name);
         }
 
-        $save_to->list->grep( sub {
-            my $target = $_;
-            not grep { $_ eq $target } @targets;
-        } )->each('remove');
+        $save_to->list->each( sub {
+            my ( $pre, $version, $post ) = $_->basename =~ /^(.+)\-v(\d+)\.(.+)$/;
+            $_->remove if (
+                $save_to->list->first( sub {
+                    my ( $this_pre, $this_version, $this_post ) = $_->basename =~ /^(.+)\-v(\d+)\.(.+)$/;
+                    $this_pre eq $pre and $this_post eq $post and $this_version > $version;
+                } )
+            );
+        } );
 
         my %icons;
         $save_to->list->each( sub {
@@ -253,7 +266,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                 @font_style_css_blocks,
                 join(
                     "\n",
-                    qq\.$icons{$icon_key}{icon_name} {\,
+                    qq\.$icon_key {\,
                     qq\    font-family                : '$icons{$icon_key}{icon_name}';\,
                     q\    font-weight                : normal;\,
                     q\    font-style                 : normal;\,
