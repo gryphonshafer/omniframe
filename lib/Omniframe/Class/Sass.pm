@@ -9,13 +9,19 @@ has mode => sub ($self) {
 };
 
 has sass_exe => sub ($self) {
-    my $local = path( conf->get( qw( config_app root_dir ) ) )
+    my $exe = path( conf->get( qw( config_app root_dir ) ) )
         ->child( conf->get( qw( sass exe ) ) );
 
-    return $local if ( -f $local );
-    return path( conf->get( qw( config_app root_dir ) ) )
+    return $exe if ( $exe and -f $exe );
+
+    $exe = path( conf->get( qw( config_app root_dir ) ) )
         ->child( conf->get('omniframe') )
-        ->child( conf->get( qw( sass exe ) ) );
+        ->child( conf->get( qw( sass exe ) ) )
+        if ( conf->get('omniframe') );
+
+    return $exe if ( $exe and -f $exe );
+
+    return;
 };
 
 has scss_src => sub ($self) {
@@ -57,6 +63,8 @@ sub build (
     $report_cb = $self->report_cb,
     $error_cb  = $self->error_cb,
 ) {
+    return unless ( $self->sass_exe and -f $self->sass_exe );
+
     unless ( $self->scss_src ) {
         $error_cb->('scss_src is empty');
         return;
