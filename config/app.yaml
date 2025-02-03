@@ -43,6 +43,7 @@ default:
     sass:
         scss_src: config/assets/sass/app
         compile_to: static/build/app.css
+        exe: local/externals/dart_sass/sass
     mojolicious:
         access_log: local/access.log
         static_paths:
