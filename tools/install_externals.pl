@@ -101,14 +101,45 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
             print `unzip -o -a $save_to -d $target`;
             unlink( $save_to->to_string );
 
+            my $metadata = [];
             $save_to->to_abs->dirname->list->each( sub {
                 my ( $pre, $version, $post ) = $_->basename =~ /^(.+)\-v(\d+)\-(.+)$/;
-                $_->remove if (
+                if (
                     $save_to->to_abs->dirname->list->first( sub {
                         my ( $this_pre, $this_version, $this_post ) = $_->basename =~ /^(.+)\-v(\d+)\-(.+)$/;
                         $this_pre eq $pre and $this_post eq $post and $this_version > $version;
                     } )
-                );
+                ) {
+                    $_->remove;
+                }
+                else {
+                    my @parts = split( /[\-\.]/,
+                        substr(
+                            $_->basename,
+                            length($font_key) + 1 + length($version),
+                        )
+                    );
+
+                    my ( $format, $variant ) = ( pop @parts, pop @parts );
+                    shift @parts;
+
+                    my $style   = ( $variant =~ /italic/ ) ? 'italic' : 'normal';
+                    my $weight  = ( $variant =~ /(\d+)/  ) ? $1       : 400;
+
+                    push( @$metadata, {
+                        style   => $style,
+                        weight  => $weight,
+                        variant => $variant,
+                        subsets => join( '-', @parts ),
+                    } ) if (
+                        not @$metadata or
+                        $metadata->[-1]{style} ne $style or
+                        $metadata->[-1]{weight} ne $weight or
+                        $metadata->[-1]{variant} ne $variant
+                    );
+
+                    push( @{ $metadata->[-1]{formats} }, $format );
+                }
             } );
 
             my ($version) = substr(
@@ -118,56 +149,51 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
 
             my $css = $dest_css->child( $font_key . '.css' );
             $css->spew(
-                join( "\n\n",
-                    map {
-                        my $variant = $_;
-                        my $style   = ( $variant =~ /italic/ ) ? 'italic' : 'normal';
-                        my $weight  = ( $variant =~ /(\d+)/  ) ? $1       : 400;
-
-                        join(
-                            "\n",
-                            q\@font-face {\,
-                            qq\    font-family : '$font_name';\,
-                            qq\    font-style  : $style;\,
-                            qq\    font-weight : $weight;\,
-                            (
-                                ( grep { $_ eq 'eot' } @{ $font_set->{formats} } ) ? (
-                                    sprintf(
-                                        q\    src         : url('\ . $dest_fonts_rel_path .
-                                            q\/%s/%s-%s-%s-%s.%s');\,
-                                        $font_key,
-                                        $font_key,
-                                        $version,
-                                        join( '_', sort @{ $font_set->{subsets} } ),
-                                        $variant,
-                                        'eot',
-                                    )
-                                ) : ()
-                            ),
-                            q\    src         : local(''),\,
-                            join( ",\n", map {
+                join( "\n\n", map {
+                    my $this = $_;
+                    join(
+                        "\n",
+                        q\@font-face {\,
+                        qq\    font-family : '$font_name';\,
+                        qq\    font-style  : $this->{style};\,
+                        qq\    font-weight : $this->{weight};\,
+                        (
+                            ( grep { $_ eq 'eot' } map { $_->{format} } @{ $this->{src} } ) ? (
                                 sprintf(
-                                    ' ' x 8 . q\url('\ . $dest_fonts_rel_path .
-                                        q\/%s/%s-%s-%s-%s.%s') format('%s')\,
+                                    q\    src         : url('\ . $dest_fonts_rel_path .
+                                        q\/%s/%s-%s-%s-%s.%s');\,
                                     $font_key,
                                     $font_key,
                                     $version,
-                                    join( '_', sort @{ $font_set->{subsets} } ),
-                                    $variant,
-                                    (
-                                        ( $_ eq 'eot' ) ? $_ . '?#iefix'              :
-                                        ( $_ eq 'svg' ) ? $_ . '#' . $font_name_camel : $_
-                                    ),
-                                    (
-                                        ( $_ eq 'eot' ) ? 'embedded-opentype' :
-                                        ( $_ eq 'ttf' ) ? 'truetype'          : $_
-                                    ),
+                                    $this->{subsets},
+                                    $this->{variant},
+                                    'eot',
                                 )
-                            } @{ $font_set->{formats} } ) . ';',
-                            q\}\,
-                        );
-                    } @{ $font_set->{variants} }
-                ) . "\n"
+                            ) : ()
+                        ),
+                        q\    src         : local(''),\,
+                        join( ",\n", map {
+                            sprintf(
+                                ' ' x 8 . q\url('\ . $dest_fonts_rel_path .
+                                    q\/%s/%s-%s-%s-%s.%s') format('%s')\,
+                                $font_key,
+                                $font_key,
+                                $version,
+                                $this->{subsets},
+                                $this->{variant},
+                                (
+                                    ( $_ eq 'eot' ) ? $_ . '?#iefix'              :
+                                    ( $_ eq 'svg' ) ? $_ . '#' . $font_name_camel : $_
+                                ),
+                                (
+                                    ( $_ eq 'eot' ) ? 'embedded-opentype' :
+                                    ( $_ eq 'ttf' ) ? 'truetype'          : $_
+                                ),
+                            )
+                        } @{ $this->{formats} } ) . ';',
+                        q\}\,
+                    );
+                } @$metadata ) . "\n"
             );
             say $css;
         }
