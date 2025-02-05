@@ -20,7 +20,7 @@ sub opath (@parts) {
     $settings->{paths} = [ reverse @{ $settings->{paths} } ]
         if ( $settings->{omniframe} and not $settings->{paths} );
 
-    for my $path ( map { $_ . '/' . $file } $settings->{paths}->@* ) {
+    for my $path ( grep { $_ } map { glob( $_ . '/' . $file ) } $settings->{paths}->@* ) {
         return Mojo::File->new($path) if ( $settings->{no_check} or -r $path );
     }
 
@@ -54,6 +54,11 @@ but behind the scenes, it does some L<Omniframe>-specific work by default.
 
     my $css_0 = opath('static/build/app.css')->slurp;
     my $css_1 = opath( qw( static build app.css ) )->slurp;
+
+Globs are supported. If multiple files are matched, only the first (that's
+readable, unless C<no_check> is set) is used:
+
+    my $css_2 = opath('static/*/app.css')->slurp;
 
 It will first check for the file to exist and be readable relative to the
 project's root directory. If it doesn't find the file there, it will look under
