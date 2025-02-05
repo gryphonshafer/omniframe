@@ -8,7 +8,7 @@ exact->exportable('opath');
 sub opath (@parts) {
     my ($settings) = grep { ref $_ eq 'HASH' } @parts;
     $settings //= {};
-    my $file = join( '/', grep { not ref $_ } @parts );
+    my $file = join( '/', grep { defined and not ref $_ } @parts );
 
     $settings->{paths} //= [ grep { defined }
         conf->get( qw( config_app root_dir ) ),
@@ -21,10 +21,10 @@ sub opath (@parts) {
         if ( $settings->{omniframe} and not $settings->{paths} );
 
     for my $path ( grep { $_ } map { glob( $_ . '/' . $file ) } $settings->{paths}->@* ) {
-        return Mojo::File->new($path) if ( $settings->{no_check} or -r $path );
+        return Mojo::File->new($path) if ( $settings->{no_check} or -f $path and -r $path );
     }
 
-    croak "File does not exist or is not readable: $file";
+    croak qq{File does not exist or is not readable: "$file"};
 }
 
 1;

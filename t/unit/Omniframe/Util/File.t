@@ -16,7 +16,7 @@ ok( ! -r $path, 'file unreadable' );
 
 like(
     dies { opath('file/does/not/exist') },
-    qr|File does not exist or is not readable: file/does/not/exist|,
+    qr|File does not exist or is not readable: "file/does/not/exist"|,
     'bad file',
 );
 
