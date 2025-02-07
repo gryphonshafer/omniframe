@@ -2,6 +2,7 @@ package Omniframe::Role::Template;
 
 use exact -role, -conf;
 use Mojo::File 'path';
+use Mojo::JSON 'encode_json';
 
 BEGIN {
     local $SIG{__WARN__} = sub {};
@@ -73,6 +74,10 @@ sub tt_settings ( $self, $type = 'web' ) {
             $context->define_vmethod( 'list', 'randomize', sub {
                 return map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @{ $_[0] };
             } );
+
+            $context->define_vmethod( $_, 'json', sub {
+                return encode_json( $_[0] );
+            } ) for ( qw( scalar list hash ) );
         },
     };
 }

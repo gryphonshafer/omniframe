@@ -80,3 +80,28 @@ a:hover {
 a:active {
     color : $a_active_color;
 }
+
+dialog.memo {
+    position     : absolute;
+    top          : 0;
+    z-index      : 1000;
+    margin       : 2em auto 0 auto;
+    padding      : 1em;
+    outline      : none;
+    border       : 1px solid;
+    max-width    : calc( 100vw - 6em );
+    border-radius: 0.5em;
+    border-color : $form_borders;
+
+    p:first-child {
+        margin-top: 0;
+    }
+
+    form {
+        text-align: right;
+
+        button {
+            margin-left: 0.5em;
+        }
+    }
+}

@@ -32,6 +32,12 @@
         PROCESS $template;
     END;
 
+    memo = memo || c.session.flash.memo;
+    IF memo;
+        page.js.defer.push('util/memo');
+        page.js.inline.push( 'window.addEventListener( "load", () => omniframe.memo( ' _ memo.json _ ' ) )' );
+    END;
+
     IF NOT page.vue AND ( page.demi OR page.pinia OR page.vue_router );
         page.vue = 1;
     END;
@@ -133,9 +139,10 @@
         %]
 
         [% BLOCK js %]
-            [% UNLESS js_seen.$file %]
-                <script [% type %] src="[% PROCESS js_src file = file %]"></script>
-                [% js_seen.$file = ( js_seen.$file || 0 ) + 1 %]
+            [% js_src_file = PROCESS js_src file = file %]
+            [% UNLESS js_seen.$js_src_file %]
+                <script [% type %] src="[% js_src_file %]"></script>
+                [% js_seen.$js_src_file = ( js_seen.$js_src_file || 0 ) + 1 %]
             [% END %]
         [% END %]
 
@@ -157,7 +164,7 @@
                 // Firefox can throw a "bare specifier" error erroneously when
                 // using an importmap on a page that's opened without focus.
                 // Thus, page reload on focus after that error.
-                window.addEventListener( 'error', (e) => {
+                window.addEventListener( 'error', e => {
                     if (
                         navigator.appCodeName == 'Mozilla' &&
                         e.message.indexOf('was a bare specifier, but was not remapped to anything') != -1
