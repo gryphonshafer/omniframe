@@ -1,85 +1,80 @@
 'use strict';
 if ( ! window.omniframe ) window.omniframe = {};
 ( () => {
-    const dialog = window.document.createElement('dialog');
-    dialog.id = 'omniframe_memo';
+    function args_to_inputs(...args) {
+        if ( args.length == 0 ) return;
 
-    const div = document.createElement('div');
-    dialog.appendChild(div);
-
-    const form = document.createElement('form');
-    form.setAttribute( 'method', 'dialog' );
-    dialog.appendChild(form);
-
-    window.addEventListener( 'load', () => window.document.body.appendChild(dialog) );
-
-    window.omniframe.memo = (...args) => {
-        if ( document.readyState === 'complete' ) {
-            if ( ! window.document.querySelector('dialog#omniframe_memo') )
-                window.document.body.appendChild(dialog);
-
-            if ( args.length == 0 ) return;
-
-            const inputs = {};
-            if ( args.length == 1 && typeof args[0] == 'object' && ! Array.isArray( args[0] ) ) {
-                Object.assign( inputs, args[0] );
-                [ 'message', 'class', 'option', 'callback' ].forEach( singular => {
-                    const plural = singular + ( ( singular[ singular.length - 1 ] == 's') ? 'es' : 's' );
-                    if ( inputs.hasOwnProperty(singular) ) {
-                        inputs[plural] = inputs[singular];
-                        delete inputs[singular];
-                    }
-                } );
-            }
-            else {
-                const keys = [ 'messages', 'classes', 'options', 'callbacks' ];
-                while ( args.length > 0 ) inputs[ keys.shift() ] = args.shift();
-            }
-
-            inputs.options ||= 'OK';
-            [ 'messages', 'classes', 'options', 'callbacks' ].forEach( key => {
-                if ( ! Array.isArray( inputs[key] ) ) inputs[key] = [ inputs[key] ];
-            } );
-
-            [ div, form ].forEach( element => {
-                while ( element.firstChild ) element.removeChild( element.firstChild );
-            } );
-
-            inputs.messages.forEach( message => {
-                if ( typeof message == 'string' ) {
-                    const p = document.createElement('p');
-                    if ( ! message.match('[.,?:;!]$') ) message += '.';
-                    p.innerHTML = message;
-                    div.appendChild(p);
-                }
-                else if ( Array.isArray(message) ) {
-                    const ul = document.createElement('ul');
-                    message.forEach( item => {
-                        const li = document.createElement('li');
-                        li.innerHTML = item;
-                        ul.appendChild(li);
-                    } );
-                    div.appendChild(ul);
+        const inputs = {};
+        if ( args.length == 1 && typeof args[0] == 'object' && ! Array.isArray( args[0] ) ) {
+            Object.assign( inputs, args[0] );
+            [ 'message', 'class', 'option', 'callback' ].forEach( singular => {
+                const plural = singular + ( ( singular[ singular.length - 1 ] == 's') ? 'es' : 's' );
+                if ( inputs.hasOwnProperty(singular) ) {
+                    inputs[plural] = inputs[singular];
+                    delete inputs[singular];
                 }
             } );
-
-            inputs.options.forEach( option => {
-                const button = document.createElement('button');
-                button.innerHTML = option;
-                if ( inputs.callbacks && inputs.callbacks.length ) button.onclick = inputs.callbacks.shift();
-                form.appendChild(button);
-            } );
-
-            dialog.className = '';
-            dialog.classList.add( ...inputs.classes );
-
-            dialog.autofocus = true;
-            dialog.show();
         }
         else {
+            const keys = [ 'messages', 'classes', 'options', 'callbacks' ];
+            while ( args.length > 0 ) inputs[ keys.shift() ] = args.shift();
+        }
+
+        inputs.options ||= 'OK';
+        [ 'messages', 'classes', 'options', 'callbacks' ].forEach( key => {
+            if ( ! Array.isArray( inputs[key] ) ) inputs[key] = [ inputs[key] ];
+        } );
+
+        return inputs;
+    }
+
+    function build_dialog(inputs) {
+        const dialog = window.document.createElement('dialog');
+        const div    = window.document.createElement('div');
+        const form   = window.document.createElement('form');
+
+        [ 'memo', ...inputs.classes ].filter( name => name ).forEach( name => dialog.classList.add(name) );
+        form.setAttribute( 'method', 'dialog' );
+        [ div, form ].forEach( element => dialog.appendChild(element) );
+
+        inputs.messages.forEach( message => {
+            if ( typeof message == 'string' ) {
+                const p = document.createElement('p');
+                if ( ! message.match('[.,?:;!]$') ) message += '.';
+                p.innerHTML = message;
+                div.appendChild(p);
+            }
+            else if ( Array.isArray(message) ) {
+                const ul = document.createElement('ul');
+                message.forEach( item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = item;
+                    ul.appendChild(li);
+                } );
+                div.appendChild(ul);
+            }
+        } );
+
+        inputs.options.forEach( option => {
+            const button = document.createElement('button');
+            button.innerHTML = option;
+            if ( inputs.callbacks && inputs.callbacks.length ) button.onclick = inputs.callbacks.shift();
+            form.appendChild(button);
+        } );
+
+        window.document.body.appendChild(dialog);
+        dialog.autofocus = true;
+        dialog.show();
+    }
+
+    window.omniframe.memo = (...args) => {
+        if ( document.readyState !== 'complete' ) {
             window.addEventListener( 'load', () => {
-                window.omniframe.memo(...args);
+                build_dialog( args_to_inputs(...args) );
             } );
+        }
+        else {
+            build_dialog( args_to_inputs(...args) );
         }
     };
 } )();
