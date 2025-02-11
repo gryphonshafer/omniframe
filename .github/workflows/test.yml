@@ -11,6 +11,7 @@ jobs:
       image: perldocker/perl-tester:5.${{ matrix.perl-version }}
     steps:
       - uses: actions/checkout@v3
+      - run: cpanm https://backpan.perl.org/authors/id/T/TO/TONYC/Imager-1.026.tar.gz
       - run: cpanm --with-develop --with-all-features --installdeps .
         env:
           PERL_CPANM_OPT: --from https://cpan.metacpan.org/ --notest --force --skip-satisfied

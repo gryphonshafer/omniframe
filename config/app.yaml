@@ -2,23 +2,23 @@
 default:
     mojo_app_lib: Omniframe::Control
     database:
-        file: local/app.sqlite
+        file    : local/app.sqlite
         settings:
             sqlite_see_if_its_a_number: 1
-            sqlite_defensive: 1
-            RaiseError: 1
-            PrintError: 0
+            sqlite_defensive          : 1
+            RaiseError                : 1
+            PrintError                : 0
         pragmas:
-            encoding: UTF-8
-            foreign_keys: ON
+            encoding          : UTF-8
+            foreign_keys      : ON
             recursive_triggers: ON
-            temp_store: MEMORY
+            temp_store        : MEMORY
         # extensions:
         #     - sqlean
     logging:
-        log_file: local/app.log
+        log_file : local/app.log
         log_level:
-            production: info
+            production : info
             development: debug
         alert_email:
             - example@example.com
@@ -29,7 +29,7 @@ default:
         compile_ext: .ttc
         compile_dir: local/ttc
         web:
-            wrapper: wrapper.html.tt
+            wrapper     : wrapper.html.tt
             include_path:
                 - templates/pages
                 - templates/components
@@ -41,25 +41,25 @@ default:
             remove_comments: 1
             # remove_newlines: 1
     sass:
-        scss_src: config/assets/sass/app
+        scss_src  : config/assets/sass/app
         compile_to: static/build/app.css
-        exe: local/externals/dart_sass/sass
+        exe       : local/externals/dart_sass/sass
     mojolicious:
-        access_log: local/access.log
+        access_log  : local/access.log
         static_paths:
             - static
         config:
             hypnotoad:
-                proxy: 1
+                proxy   : 1
                 pid_file: local/hypnotoad.pid
-                listen:
+                listen  :
                     - http://*:8080
         session:
-            cookie_name: omniframe_session
+            cookie_name       : omniframe_session
             default_expiration: 31557600 # 365.25 days
         ws_inactivity_timeout: 14400 # 4 hours
         linda:
-            app: app.psgi
+            app  : app.psgi
             watch:
                 - app.psgi
                 - config/app.yaml
@@ -68,18 +68,30 @@ default:
                 - templates
                 - ../omniframe
     email:
-        from: Example <example@example.com>
+        from  : Example <example@example.com>
         active: 1
     bcrypt:
         cost: 5
         salt: 0123456789abcdef
     crypt:
-        pass: passphrase
-        salt: 0123456789a
-        pbkdf: pbkdf2
+        pass      : passphrase
+        salt      : 0123456789a
+        pbkdf     : pbkdf2
         chain_mode: cbc
-        cipher: Cipher::AES
-        iter: 10000
-        hasher: HMACSHA2
-        header: salt
-        padding: standard
+        cipher    : Cipher::AES
+        iter      : 10000
+        hasher    : HMACSHA2
+        header    : salt
+        padding   : standard
+    otpauth:
+        issuer: Omniframe
+        range : 1
+        imager:
+            size         : 4
+            margin       : 2
+            level        : M
+            version      : 6
+            casesensitive: 0
+            mode         : 8-bit
+            lightcolor   : [ 255, 255, 255 ]
+            darkcolor    : [ 0, 0, 0 ]

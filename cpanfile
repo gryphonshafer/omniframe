@@ -1,4 +1,5 @@
 requires 'App::Dest', '1.33';
+requires 'Auth::GoogleAuth', '1.06';
 requires 'Crypt::CBC';
 requires 'Cwd', '3.75';
 requires 'DBD::SQLite', '1.74';
@@ -16,6 +17,7 @@ requires 'File::Copy::Recursive', '0.45';
 requires 'File::Glob';
 requires 'FindBin', '1.54';
 requires 'HTML::Packer', '2.11';
+requires 'Imager::QRCode';
 requires 'IPC::Run3', '0.049';
 requires 'JavaScript::QuickJS', '0.21';
 requires 'Linux::Inotify2', '2.3';

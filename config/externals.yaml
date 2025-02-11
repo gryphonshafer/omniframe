@@ -38,7 +38,7 @@ vue:
         vue-router/dist/vue-router.global.js     : vue-router.global.js
         vue-router/dist/vue-router.global.prod.js: vue-router.global.prod.js
 font_awesome:
-    dest: static/externals/font_awesome
+    dest : static/externals/font_awesome
     parts:
         - webfonts/*
         - css/all.css
