@@ -1,0 +1,12 @@
+<h1>Unexpected Error</h1>
+
+<p>
+    There was an unexpected error handling your recent request. The error has
+    been logged for resolution. In the meantime, perhaps try one of the
+    following options:
+</p>
+
+<p>
+    <button onclick="window.history.back()">Go Back a Page</button>
+    <button onclick="window.location.href = '[% c.url_for('/') %]'">Go to the Home Page</button>
+</p>
