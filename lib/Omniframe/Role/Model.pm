@@ -3,10 +3,7 @@ package Omniframe::Role::Model;
 use exact -role;
 use Mojo::Util 'decamelize';
 
-with qw(
-    Omniframe::Role::Database
-    Omniframe::Role::Logging
-);
+with qw( Omniframe::Role::Database Omniframe::Role::Logging );
 
 class_has name => sub ($self) {
     my $name = ref $self;

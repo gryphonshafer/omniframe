@@ -3,9 +3,9 @@ package Omniframe::Role::Logging;
 use exact -role, -conf;
 use Log::Dispatch;
 use Mojo::File 'path';
-use Term::ANSIColor;
 use Omniframe::Class::Time;
 use Omniframe::Util::Output 'dp';
+use Term::ANSIColor;
 
 my $log_levels_definitions = {
     debug => 1,
