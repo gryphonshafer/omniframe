@@ -45,7 +45,7 @@ sub setup ( $self, $app, $location ) {
                             my $node = $_->to_rel->to_string;
 
                             $node = substr( $node, length( $root_dirs->[-1]->{dir} ) + 1 )
-                                if ( $tree->{name} eq 'Omniframe' );
+                                if ( $tree->{name} eq 'Omniframe' and @$root_dirs > 1 );
 
                             my $filename = $node;
                             my ($type)   = ( $filename =~ s:^(lib)/:: ) ? $1 : '';

@@ -24,12 +24,17 @@ sub startup ($self) {
         $c->socket( setup => 'example_ws' );
     } );
 
-    $r->any( '/test.js' => sub ($c) {
-        return $c->document('/static/js/util/browser_test.js');
-    } );
-
     $r->any( '/api' => sub ($c) {
         $c->render( json => { request => $c->req->json } );
+    } );
+
+    $r->any( '/test.js' => sub ($c) {
+        $c->document('/static/js/util/browser_test.js');
+    } );
+
+    $r->any( '/docs/*name' => { name => 'index.md' } => sub ($c) {
+        $c->document( $c->stash('name') );
+        $c->render( text => $c->stash('html') ) if ( $c->stash('html') );
     } );
 
     $r->any( '/*null' => { null => undef } => sub ($c) {
