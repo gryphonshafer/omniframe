@@ -1,4 +1,5 @@
 use Test2::V0;
+use exact -conf;
 use Omniframe::Class::Email;
 
 my $mock_email  = mock 'Omniframe::Class::Email' => ( override => 'info' );
@@ -13,7 +14,7 @@ like(
 );
 ok( lives { $obj = Omniframe::Class::Email->new( type => 'example' ) }, 'new( type => $type )' ) or note $@;
 isa_ok( $obj, $_ ) for ( qw( Omniframe::Class::Email Omniframe ) );
-ok( $obj->does("Omniframe::Role::$_"), "does $_ role" ) for ( qw( Template Logging ) );
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Logging Template ) );
 can_ok( $obj, qw( type subject html new send ) );
 ok( lives { $obj->send({}) }, 'send()' ) or note $@;
 

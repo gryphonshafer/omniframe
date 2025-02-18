@@ -1,4 +1,5 @@
 use Test2::V0;
+use exact -conf;
 use Omniframe::Control;
 
 my $mock = mock 'Omniframe::Control' => (
@@ -8,7 +9,7 @@ my $mock = mock 'Omniframe::Control' => (
 my $obj;
 ok( lives { $obj = Omniframe::Control->new }, 'new' ) or note $@;
 isa_ok( $obj, $_ ) for ( 'Mojolicious', 'Omniframe' );
-DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Logging ) );
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Logging Template ) );
 
 can_ok( $obj, qw(
     sass

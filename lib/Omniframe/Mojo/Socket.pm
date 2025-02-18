@@ -1,12 +1,12 @@
 package Omniframe::Mojo::Socket;
 
-use exact 'Omniframe';
+use exact -conf, 'Omniframe';
 use Mojo::JSON qw( decode_json encode_json );
 use Proc::ProcessTable;
 
-with qw( Omniframe::Role::Conf Omniframe::Role::Database Omniframe::Role::Logging );
+with qw( Omniframe::Role::Database Omniframe::Role::Logging );
 
-class_has sockets => {};
+class_has sockets => sub { {} };
 class_has ppid    => undef;
 
 my $table_sql = q{CREATE TABLE IF NOT EXISTS socket (
@@ -71,7 +71,7 @@ sub event_handler ($self) {
             return $c->redirect_to('/') unless ( $c->tx->is_websocket );
 
             Mojo::IOLoop->stream( $c->tx->connection )->timeout(
-                $self->conf->get( qw( mojolicious ws_inactivity_timeout ) )
+                conf->get( qw( mojolicious ws_inactivity_timeout ) )
             );
 
             $c->on( finish => sub { $c->socket( finish => $socket_name ) } );
@@ -226,15 +226,14 @@ be called from outside the Mojolicious application.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     mojolicious:
         ws_inactivity_timeout: 14400 # 4 hours
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Database>,
-L<Omniframe::Role::Logging>.
+L<Omniframe::Role::Database>, L<Omniframe::Role::Logging>.
 
 =head1 INHERITANCE
 

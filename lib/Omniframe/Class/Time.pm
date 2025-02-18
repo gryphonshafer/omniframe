@@ -1,6 +1,6 @@
 package Omniframe::Class::Time;
 
-use exact 'Omniframe';
+use exact -conf, 'Omniframe';
 use Date::Format ();
 use Date::Parse ();
 use DateTime;
@@ -9,24 +9,22 @@ use DateTime::TimeZone::Olson 'olson_country_selection';
 use Time::HiRes ();
 use YAML::XS ();
 
-with 'Omniframe::Role::Conf';
-
 has time_zone => 'local';
 has locale    => 'en-US';
 has datetime  => undef;
 
-class_has formats => {
+class_has formats => sub { {
     ansi    => '%Y-%m-%d %T',
     log     => '%b %e %T %Y',
     common  => '%d/%b/%Y:%T %z',
     rfc822  => '%a, %d %b %Y %H:%M:%S %z',
-};
+} };
 
 class_has olson_zones => sub ($self) {
     my $olson_zones;
     my $country_population = YAML::XS::LoadFile(
         (
-            $self->conf->get( qw( config_app root_dir ) ) . '/' . ( $self->conf->get('omniframe') // '' )
+            conf->get( qw( config_app root_dir ) ) . '/' . ( conf->get('omniframe') // '' )
         ) . '/config/population.yaml'
     );
 
@@ -373,10 +371,6 @@ Given a class object where C<datetime> has a L<DateTime> value that itself has
 an offset value but no Olson time zone, this method will attempt to use the
 C<olson> method to set the time zone of the L<DateTime> object to an Olson time
 zone.
-
-=head1 WITH ROLES
-
-L<Omniframe::Role::Conf>.
 
 =head1 INHERITANCE
 

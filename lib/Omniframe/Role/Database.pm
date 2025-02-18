@@ -1,15 +1,15 @@
 package Omniframe::Role::Database;
 
-use exact -role;
+use exact -role, -conf;
 use App::Dest;
 use Cwd 'cwd';
 use DBIx::Query;
 use File::Glob ':bsd_glob';
 use Mojo::File 'path';
+use Omniframe::Class::Time;
 use YAML::XS;
 
-with qw( Omniframe::Role::Conf Omniframe::Role::Time );
-
+my $time    = Omniframe::Class::Time->new;
 my $globals = {
     default_shard => undef,
     dq_shards     => undef,
@@ -34,9 +34,9 @@ sub dq ( $self, $shard = undef ) {
     };
     return $return_shard->() if ( ref $self->dq_shards eq 'HASH' );
 
-    my $omniframe = $self->conf->get('omniframe');
-    my $conf_full = $self->conf->get('database');
-    my $root_dir  = $self->conf->get( qw( config_app root_dir ) );
+    my $omniframe = conf->get('omniframe');
+    my $conf_full = conf->get('database');
+    my $root_dir  = conf->get( qw( config_app root_dir ) );
 
     my @shards;
     if ( $conf_full->{shards} ) {
@@ -125,7 +125,7 @@ sub dq ( $self, $shard = undef ) {
                 } keys %{ $conf->{log} } };
 
                 $dq->sqlite_trace( sub ($sql) {
-                    my $time = ($self) ? $self->time->set->format('sqlite') : time;
+                    my $time = ($self) ? $time->set->format('sqlite') : time;
 
                     my $write = (
                         $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
@@ -248,7 +248,7 @@ L</"CONFIGURATION"> below.
 =head1 CONFIGURATION
 
 The following is the default configuration, which can be overridden in the
-application's configuration file. See L<Omniframe::Role::Conf>.
+application's configuration file. See L<Config::App>.
 
     database:
         file: local/app.sqlite
@@ -293,7 +293,3 @@ to indicate which shard is the default.
             foreign_keys: ON
             recursive_triggers: ON
             temp_store: MEMORY
-
-=head1 WITH ROLES
-
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Time>.

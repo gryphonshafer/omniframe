@@ -5,20 +5,18 @@ default:
         file: local/app.sqlite
         settings:
             sqlite_see_if_its_a_number: 1
-            sqlite_defensive: 1
-            RaiseError: 1
-            PrintError: 0
+            sqlite_defensive          : 1
+            RaiseError                : 1
+            PrintError                : 0
         pragmas:
-            encoding: UTF-8
-            foreign_keys: ON
+            encoding          : UTF-8
+            foreign_keys      : ON
             recursive_triggers: ON
-            temp_store: MEMORY
-        # extensions:
-        #     - sqlean
+            temp_store        : MEMORY
     logging:
         log_file: local/app.log
         log_level:
-            production: info
+            production : info
             development: debug
         alert_email:
             - example@example.com
@@ -39,10 +37,11 @@ default:
     packer:
         production:
             remove_comments: 1
-            # remove_newlines: 1
+            remove_newlines: 0
     sass:
-        scss_src: config/assets/sass/app
-        compile_to: static/app.css
+        scss_src  : config/assets/sass/app
+        compile_to: static/build/app.css
+        exe       : local/externals/dart_sass/sass
     mojolicious:
         access_log: local/access.log
         static_paths:
@@ -72,3 +71,25 @@ default:
     bcrypt:
         cost: 5
         salt: 0123456789abcdef
+    crypt:
+        pass      : passphrase
+        salt      : 0123456789a
+        pbkdf     : pbkdf2
+        chain_mode: cbc
+        cipher    : Cipher::AES
+        iter      : 10000
+        hasher    : HMACSHA2
+        header    : salt
+        padding   : standard
+    otpauth:
+        issuer: Omniframe
+        range : 1
+        imager:
+            size         : 4
+            margin       : 2
+            level        : M
+            version      : 6
+            casesensitive: 0
+            mode         : 8-bit
+            lightcolor   : [ 255, 255, 255 ]
+            darkcolor    : [ 0, 0, 0 ]

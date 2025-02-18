@@ -1,19 +1,19 @@
 package Omniframe::Mojo::Document;
 
-use exact 'Omniframe';
+use exact -conf, 'Omniframe';
 use File::Find 'find';
 use Mojo::File;
 use Mojo::Util 'decode';
 use Text::CSV_XS 'csv';
 use Text::MultiMarkdown 'markdown';
 
-with qw( Omniframe::Role::Conf Omniframe::Role::Logging );
+with 'Omniframe::Role::Logging';
 
 sub document_helper ($self) {
     return sub ( $c, $file, $payload_process = undef, $file_filter = undef ) {
         my $paths = [ grep { defined }
-            $self->conf->get( qw( config_app root_dir ) ),
-            $self->conf->get('omniframe'),
+            conf->get( qw( config_app root_dir ) ),
+            conf->get('omniframe'),
         ];
 
         my $pathfile;
@@ -80,12 +80,12 @@ sub document_helper ($self) {
 sub docs_nav_helper ($self) {
     return sub (
         $c,
-        $relative_docs_dir,
-        $home_type  = 'md',
-        $home_name  = 'Home Page',
-        $home_title = 'Home Page',
+        $relative_docs_dir = '',
+        $home_type         = 'md',
+        $home_name         = 'Home Page',
+        $home_title        = 'Home Page',
     ) {
-        my $docs_dir = $self->conf->get( qw( config_app root_dir ) ) . '/' . $relative_docs_dir;
+        my $docs_dir = conf->get( qw( config_app root_dir ) ) . '/' . $relative_docs_dir;
 
         my @files;
         find(
@@ -106,7 +106,7 @@ sub docs_nav_helper ($self) {
             $docs_dir,
         );
 
-        my $docs_dir_length = length($docs_dir) + 1;
+        my $docs_dir_length = length($docs_dir) + ( ( length($relative_docs_dir) ) ? 1 : 0 );
         my $docs_nav        = [];
 
         for (@files) {
@@ -196,11 +196,14 @@ Omniframe::Mojo::Document
         $self->helper( document => $document->document_helper );
         $self->helper( docs_nav => $document->docs_nav_helper );
 
-        my $r = $self->routes;
+        $self->routes->any( '/docs/*name' => { name => 'index.md' } => sub ($c) {
+            $c->document( $c->stash('name') );
+            $c->render( text => $c->stash('html') ) if ( $c->stash('html') );
+        } );
 
-        $r->any( '/sw.js' => sub ($c) {
-            $c->document('/static/js/util/sw.js');
+        $self->routes->any( '/*null' => { null => undef } => sub ($c) {
             $c->stash( docs_nav => $c->docs_nav );
+            $c->render( template => 'example/index' );
         } );
     }
 
@@ -232,8 +235,9 @@ Mojolicious helper.
 This helper once set can be called with a path to a file asset, assuming root
 is the project's root directory.
 
-    $self->routes->any( '/sw.js' => sub ($c) {
-        $c->document('/static/js/util/sw.js');
+    $self->routes->any( '/docs/*name' => { name => 'index.md' } => sub ($c) {
+        $c->document( $c->stash('name') );
+        $c->render( text => $c->stash('html') ) if ( $c->stash('html') );
     } );
 
 You can optionally pass a subroutine reference that will be passed any MD or CSV
@@ -255,9 +259,9 @@ the base/root page.
 What will be returned is a data structure of the documents directory suitable
 for use in a navigation menu.
 
-=head1 WITH ROLES
+=head1 WITH ROLE
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Logging>.
+L<Omniframe::Role::Logging>.
 
 =head1 INHERITANCE
 

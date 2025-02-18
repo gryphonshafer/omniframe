@@ -3,11 +3,7 @@ package Omniframe::Role::Model;
 use exact -role;
 use Mojo::Util 'decamelize';
 
-with qw(
-    Omniframe::Role::Conf
-    Omniframe::Role::Database
-    Omniframe::Role::Logging
-);
+with qw( Omniframe::Role::Database Omniframe::Role::Logging );
 
 class_has name => sub ($self) {
     my $name = ref $self;
@@ -18,14 +14,14 @@ class_has id_name => sub ($self) { $self->name . '_id' };
 class_has active  => 0;
 
 has id         => undef;
-has data       => {};
-has saved_data => {};
+has data       => sub { {} };
+has saved_data => sub { {} };
 
 sub create ( $self, $data ) {
     $data = $self->data_merge($data);
-    croak('create() data hashref contains no data') unless ( keys %$data );
-
     $data = $self->freeze($data) if ( $self->can('freeze') );
+
+    croak('create() data hashref contains no data') unless ( keys %$data );
 
     eval { $self->load(
         $self->dq->add( $self->name, $data ),
@@ -91,7 +87,7 @@ sub save ( $self, $data = undef ) {
         $self->create($data);
     }
     else {
-        $data = $self->freeze($data) if $self->can('freeze');
+        $data = $self->freeze($data) if ( $self->can('freeze') );
 
         for ( grep { exists $self->saved_data->{$_} } keys %$data ) {
             delete $data->{$_} if (
@@ -472,5 +468,4 @@ which will result in "active" playing no factor in the record search.
 
 =head1 WITH ROLES
 
-L<Omniframe::Role::Conf>, L<Omniframe::Role::Database>,
-L<Omniframe::Role::Logging>.
+L<Omniframe::Role::Database>, L<Omniframe::Role::Logging>.

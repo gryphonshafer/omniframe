@@ -1,6 +1,6 @@
 package Omniframe::Mojo::DevDocs;
 
-use exact 'Omniframe';
+use exact -conf, 'Omniframe';
 use Mojo::DOM;
 use Mojo::File 'path';
 use Mojo::Util 'url_unescape';
@@ -8,10 +8,8 @@ use Pod::Simple::HTML;
 use Template;
 use Text::MultiMarkdown 'markdown';
 
-with 'Omniframe::Role::Conf';
-
 class_has template => join( '', <DATA> );
-class_has tt       => Template->new;
+class_has tt       => sub { Template->new };
 
 sub setup ( $self, $app, $location ) {
     $app->routes->any( $location . '*pathinfo' => { pathinfo => '' } => sub ($c) {
@@ -28,7 +26,7 @@ sub setup ( $self, $app, $location ) {
             }
             grep { defined $_->[1] }
             map {
-                $_->[1] = $self->conf->get( @{ $_->[1] } );
+                $_->[1] = conf->get( @{ $_->[1] } );
                 $_;
             } (
                 [ $app_name => [ qw( config_app root_dir ) ] ],
@@ -47,7 +45,7 @@ sub setup ( $self, $app, $location ) {
                             my $node = $_->to_rel->to_string;
 
                             $node = substr( $node, length( $root_dirs->[-1]->{dir} ) + 1 )
-                                if ( $tree->{name} eq 'Omniframe' );
+                                if ( $tree->{name} eq 'Omniframe' and @$root_dirs > 1 );
 
                             my $filename = $node;
                             my ($type)   = ( $filename =~ s:^(lib)/:: ) ? $1 : '';
@@ -181,10 +179,6 @@ links are clicked, the POD or Markdown is rendered.
 
 This method expects the application object and an optional override root path
 for the routes to setup. (It defaults to "/devdocs".)
-
-=head1 WITH ROLES
-
-L<Omniframe::Role::Conf>.
 
 =head1 INHERITANCE
 

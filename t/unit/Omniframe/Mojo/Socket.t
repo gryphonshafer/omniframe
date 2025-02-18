@@ -1,5 +1,6 @@
 use Test2::V0;
 use DBD::SQLite;
+use exact -conf;
 use Omniframe::Mojo::Socket;
 
 my $mock_logging = mock 'Omniframe::Role::Logging' => ( set => [ qw( info debug ) ] );
@@ -17,7 +18,7 @@ my $mock_dbixc   = mock 'DBIx::Query'              => (
 my $obj;
 ok( lives { $obj = Omniframe::Mojo::Socket->new }, 'new' ) or note $@;
 can_ok( $obj, $_ ) for ( qw( sockets setup event_handler ) );
-DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Conf Database Logging ) );
+DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Database Logging ) );
 
 my $orig_sig_urg = $SIG{URG};
 ok( lives { $obj = $obj->setup }, 'setup' ) or note $@;
