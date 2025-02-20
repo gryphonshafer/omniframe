@@ -4,11 +4,12 @@ use exact -conf, 'Omniframe';
 use Mojo::DOM;
 use Mojo::File 'path';
 use Mojo::Util 'url_unescape';
+use Omniframe::Util::File 'opath';
 use Pod::Simple::HTML;
 use Template;
 use Text::MultiMarkdown 'markdown';
 
-class_has template => join( '', <DATA> );
+class_has template => opath('templates/pages/devdocs.html.tt')->slurp;
 class_has tt       => sub { Template->new };
 
 sub setup ( $self, $app, $location ) {
@@ -41,6 +42,9 @@ sub setup ( $self, $app, $location ) {
                     my $tree = $_;
 
                     $tree->{files} = [
+                        sort {
+                            $a->{sort} cmp $b->{sort}
+                        }
                         map {
                             my $node = $_->to_rel->to_string;
 
@@ -48,19 +52,14 @@ sub setup ( $self, $app, $location ) {
                                 if ( $tree->{name} eq 'Omniframe' and @$root_dirs > 1 );
 
                             my $filename = $node;
-                            my ($type)   = ( $filename =~ s:^(lib)/:: ) ? $1 : '';
-
-                            if ( $type eq 'lib' ) {
-                                $filename =~ s|/+|::|g;
-                                $filename =~ s|\.pm$||;
-                            }
-                            else {
-                                $filename = [ split( m|/+|, $filename ) ];
-                            }
+                            my $type     = ( $filename =~ s:^(lib)/:: ) ? 'lib' : 'file';
+                            my $name     = [ split( m|/+|, $filename ) ];
 
                             +{
-                                name => $filename,
+                                name => $name,
+                                type => $type,
                                 url  => $c->url_for( join( '/', $location, $tree->{name}, $node ) ),
+                                sort => join( '/', @$name[ 0 .. @$name - 2 ] ),
                             };
                         }
                         @{ $tree->{path}->list_tree->grep( qr/\.(md|pm|pl?)$/i )->to_array }
@@ -185,183 +184,3 @@ for the routes to setup. (It defaults to "/devdocs".)
 L<Omniframe>.
 
 =cut
-
-__DATA__
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>[% title %]</title>
-
-        <meta charset="utf-8">
-        <meta name="robots" content="noindex">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-        <style type="text/css">
-            body {
-                margin-left  : 3em;
-                margin-right : 3em;
-                margin-top   : 3em;
-                margin-bottom: 3em;
-                font-family  : sans-serif;
-                font-size    : 14px;
-                line-height  : 1.5em;
-            }
-
-            section {
-                page-break-inside: avoid;
-            }
-
-            h1 {
-                margin        : 1em 0 0.7em -0.7em;
-                font-size     : 150%;
-                padding-bottom: 12pt;
-                border-bottom : 1px solid gainsboro;
-            }
-
-            h2 {
-                margin        : 1.4em 0 0.7em -0.7em;
-                font-size     : 130%;
-                padding-bottom: 6pt;
-            }
-
-            h3 {
-                margin   : 1.4em 0 0.7em -0.7em;
-                font-size: 120%;
-            }
-
-            h4 {
-                margin   : 1.4em 0 0.7em -0.7em;
-                font-size: 110%;
-            }
-
-            h5 {
-                margin   : 1.4em 0 0.7em -0.7em;
-                font-size: 105%;
-            }
-
-            h6 {
-                margin   : 1.4em 0 0.7em -0.7em;
-                font-size: 100%;
-            }
-
-            dt {
-                margin-left: 1em;
-                font-weight: bold;
-            }
-
-            dd {
-                margin-bottom: 1em;
-            }
-
-            table {
-                border-collapse: collapse;
-            }
-
-            table,
-            table th,
-            table td {
-                border: 1px solid gainsboro;
-            }
-
-            th, td {
-                padding: 0.35em 0.7em;
-            }
-
-            tr:nth-child(even) td {
-                background-color: whitesmoke;
-            }
-
-            pre, code {
-                background-color: whitesmoke;
-                font-family     : monospace;
-                font-size       : 13px;
-            }
-
-            pre {
-                padding      : 1.0em 1.25em;
-                border-radius: 0.5em;
-                line-height  : 1.25em;
-                border       : 1px solid lightgray;
-            }
-
-            code {
-                border-radius: 0.25em;
-                padding      : 0.02em 0.25em;
-            }
-
-            pre > code {
-                border-radius: 0;
-                padding      : 0;
-                white-space  : pre-wrap;
-            }
-
-            blockquote {
-                color       : gray;
-                border-left : 0.3em solid lightgray;
-                padding-left: 1em;
-                margin-left : 0;
-            }
-
-            p.home_location {
-                float     : right;
-                margin-top: 0;
-            }
-
-            @media only print {
-                body {
-                    font-size    : 10pt;
-                    margin-left  : 1.3em;
-                    margin-right : 0.2em;
-                    margin-top   : 0.2em;
-                    margin-bottom: 0.2em;
-                }
-
-                a {
-                    text-decoration: none;
-                    color          : black;
-                }
-
-                p.home_location {
-                    display: none;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        [% IF home_location %]
-            <p class="home_location"><a
-                href="[% home_location %]">[% home_title %]</a></p>
-        [% END %]
-
-        [% IF header %]<h1>[% header %]</h1>[% END %]
-
-        [% FOR tree IN trees %]
-            <h2>[% tree.name %]</h2>
-
-            [% IF tree.files.size %]
-                <ul>
-                    [% FOR file IN tree.files %]
-                        [%
-                            name = '';
-                            path = [];
-
-                            IF file.name.ref;
-                                name = file.name.pop;
-                                path = file.name;
-                            ELSE;
-                                name = file.name;
-                            END;
-                        %]
-                        <li>
-                            [% FOR part IN path %][% part %]/[% END %]<a href="[% file.url %]">[% name %]</a>
-                        </li>
-                    [% END %]
-                </ul>
-            [% END %]
-        [% END %]
-
-        [% IF content %]
-            <div class="[% type %]">[% content %]</div>
-        [% END %]
-    </body>
-</html>
