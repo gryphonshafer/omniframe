@@ -39,15 +39,15 @@ if ( ! window.omniframe ) window.omniframe = {};
 
         inputs.messages.forEach( message => {
             if ( typeof message == 'string' ) {
-                const p = document.createElement('p');
+                const p = window.document.createElement('p');
                 if ( ! message.match('[.,?:;!>]$') ) message += '.';
                 p.innerHTML = message;
                 div.appendChild(p);
             }
             else if ( Array.isArray(message) ) {
-                const ul = document.createElement('ul');
+                const ul = window.document.createElement('ul');
                 message.forEach( item => {
-                    const li = document.createElement('li');
+                    const li = window.document.createElement('li');
                     li.innerHTML = item;
                     ul.appendChild(li);
                 } );
@@ -56,19 +56,25 @@ if ( ! window.omniframe ) window.omniframe = {};
         } );
 
         inputs.options.forEach( option => {
-            const button = document.createElement('button');
+            const button = window.document.createElement('button');
             button.innerHTML = option;
-            if ( inputs.callbacks && inputs.callbacks.length ) button.onclick = inputs.callbacks.shift();
+            button.onclick   = event => {
+                if ( inputs.callbacks && inputs.callbacks.length ) {
+                    const callback = inputs.callbacks.shift();
+                    if (callback) callback(event);
+                }
+                window.document.body.removeChild(dialog);
+            };
             form.appendChild(button);
         } );
 
         window.document.body.appendChild(dialog);
         dialog.autofocus = true;
-        dialog.show();
+        dialog.showModal();
     }
 
     window.omniframe.memo = (...args) => {
-        if ( document.readyState !== 'complete' ) {
+        if ( window.document.readyState !== 'complete' ) {
             window.addEventListener( 'load', () => {
                 build_dialog( args_to_inputs(...args) );
             } );
