@@ -6,7 +6,7 @@ use Test2::MojoX;
 use Omniframe;
 use Omniframe::Control;
 
-exact->export( qw{ setup stuff mojo url teardown } );
+exact->export( qw{ setup stuff username email mojo url teardown } );
 
 my $stuff = {};
 
@@ -17,8 +17,6 @@ sub setup {
     $obj->dq->begin_work;
     conf->put( qw( email active ) => 0 );
 
-    ( my $username = lc( crypt( $$ . ( time + rand ), 'gs' ) ) ) =~ s/[^a-z0-9]+//g;
-
     my $mock_omniframe_control = mock 'Omniframe::Control' => (
         override => [ qw( setup_access_log debug info notice warning warn ) ],
     );
@@ -27,11 +25,20 @@ sub setup {
         mojo  => Test2::MojoX->new( conf->get('mojo_app_lib') ),
         obj   => $obj,
         dq    => $obj->dq,
-        email => $username . '@example.com',
         mocks => {
             'Omniframe::Control' => $mock_omniframe_control,
         },
     };
+}
+
+sub username {
+    ( my $username = lc( crypt( $$ . ( time + rand ), 'gs' ) ) ) =~ s/[^a-z0-9]+//g;
+    state $count = 0;
+    return $username . $count++;
+}
+
+sub email {
+    return username . '@example.com';
 }
 
 sub stuff ($key) {
@@ -65,7 +72,9 @@ Omniframe::Test::App
 
     setup;
 
-    my $email = stuff('email');
+    my $dq       = stuff('dq');
+    my $username = email;
+    my $email    = email;
 
     mojo->get_ok('/')->status_is(200);
 
@@ -91,10 +100,17 @@ active to false. And if sets up some useful stuff for C<stuff>.
 
 This function gives you access to "stuff" created during C<setup>.
 
-    my $email = stuff('email'); # an example email address for the test
     my $dq    = stuff('dq');    # DBIx::Query object of the default shard
     my $mocks = stuff('mocks'); # mocks setup by setup()
     my $obj   = stuff('obj');   # generic Omniframe object with Database role
+
+=head2 username
+
+Generates and returns a fake but useful username.
+
+=head2 email
+
+Generates and returns a fake but useful email address.
 
 =head2 mojo
 
