@@ -68,13 +68,11 @@ window.omniframe.cookies
 
     <script type="text/javascript" src="/js/util/cookies.js" async></script>
     <script type="text/javascript">
-        window.addEventListener( 'load', () => {
-            omniframe.cookies.set( 'cookie_name', { answer: 42 }, 365 );
-            console.log( omniframe.cookies.get('cookie_name').answer );
-            console.log( omniframe.cookies.all() );
-            omniframe.cookies.delete('cookie_name');
-            omniframe.cookies.delete_all();
-        } );
+        omniframe.cookies.set( 'cookie_name', { answer: 42 }, 365 );
+        console.log( omniframe.cookies.get('cookie_name').answer );
+        console.log( omniframe.cookies.all() );
+        omniframe.cookies.delete('cookie_name');
+        omniframe.cookies.delete_all();
     </script>
 
 =head1 DESCRIPTION

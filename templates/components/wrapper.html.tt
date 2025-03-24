@@ -35,7 +35,9 @@
     memo = memo || c.session.flash.memo;
     IF memo;
         page.js.defer.push('util/memo');
-        page.js.inline.push( 'window.addEventListener( "load", () => omniframe.memo( ' _ memo.json _ ' ) )' );
+        page.js.inline.push(
+            'window.addEventListener( "DOMContentLoaded", () => omniframe.memo( ' _ memo.json _ ' ) )'
+        );
     END;
 
     IF NOT page.vue AND ( page.demi OR page.pinia OR page.vue_router );

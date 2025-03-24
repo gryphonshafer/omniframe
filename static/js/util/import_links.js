@@ -26,7 +26,7 @@ window.omniframe.import_links = {
     function initiate (url) {
         var req = new XMLHttpRequest();
         req.overrideMimeType('text/plain');
-        req.addEventListener( 'load', function () {
+        req.addEventListener( 'DOMContentLoaded', function () {
             var nodes_to_add = [];
 
             if ( this.responseURL.search(/\.js$|\.js\?/) != -1 ) {

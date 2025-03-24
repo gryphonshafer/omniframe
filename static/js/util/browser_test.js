@@ -166,7 +166,7 @@ window.omniframe.browser_test
 
     <script type="text/javascript" src="/js/util/browser_test.js" async></script>
     <script type="text/javascript">
-        window.addEventListener( 'load', () => {
+        window.addEventListener( 'DOMContentLoaded', () => {
 
             if ( omniframe.browser_test.check( 'ES6', 'Promise' ) )
                 console.log('Promise functionality available');

@@ -75,7 +75,7 @@ if ( ! window.omniframe ) window.omniframe = {};
 
     window.omniframe.memo = (...args) => {
         if ( window.document.readyState !== 'complete' ) {
-            window.addEventListener( 'load', () => {
+            window.addEventListener( 'DOMContentLoaded', () => {
                 build_dialog( args_to_inputs(...args) );
             } );
         }
@@ -94,7 +94,7 @@ window.omniframe.memo
 
     <script type="text/javascript" src="/js/util/memo.js" async></script>
     <script type="text/javascript">
-        window.addEventListener( 'load', () => {
+        window.addEventListener( 'DOMContentLoaded', () => {
             omniframe.memo('Message');
 
             omniframe.memo({

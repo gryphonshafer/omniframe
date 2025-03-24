@@ -70,7 +70,7 @@ window.omniframe.net_buffer = ( function () {
     }
 
     window.addEventListener( 'online', () => queue_process() );
-    window.addEventListener( 'load',   () => queue_process() );
+    queue_process();
 
     return {
         send : ( url, payload, callback ) => {
@@ -102,10 +102,8 @@ window.omniframe.net_buffer
 
     <script type="text/javascript" src="/js/util/net_buffer.js" async></script>
     <script type="text/javascript">
-        window.addEventListener( 'load', () => {
-            omniframe.net_buffer.send( '/api', { answer: 1138 }, (data) => console.log(data) );
-            console.log( omniframe.net_buffer.usage() );
-        } );
+        omniframe.net_buffer.send( '/api', { answer: 1138 }, (data) => console.log(data) );
+        console.log( omniframe.net_buffer.usage() );
     </script>
 
 =head1 DESCRIPTION

@@ -62,15 +62,13 @@ window.omniframe.websocket
 
     <script type="text/javascript" src="/js/util/websocket.js" async></script>
     <script type="text/javascript">
-        window.addEventListener( 'load', () => {
-            let restarting_websocket = omniframe.websocket.start({
-                path      : '/ws',
-                onmessage : function ( data, ws ) {
-                    console.log(data);
-                    ws.stop();
-                }
-            });
-        } );
+        const restarting_websocket = omniframe.websocket.start({
+            path      : '/ws',
+            onmessage : function ( data, ws ) {
+                console.log(data);
+                ws.stop();
+            }
+        });
     </script>
 
 =head1 DESCRIPTION
@@ -95,7 +93,7 @@ attribute defined. The C<path> attribute is a relative or absolute path to a
 websocket endpoint. Additionally, you can add callbacks for: onopen, onmessage,
 onclose, and onerror.
 
-    let restarting_websocket = omniframe.websocket.start({
+    const restarting_websocket = omniframe.websocket.start({
         path      : '/ws',
         onmessage : function ( data, restarting_websocket, event ) {
             console.log(data);
