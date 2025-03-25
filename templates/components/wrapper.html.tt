@@ -36,7 +36,7 @@
     IF memo;
         page.js.defer.push('util/memo');
         page.js.inline.push(
-            'window.addEventListener( "DOMContentLoaded", () => omniframe.memo( ' _ memo.json _ ' ) )'
+            'window.addEventListener( "load", () => omniframe.memo( ' _ memo.json _ ' ) )'
         );
     END;
 
