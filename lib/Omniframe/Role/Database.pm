@@ -124,7 +124,7 @@ sub dq ( $self, $shard = undef ) {
                     $_ => $fh;
                 } keys %{ $conf->{log} } };
 
-                $dq->sqlite_trace( sub ($sql) {
+                $dq->sqlite_profile( sub ( $sql, $elapsed_time ) {
                     my $time = ($self) ? $time->set->format('sqlite') : time;
 
                     my $write = (
@@ -148,7 +148,7 @@ sub dq ( $self, $shard = undef ) {
                     ) {
                         my $this_sql = $sql;
                         $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
-                        my $message = '-- ' . $time . "\n" . $this_sql . "\n\n";
+                        my $message = '-- ' . $time . "\n" . '-- ' . $elapsed_time . "\n" . $this_sql . "\n\n";
 
                         print { $log_fhs->{all}   } $message if ( $log_fhs->{all}                  );
                         print { $log_fhs->{write} } $message if ( $log_fhs->{write} and $write     );
