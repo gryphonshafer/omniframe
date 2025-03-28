@@ -1,4 +1,4 @@
-requires 'App::Dest', '1.33';
+requires 'App::Dest', '1.34';
 requires 'Auth::GoogleAuth', '1.07';
 requires 'Crypt::CBC', '3.04';
 requires 'Cwd', '3.75';
