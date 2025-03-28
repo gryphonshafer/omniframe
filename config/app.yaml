@@ -69,7 +69,6 @@ default:
                 - config/assets
                 - lib
                 - templates
-                - ../omniframe
     email:
         from: Example <example@example.com>
         active: 1
