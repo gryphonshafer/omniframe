@@ -9,7 +9,7 @@ use Pod::Simple::HTML;
 use Template;
 use Text::MultiMarkdown 'markdown';
 
-class_has template => opath('templates/pages/devdocs.html.tt')->slurp;
+class_has template => opath('templates/pages/devdocs.html.tt')->slurp('UTF-8');
 class_has tt       => sub { Template->new };
 
 sub setup ( $self, $app, $location ) {
@@ -82,7 +82,7 @@ sub setup ( $self, $app, $location ) {
 
             if ( $data->{extname} eq 'md' ) {
                 $data->{type}    = 'md';
-                $data->{content} = markdown( $file->slurp );
+                $data->{content} = markdown( $file->slurp('UTF-8') );
             }
             elsif ( $data->{extname} eq 'pm' or $data->{extname} eq 'pl' ) {
                 $data->{type} = 'pod';
@@ -133,7 +133,7 @@ sub setup ( $self, $app, $location ) {
                 }
             }
             else {
-                $data->{content} = '<pre>' . $file->slurp . '</pre>';
+                $data->{content} = '<pre>' . $file->slurp('UTF-8') . '</pre>';
             }
         }
 

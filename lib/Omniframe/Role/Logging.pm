@@ -112,6 +112,7 @@ class_has log_dispatch => sub ($self) {
                 mode      => 'append',
                 autoflush => 1,
                 filename  => $self->log_file,
+                binmode   => ':encoding(UTF-8)',
             ],
             [
                 'Email::Mailer',

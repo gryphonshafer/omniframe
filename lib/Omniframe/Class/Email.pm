@@ -3,7 +3,6 @@ package Omniframe::Class::Email;
 use exact -conf, 'Omniframe';
 use Email::Mailer;
 use Mojo::File 'path';
-use Mojo::Util 'decode';
 
 with qw( Omniframe::Role::Logging Omniframe::Role::Template );
 
@@ -39,7 +38,7 @@ sub new ( $self, @params ) {
 
     croak( 'Failed to find email template of type: ' . $self->type ) unless ($file);
 
-    my $html    = decode( 'UTF-8', path($file)->slurp );
+    my $html    = path($file)->slurp('UTF-8');
     my $subject = ( $html =~ s|<title>(.*?)</title>||ms ) ? $1 : '';
 
     $subject =~ s/\s+/ /msg;

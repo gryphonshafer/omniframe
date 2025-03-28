@@ -34,8 +34,8 @@ cp(
 ) );
 
 path( $proj_dir . '/t/app' )->make_path;
-( my $content = path( $root_dir . '/t/app/home_page.t' )->slurp ) =~ s/\bProject::/$opt->{name}::/g;
-path( $proj_dir . '/t/app/home_page.t' )->spew($content);
+( my $content = path( $root_dir . '/t/app/home_page.t' )->slurp('UTF-8') ) =~ s/\bProject::/$opt->{name}::/g;
+path( $proj_dir . '/t/app/home_page.t' )->spew( $content, 'UTF-8' );
 
 local $YAML::XS::Indent = 4;
 
@@ -91,8 +91,8 @@ for my $type (
 
             cp( $src, $dest );
 
-            ( my $content = $file->slurp ) =~ s/\bProject::/$opt->{name}::/g;
-            $file->spew($content);
+            ( my $content = $file->slurp('UTF-8') ) =~ s/\bProject::/$opt->{name}::/g;
+            $file->spew( $content, 'UTF-8' );
 
             say $dest;
         } );

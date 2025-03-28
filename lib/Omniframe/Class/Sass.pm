@@ -107,7 +107,7 @@ sub build (
         );
 
         unless ($error) {
-            path( $self->compile_to )->spew($output);
+            path( $self->compile_to )->spew( $output, 'UTF-8' );
             $report_cb->();
         }
     }

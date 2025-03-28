@@ -1,7 +1,7 @@
 package Omniframe::Mojo::Socket;
 
 use exact -conf, 'Omniframe';
-use Mojo::JSON qw( decode_json encode_json );
+use Mojo::JSON qw( from_json to_json );
 use Proc::ProcessTable;
 
 with qw( Omniframe::Role::Database Omniframe::Role::Logging );
@@ -45,7 +45,7 @@ sub setup ($self) {
                 for ( values %{ $self->sockets->{ $socket->{name} }{transactions} } ) {
                     my $json;
                     try {
-                        $json = decode_json(
+                        $json = from_json(
                             $self->dq->sql('SELECT data FROM socket WHERE name = ?')
                                 ->run( $socket->{name} )->value
                         );
@@ -105,7 +105,7 @@ sub event_handler ($self) {
 
 sub message ( $self, $socket_name, $data ) {
     if ( $self->dq->sql('SELECT COUNT(*) FROM socket WHERE name = ?')->run($socket_name)->value ) {
-        $data = encode_json($data);
+        $data = to_json($data);
         undef $data if ( $data eq '{}' or $data eq 'null' );
 
         $self->dq->sql(q{

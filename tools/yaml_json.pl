@@ -6,7 +6,8 @@ BEGIN { $FindBin::Bin = cwd(); }
 use exact -cli, -conf;
 use DDP;
 use Mojo::File 'path';
-use Mojo::JSON qw( encode_json decode_json );
+use Mojo::Util 'decode';
+use Mojo::JSON qw( to_json from_json );
 use YAML::XS qw( Load Dump );
 use Omniframe;
 
@@ -23,15 +24,15 @@ pod2usage('Must specify table, field, where')
     unless ( $opt->{table} and $opt->{field} and $opt->{where} );
 
 my $dq    = Omniframe->with_roles('+Database')->new->dq( $opt->{database} );
-my $where = decode_json( $opt->{where} );
+my $where = from_json( $opt->{where} );
 $where    = { $opt->{table} . '_id' => $where } unless ( ref $where );
 
 my ( $yaml, $data, $json );
 
 if ( $opt->{import} ) {
-    $data = Load( path( $opt->{import} )->slurp );
-    $yaml = Dump($data);
-    $json = encode_json($data);
+    $data = Load( encode( 'UTF-8', path( $opt->{import} )->slurp('UTF-8') ) );
+    $yaml = decode( 'UTF-8', Dump($data) );
+    $json = to_json($data);
 
     $dq->update(
         $opt->{table},
@@ -41,8 +42,8 @@ if ( $opt->{import} ) {
 }
 else {
     $json = $dq->get( $opt->{table}, [ $opt->{field} ], $where, { rows => 1 } )->run->value;
-    $data = decode_json($json);
-    $yaml = Dump($data);
+    $data = from_json($json);
+    $yaml = decode( 'UTF-8', Dump($data) );
 }
 
 if ( ( $opt->{output} // '' ) =~ /^d/i ) {

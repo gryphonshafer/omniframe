@@ -4,10 +4,15 @@ default:
     database:
         file: local/app.sqlite
         settings:
-            sqlite_see_if_its_a_number: 1
-            sqlite_defensive          : 1
-            RaiseError                : 1
-            PrintError                : 0
+            PrintError                  : 0
+            RaiseError                  : 1
+            sqlite_see_if_its_a_number  : 1
+            sqlite_defensive            : 1
+            sqlite_extended_result_codes: 1
+            sqlite_string_mode          : 6
+                # 4 = DBD_SQLITE_STRING_MODE_UNICODE_NAIVE
+                # 5 = DBD_SQLITE_STRING_MODE_UNICODE_FALLBACK
+                # 6 = DBD_SQLITE_STRING_MODE_UNICODE_STRICT
         pragmas:
             encoding          : UTF-8
             foreign_keys      : ON

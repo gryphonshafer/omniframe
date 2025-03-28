@@ -435,17 +435,17 @@ ways such that you can serialize and deserialize data.
     package Model;
 
     use exact -class;
-    use Mojo::JSON qw( encode_json decode_json );
+    use Mojo::JSON qw( to_json from_json );
 
     with 'Omniframe::Role::Model';
 
     sub freeze ( $self, $data ) {
-        $data->{data} = encode_json $data->{data};
+        $data->{data} = to_json $data->{data};
         return $data;
     }
 
     sub thaw ( $self, $data ) {
-        $data->{data} = decode_json $data->{data};
+        $data->{data} = from_json $data->{data};
         return $data;
     }
 

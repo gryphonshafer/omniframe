@@ -5,7 +5,7 @@ BEGIN { $FindBin::Bin = cwd(); }
 
 use exact -cli, -conf;
 use Data::Printer;
-use Mojo::JSON 'encode_json';
+use Mojo::JSON 'to_json';
 use Mojo::Util 'camelize';
 use YAML::XS 'Dump';
 
@@ -55,10 +55,10 @@ catch ($e) {
 unless ( $opt->{silent} ) {
     $opt->{output} //= 'data';
     if ( uc $opt->{output} eq 'YAML' ) {
-        say Dump $rv;
+        say decode( 'UTF-8', Dump($rv) );
     }
     elsif ( uc $opt->{output} eq 'JSON' ) {
-        say encode_json($rv);
+        say to_json($rv);
     }
     else {
         say np( $rv, colored => 1 );

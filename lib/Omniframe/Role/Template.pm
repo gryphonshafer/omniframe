@@ -2,7 +2,7 @@ package Omniframe::Role::Template;
 
 use exact -role, -conf;
 use Mojo::File 'path';
-use Mojo::JSON 'encode_json';
+use Mojo::JSON 'to_json';
 
 BEGIN {
     local $SIG{__WARN__} = sub {};
@@ -76,7 +76,7 @@ sub tt_settings ( $self, $type = 'web' ) {
             } );
 
             $context->define_vmethod( $_, 'json', sub {
-                return encode_json( $_[0] );
+                return to_json( $_[0] );
             } ) for ( qw( scalar list hash ) );
         },
     };

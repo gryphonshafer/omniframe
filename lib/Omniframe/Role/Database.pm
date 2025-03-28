@@ -7,7 +7,7 @@ use DBIx::Query;
 use File::Glob ':bsd_glob';
 use Mojo::File 'path';
 use Omniframe::Class::Time;
-use YAML::XS;
+use YAML::XS qw( Load Dump );
 
 my $time    = Omniframe::Class::Time->new;
 my $globals = {
@@ -43,7 +43,7 @@ sub dq ( $self, $shard = undef ) {
         @shards = map {
             $self->default_shard($_) if ( $conf_full->{shards}{$_}{default_shard} );
 
-            my $shard_conf = YAML::XS::Load( YAML::XS::Dump( {
+            my $shard_conf = Load( Dump( {
                 %$conf_full,
                 %{ $conf_full->{shards}{$_} },
                 shard => $_,

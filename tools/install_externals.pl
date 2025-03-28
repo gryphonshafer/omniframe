@@ -193,7 +193,8 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
                         } @{ $this->{formats} } ) . ';',
                         q\}\,
                     );
-                } @$metadata ) . "\n"
+                } @$metadata ) . "\n",
+                'UTF-8',
             );
             say $css;
         }
@@ -312,7 +313,7 @@ if ( my $google_fonts = $ext_yaml->{google_fonts} ) {
         }
 
         my $css = $dest_css->child('material-icons.css');
-        $css->spew( join( "\n\n", @font_face_css_blocks, @font_style_css_blocks ) . "\n" );
+        $css->spew( join( "\n\n", @font_face_css_blocks, @font_style_css_blocks ) . "\n", 'UTF-8' );
         say $css;
     }
 }
@@ -325,7 +326,7 @@ if ( my $vue = $ext_yaml->{vue} ) {
         ( my $body = $ua->get( 'https://unpkg.com/' . $src )->result->body ) =~ s/\s+$//g;
         my $save_to = $dest->child($target);
         $save_to->dirname->make_path;
-        $save_to->spew($body);
+        $save_to->spew( $body, 'UTF-8' );
         say $save_to;
     }
 }

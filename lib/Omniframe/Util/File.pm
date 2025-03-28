@@ -20,8 +20,11 @@ sub opath (@parts) {
     $settings->{paths} = [ reverse @{ $settings->{paths} } ]
         if ( $settings->{omniframe} and not $settings->{paths} );
 
-    for my $path ( grep { $_ } map { glob( $_ . '/' . $file ) } $settings->{paths}->@* ) {
-        return Mojo::File->new($path) if ( $settings->{no_check} or -f $path and -r $path );
+    for my $path (
+        grep { $_ } map { glob( $_ . '/' . $file ) } $settings->{paths}->@*
+    ) {
+        return Mojo::File->new($path)
+            if ( $settings->{no_check} or -f $path and -r $path );
     }
 
     croak qq{File does not exist or is not readable: "$file"};
@@ -38,7 +41,7 @@ Omniframe::Util::File
     use exact;
     use Omniframe::Util::File 'opath';
 
-    my $css = opath('static/build/app.css')->slurp;
+    my $css = opath('static/build/app.css')->slurp('UTF-8');
 
 =head1 DESCRIPTION
 
@@ -52,13 +55,13 @@ like C<path> from L<Mojo::File>.
 This function acts like somewhat like the C<path> function from L<Mojo::File>,
 but behind the scenes, it does some L<Omniframe>-specific work by default.
 
-    my $css_0 = opath('static/build/app.css')->slurp;
-    my $css_1 = opath( qw( static build app.css ) )->slurp;
+    my $css_0 = opath('static/build/app.css')->slurp('UTF-8');
+    my $css_1 = opath( qw( static build app.css ) )->slurp('UTF-8');
 
 Globs are supported. If multiple files are matched, only the first (that's
 readable, unless C<no_check> is set) is used:
 
-    my $css_2 = opath('static/*/app.css')->slurp;
+    my $css_2 = opath('static/*/app.css')->slurp('UTF-8');
 
 It will first check for the file to exist and be readable relative to the
 project's root directory. If it doesn't find the file there, it will look under
@@ -67,7 +70,10 @@ throw an error.
 
 The behavior can be modified by providing a settings hashref.
 
-    my $icon = opath( qw( static favicon.ico ), { no_check => 1 } )->slurp;
+    my $icon = opath(
+        qw( static favicon.ico ),
+        { no_check => 1 },
+    )->slurp('UTF-8');
 
 These are the supported keys:
 

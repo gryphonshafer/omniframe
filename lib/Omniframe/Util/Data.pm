@@ -1,7 +1,7 @@
 package Omniframe::Util::Data;
 
 use exact -conf;
-use Mojo::JSON 'decode_json';
+use Mojo::JSON 'from_json';
 use Mojo::File 'path';
 use YAML::XS qw( LoadFile Load Dump );
 
@@ -10,8 +10,10 @@ exact->exportable( qw( dataload deepcopy ) );
 sub dataload ($file) {
     my $path = path( conf->get( qw( config_app root_dir ) ) . '/' . $file );
     return
-        ( $file =~ /\.yaml$/i ) ? LoadFile($path)             :
-        ( $file =~ /\.json$/i ) ? decode_json( $path->slurp ) : $path->slurp;
+        ( $file =~ /\.yaml$/i ) ? LoadFile($path) :
+        ( $file =~ /\.json$/i )
+            ? from_json( $path->slurp('UTF-8') )
+            : $path->slurp('UTF-8');
 }
 
 sub deepcopy (@items) {

@@ -4,7 +4,7 @@ use FindBin;
 BEGIN { $FindBin::Bin = cwd(); }
 
 use exact -cli, -conf;
-use Mojo::JSON 'decode_json', 'encode_json';
+use Mojo::JSON 'from_json';
 use Omniframe::Class::Email;
 
 my $opt = options( qw{ recipient|r=s type|t=s data|d=s } );
@@ -13,7 +13,7 @@ pod2usage('Must set email "type" to use') unless ( $opt->{type} );
 
 Omniframe::Class::Email->new( type => $opt->{type} )->send({
     to   => $opt->{recipient},
-    data => ( ( $opt->{data} ) ? decode_json( $opt->{data} ) : {} ),
+    data => ( ( $opt->{data} ) ? from_json( $opt->{data} ) : {} ),
 });
 
 =head1 NAME

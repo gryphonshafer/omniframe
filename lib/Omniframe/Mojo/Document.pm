@@ -45,7 +45,7 @@ sub document_helper ($self) {
         my $asset = Mojo::Asset::File->new( path => $pathfile );
 
         if ( not $c->param('download') and ( $type eq 'md' or $type eq 'csv' ) ) {
-            my $payload = decode( 'UTF-8', $asset->slurp );
+            my $payload = decode( 'UTF-8', $asset->slurp('UTF-8') );
 
             ( my $name = $file ) =~ s/\.[^\.\/]+$//;
             $name =~ s|/_|/|g;
@@ -122,14 +122,16 @@ sub docs_nav_helper ($self) {
             my $type = (/\.([^\.]+)$/) ? lc($1) : '';
             $type =~ s/x$// if ( length $type == 4 );
 
-            my $name  = pop @path;
+            my $name = pop @path;
+            $name = decode( 'UTF-8', $name ) // $name;
             my $title = $name;
 
             if ( $type eq 'md' ) {
-                my $content = Mojo::File->new($_)->slurp;
+                my $content = Mojo::File->new($_)->slurp('UTF-8');
                 my @headers = $content =~ /^\s*(#[^\n]*)/msg;
                 ( $title = $headers[0] ) =~ s/^\s*#+\s*//g if ( $headers[0] );
             }
+            $title = decode( 'UTF-8', $title ) // $title;
 
             my $set = $docs_nav;
             my $parent;
@@ -161,7 +163,7 @@ sub docs_nav_helper ($self) {
                 push( @$set, {
                     name  => $name,
                     href  => '/' . $href,
-                    title => decode( 'UTF-8', $title ),
+                    title => $title,
                     type  => $type,
                 } );
             }

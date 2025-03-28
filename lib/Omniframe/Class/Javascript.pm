@@ -3,7 +3,7 @@ package Omniframe::Class::Javascript;
 use exact 'Omniframe';
 use JavaScript::QuickJS;
 use Mojo::File qw( path tempdir );
-use Mojo::JSON 'encode_json';
+use Mojo::JSON 'to_json';
 
 has basepath  => undef;
 has importmap => undef;
@@ -34,8 +34,9 @@ sub setup ( $self, $basepath = $self->basepath, $importmap = $self->importmap ) 
         $_->{target}->dirname->make_path;
         $_->{target}->spew(
             $self->_import_re(
-                $_->{source}->slurp,
-            )
+                $_->{source}->slurp('UTF-8'),
+            ),
+            'UTF-8',
         );
     }
 
@@ -50,7 +51,7 @@ sub teardown ($self) {
 sub run ( $self, $module, $in = undef ) {
     my $output;
 
-    $module = path($module)->slurp if ( -f $module );
+    $module = path($module)->slurp('UTF-8') if ( -f $module );
     $module = $self->_import_re($module) if ( $self->mapping->%* );
     $module =~ s/^\s*(?!import\b)/\nOCJS.in = JSON.parse( OCJS.in );\n/im;
 
@@ -58,7 +59,7 @@ sub run ( $self, $module, $in = undef ) {
         ->new
         ->set_globals(
             OCJS => {
-                in  => encode_json($in),
+                in  => to_json($in),
                 out => sub { push( @$output, \@_ ) },
             },
         );
