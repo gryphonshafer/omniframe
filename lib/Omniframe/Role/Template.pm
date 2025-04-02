@@ -75,6 +75,28 @@ sub tt_settings ( $self, $type = 'web' ) {
                 return map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @{ $_[0] };
             } );
 
+            my $sort_by = sub {
+                my ( $list, $key, $direction, $numeric ) = @_;
+                $direction //= 'asc';
+
+                if ($numeric) {
+                    return ( substr( lc $direction, 0, 1 ) eq 'd' or substr( lc $direction, 0, 1 ) eq 'r' )
+                        ? ( sort { ( $b->{$key} || 0 ) <=> ( $a->{$key} || 0 ) } @$list )
+                        : ( sort { ( $a->{$key} || 0 ) <=> ( $b->{$key} || 0 ) } @$list );
+                }
+                else {
+                    return ( substr( lc $direction, 0, 1 ) eq 'd' or substr( lc $direction, 0, 1 ) eq 'r' )
+                        ? ( sort { ( $b->{$key} // '' ) cmp ( $a->{$key} // '' ) } @$list )
+                        : ( sort { ( $a->{$key} // '' ) cmp ( $b->{$key} // '' ) } @$list );
+                }
+            };
+
+            $context->define_vmethod( 'list', 'sort_by', $sort_by );
+            $context->define_vmethod( 'list', 'nsort_by', sub {
+                my ( $list, $key, $direction ) = @_;
+                $sort_by->( $list, $key, $direction, 'numeric' );
+            } );
+
             $context->define_vmethod( $_, 'json', sub {
                 return to_json( $_[0] );
             } ) for ( qw( scalar list hash ) );
