@@ -46,7 +46,6 @@ requires 'exact::class', '1.19';
 requires 'exact::cli', '1.07';
 requires 'exact::conf', '1.08';
 requires 'exact::lib', '1.04';
-recommends 'EV', '4.34';
 recommends 'IO::Socket::SSL', '2.089';
 recommends 'IO::Socket::Socks', '0.74';
 recommends 'MojoX::Linda', '1.03';
