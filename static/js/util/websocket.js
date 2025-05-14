@@ -5,7 +5,9 @@ window.omniframe.websocket = ( function () {
         this.settings = settings;
         this.ws       = undefined;
         this.restart  = true;
-        this.start    = () => {
+
+        let reconnect_attempts = 0;
+        this.start = () => {
             this.ws = new WebSocket(
                 ( ( window.location.protocol.match('s') ) ? 'wss' : 'ws' ) + '://' +
                     window.location.hostname +
@@ -15,6 +17,7 @@ window.omniframe.websocket = ( function () {
             );
 
             this.ws.onopen = (event) => {
+                reconnect_attempts = 0;
                 if ( this.settings.onopen ) this.settings.onopen( this, event );
             };
 
@@ -34,13 +37,21 @@ window.omniframe.websocket = ( function () {
 
             this.ws.onclose = (event) => {
                 if ( this.settings.onclose ) this.settings.onclose( this, event );
-                if ( this.restart ) setTimeout( this.start, 1000 );
+                if ( this.restart ) {
+                    setTimeout(
+                        () => {
+                            reconnect_attempts++;
+                            this.start();
+                        },
+                        ( reconnect_attempts < 5 ) ? 100 * Math.pow( 2, reconnect_attempts ) : 5000,
+                    );
+                }
             };
         };
 
         this.stop = () => {
             this.restart = false;
-            this.ws.close();
+            if ( this.ws ) this.ws.close();
         };
     }
 

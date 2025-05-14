@@ -20,9 +20,9 @@ ok( lives { $obj = Omniframe::Mojo::Socket->new }, 'new' ) or note $@;
 can_ok( $obj, $_ ) for ( qw( sockets setup event_handler ) );
 DOES_ok( $obj, "Omniframe::Role::$_" ) for ( qw( Database Logging ) );
 
-my $orig_sig_urg = $SIG{URG};
+my $orig_sig_urg = $SIG{ 'NUM' . $obj->signal };
 ok( lives { $obj = $obj->setup }, 'setup' ) or note $@;
-isnt( $orig_sig_urg, $SIG{URG}, 'URG handler set' );
+isnt( $orig_sig_urg, $SIG{ 'NUM' . $obj->signal }, 'Signal handler set' );
 
 my $event_handler;
 ok( lives { $event_handler = $obj->event_handler }, 'event_handler' ) or note $@;

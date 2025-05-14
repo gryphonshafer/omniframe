@@ -3,11 +3,13 @@ package Omniframe::Mojo::Socket;
 use exact -conf, 'Omniframe';
 use Mojo::JSON qw( from_json to_json );
 use Proc::ProcessTable;
+use POSIX 'signal_h';
 
 with qw( Omniframe::Role::Database Omniframe::Role::Logging );
 
 class_has sockets => sub { {} };
 class_has ppid    => undef;
+class_has signal  => SIGRTMIN() + 1;
 
 my $table_sql = q{CREATE TABLE IF NOT EXISTS socket (
     socket_id     INTEGER PRIMARY KEY,
@@ -31,8 +33,8 @@ END;};
 sub setup ($self) {
     $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
 
-    $SIG{URG} = sub {
-        $self->debug("URG received by $$");
+    $SIG{ 'NUM' . $self->signal } = sub {
+        $self->debug("Signal $self->signal received by $$");
         for my $socket ( @{ $self->dq->sql('SELECT name, counter FROM socket')->run->all({}) } ) {
             if (
                 exists $self->sockets->{ $socket->{name} } and
@@ -120,8 +122,8 @@ sub message ( $self, $socket_name, $data ) {
             grep { $_->ppid == $ppid }
             Proc::ProcessTable->new( enable_ttys => 0 )->table->@*
         ) {
-            $self->debug("URG to be sent to $_ (parent: $ppid)");
-            kill( 'URG', $_ );
+            $self->debug("Signal $self->signal to be sent to $_ (parent: $ppid)");
+            kill( $self->signal, $_ );
         }
     }
     return $self;
