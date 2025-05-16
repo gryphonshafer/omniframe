@@ -50,6 +50,8 @@ sub startup ($self) {
 }
 
 sub setup ( $self, %params ) {
+    $self->sessions->samesite( conf->get( qw( mojolicious session samesite ) ) // 'Lax' );
+
     my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? @{ $params{run} } : qw(
         mojo_logging
         request_base
@@ -434,8 +436,9 @@ application's configuration file. See L<Config::App>.
                 listen:
                     - http://*:8080
         session:
-            cookie_name: omniframe_session
+            cookie_name       : omniframe_session
             default_expiration: 31557600 # 365.25 days
+            samesite          : Lax
 
 Note however that in the application's configuration file, secrets should be
 found (although not directly if the YAML will be made public).

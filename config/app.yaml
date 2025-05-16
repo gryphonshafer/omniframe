@@ -53,16 +53,17 @@ default:
             - static
         config:
             hypnotoad:
-                proxy: 1
+                proxy   : 1
                 pid_file: local/hypnotoad.pid
-                listen:
+                listen  :
                     - http://*:8080
         session:
-            cookie_name: omniframe_session
+            cookie_name       : omniframe_session
             default_expiration: 31557600 # 365.25 days
+            samesite          : Lax
         ws_inactivity_timeout: 14400 # 4 hours
         linda:
-            app: app.psgi
+            app  : app.psgi
             watch:
                 - app.psgi
                 - config/app.yaml
@@ -70,7 +71,7 @@ default:
                 - lib
                 - templates
     email:
-        from: Example <example@example.com>
+        from  : Example <example@example.com>
         active: 1
     bcrypt:
         cost: 5
