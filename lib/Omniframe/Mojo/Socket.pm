@@ -34,7 +34,7 @@ sub setup ($self) {
     $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
 
     $SIG{ 'NUM' . $self->signal } = sub {
-        $self->debug("Signal $self->signal received by $$");
+        $self->debug( sprintf( 'Signal %s received by %s', $self->signal, $$ ) );
         for my $socket ( @{ $self->dq->sql('SELECT name, counter FROM socket')->run->all({}) } ) {
             if (
                 exists $self->sockets->{ $socket->{name} } and
@@ -122,7 +122,7 @@ sub message ( $self, $socket_name, $data ) {
             grep { $_->ppid == $ppid }
             Proc::ProcessTable->new( enable_ttys => 0 )->table->@*
         ) {
-            $self->debug("Signal $self->signal to be sent to $_ (parent: $ppid)");
+            $self->debug( sprintf( 'Signal %s to be sent to %s (parent: %s)', $self->signal, $_, $ppid ) );
             kill( $self->signal, $_ );
         }
     }
