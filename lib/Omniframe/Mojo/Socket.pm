@@ -3,13 +3,13 @@ package Omniframe::Mojo::Socket;
 use exact -conf, 'Omniframe';
 use Mojo::JSON qw( from_json to_json );
 use Proc::ProcessTable;
-use POSIX 'signal_h';
 
 with qw( Omniframe::Role::Database Omniframe::Role::Logging );
 
-class_has sockets => sub { {} };
-class_has ppid    => undef;
-class_has signal  => SIGRTMIN() + 1;
+class_has sockets        => sub { {} };
+class_has ppid           => undef;
+class_has signal         => 'URG';
+class_has signal_handler => sub { $_[0]->signal };
 
 my $table_sql = q{CREATE TABLE IF NOT EXISTS socket (
     socket_id     INTEGER PRIMARY KEY,
@@ -33,7 +33,7 @@ END;};
 sub setup ($self) {
     $self->dq->sql($_)->run for ( $table_sql, $trigger_sql );
 
-    $SIG{ 'NUM' . $self->signal } = sub {
+    $SIG{ $self->signal_handler } = sub {
         $self->debug( sprintf( 'Signal %s received by %s', $self->signal, $$ ) );
         for my $socket ( @{ $self->dq->sql('SELECT name, counter FROM socket')->run->all({}) } ) {
             if (
@@ -165,10 +165,10 @@ Omniframe::Mojo::Socket
 
 This package provides methods to enable setup of a simple sockets mechanism
 in Mojolicious applications. First, you need to call C<setup> to setup the
-database for socket data transfer and to establish a URG signal handler
-receiver, which will be used to catch thrown triggers for outbound messages.
-Second, you need to call C<event_handler> to return a subroutine reference that
-can be used in a Mojolicious helper.
+database for socket data transfer and to establish a signal handler receiver,
+which will be used to catch thrown triggers for outbound messages. Second, you
+need to call C<event_handler> to return a subroutine reference that can be used
+in a Mojolicious helper.
 
     $self->helper(
         socket => Omniframe::Mojo::Socket->new->setup->event_handler
@@ -186,7 +186,7 @@ listeners. Typically, you don't need to access or alter this data directly.
 =head2 setup
 
 This method sets up the database table called C<socket> and trigger called
-C<socket_before_update> for socket data transfer, and it establishs a URG signal
+C<socket_before_update> for socket data transfer, and it establishes a signal
 handler receiver, which will be used to catch thrown triggers for outbound
 messages. This method accepts no input parameters.
 
