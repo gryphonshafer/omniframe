@@ -8,6 +8,7 @@ use Omniframe::Util::Output 'dp';
 use Term::ANSIColor;
 
 my $log_levels_definitions = {
+    trace => 0,
     debug => 1,
     info  => 2,
     warn  => 3,
@@ -29,6 +30,7 @@ my %color = (
     reset  => Term::ANSIColor::color('reset'),
     bold   => Term::ANSIColor::color('bold'),
 
+    trace     => 'green',
     debug     => 'cyan',
     info      => 'white',
     notice    => 'bright_white',
@@ -132,6 +134,7 @@ class_has log_dispatch => sub ($self) {
     return $log_dispatch;
 };
 
+sub trace     ( $self, @params ) { return $self->log_dispatch->trace    ( dp( \@params ) ) }
 sub debug     ( $self, @params ) { return $self->log_dispatch->debug    ( dp( \@params ) ) }
 sub info      ( $self, @params ) { return $self->log_dispatch->info     ( dp( \@params ) ) }
 sub notice    ( $self, @params ) { return $self->log_dispatch->notice   ( dp( \@params ) ) }
@@ -146,11 +149,11 @@ sub emergency ( $self, @params ) { return $self->log_dispatch->emergency( dp( \@
 sub emerg     ( $self, @params ) { return $self->log_dispatch->emerg    ( dp( \@params ) ) }
 
 sub _log_cb_time (%msg) {
-    return $time->set->format('log') . ' ' . $msg{message};
+    return $time->set->format('log') . ' ' . ( ( defined $msg{message} ) ? $msg{message} : '>undef<' );
 }
 
 sub _log_cb_label (%msg) {
-    return '[' . uc( $msg{level} ) . '] ' . $msg{message};
+    return '[' . uc( $msg{level} ) . '] ' . ( ( defined $msg{message} ) ? $msg{message} : '>undef<' );
 }
 
 sub _highest_level (@input) {
@@ -162,7 +165,7 @@ sub _highest_level (@input) {
     )[0];
 }
 
-for ( qw( debug info notice warning error critical alert emergency ) ) {
+for ( qw( trace debug info notice warning error critical alert emergency ) ) {
     next unless ( $color{$_} );
     $color{$_} = join ( '', map {
         $color{$_} = Term::ANSIColor::color($_) unless ( $color{$_} );
@@ -172,8 +175,8 @@ for ( qw( debug info notice warning error critical alert emergency ) ) {
 
 sub _log_cb_color (%msg) {
     return ( $color{ $msg{level} } )
-        ? $color{ $msg{level} } . $msg{message} . $color{reset}
-        : $msg{message};
+        ? $color{ $msg{level} } . ( ( defined $msg{message} ) ? $msg{message} : '>undef<' ) . $color{reset}
+        : ( ( defined $msg{message} ) ? $msg{message} : '>undef<' );
 }
 
 1;
@@ -194,6 +197,7 @@ Omniframe::Role::Logging
         $self->log_level('debug');
         say $self->log_file;
 
+        $self->trace(     'trace-level detail logging (normally disabled)'     );
         $self->debug(     'everything at a pedantic level (normally disabled)' );
         $self->info(      'complete an action within a subsystem'              );
         $self->notice(    'service start, stop, restart, reload config, etc.'  );
@@ -218,6 +222,7 @@ messages in text-based logs.
 
 The following are the log levels and their meanings:
 
+    trace     = trace-level detail logging (normally disabled)
     debug     = everything at a pedantic level (normally disabled)
     info      = completed actions within a subsystem
     notice    = service start, stop, restart, reload config, etc.
@@ -229,6 +234,7 @@ The following are the log levels and their meanings:
 
 The following are the log levels and their outputs:
 
+    trace     = STDOUT/Screen
     debug     = STDOUT/Screen
     info      = STDOUT/Screen, DBI
     notice    = STDOUT/Screen
@@ -315,6 +321,7 @@ err
 error
 info
 notice
+trace
 warn
 warning
 
