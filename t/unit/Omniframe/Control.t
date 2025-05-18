@@ -15,14 +15,21 @@ can_ok( $obj, qw(
     sass
     startup
     setup
-    setup_access_log
     setup_mojo_logging
+    setup_access_log
+    setup_request_base
+    setup_samesite
+    setup_csrf
+    setup_sass_build
     setup_templating
     setup_static_paths
     setup_config
+    setup_packer
+    setup_compressor
     setup_sockets
     setup_document
-    preload_controllers
+    setup_devdocs
+    setup_preload_controllers
 ) );
 
 done_testing;

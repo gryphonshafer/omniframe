@@ -50,13 +50,13 @@ sub startup ($self) {
 }
 
 sub setup ( $self, %params ) {
-    $self->sessions->samesite( conf->get( qw( mojolicious session samesite ) ) // 'Lax' );
-
-    my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? @{ $params{run} } : qw(
+    my @setups = qw(
         mojo_logging
-        request_base
-        sass_build
         access_log
+        request_base
+        samesite
+        csrf
+        sass_build
         templating
         static_paths
         config
@@ -66,25 +66,11 @@ sub setup ( $self, %params ) {
         document
         devdocs
         preload_controllers
-    ) };
+    );
+
+    my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? @{ $params{run} } : @setups };
     delete $run->{$_} for ( @{ $params{skip} // [] } );
-
-    $self->setup_mojo_logging if $run->{mojo_logging};
-
-    $self->plugin('RequestBase') if $run->{request_base};
-    $self->sass->build           if $run->{sass_build};
-
-    $self->setup_access_log   if $run->{access_log};
-    $self->setup_templating   if $run->{templating};
-    $self->setup_static_paths if $run->{static_paths};
-    $self->setup_config       if $run->{config};
-    $self->setup_packer       if $run->{packer};
-    $self->setup_compressor   if $run->{compressor};
-    $self->setup_sockets      if $run->{sockets};
-    $self->setup_document     if $run->{document};
-    $self->setup_devdocs      if $run->{devdocs};
-
-    $self->preload_controllers if $run->{preload_controllers};
+    $self->$_ for ( map { 'setup_' . $_ } grep { $run->{$_} } @setups );
     return;
 }
 
@@ -108,7 +94,7 @@ sub setup_mojo_logging ($self) {
         } );
     }
 
-    $self->info('Setup mojo logging');
+    $self->info('Setup Mojo logging');
     return;
 }
 
@@ -126,6 +112,30 @@ sub setup_access_log ($self) {
     $self->log->level($log_level);
 
     $self->info('Setup access log');
+    return;
+}
+
+sub setup_request_base ($self) {
+    $self->plugin('RequestBase');
+    $self->info('Setup request base');
+    return;
+}
+
+sub setup_samesite ($self) {
+    $self->sessions->samesite( conf->get( qw( mojolicious session samesite ) ) // 'Lax' );
+    $self->info('Setup SameSite');
+    return;
+}
+
+sub setup_csrf ($self) {
+    $self->plugin( CSRF => conf->get( 'mojolicious', 'csrf' ) // {} );
+    $self->info('Setup CSRF');
+    return;
+}
+
+sub setup_sass_build ($self) {
+    $self->sass->build;
+    $self->info('Setup Sass build');
     return;
 }
 
@@ -209,6 +219,7 @@ sub setup_document ($self) {
     my $document = Omniframe::Mojo::Document->new;
     $self->helper( document => $document->document_helper );
     $self->helper( docs_nav => $document->docs_nav_helper );
+
     $self->info('Setup document system');
     return;
 }
@@ -223,11 +234,12 @@ sub setup_devdocs (
     return unless ( $trigger->($self) );
     require Omniframe::Mojo::DevDocs;
     Omniframe::Mojo::DevDocs->new->setup( $self, $location );
+
     $self->info('Setup development documents');
     return;
 }
 
-sub preload_controllers ($self) {
+sub setup_preload_controllers ($self) {
     for ( map { find_modules($_) } 'Omniframe::Control', ref($self) ) {
         if ( my $error = load_class($_) ) {
             $self->error("Error loading: $_ -- $error");
@@ -237,6 +249,7 @@ sub preload_controllers ($self) {
         }
     }
 
+    $self->info('Setup preload controllers');
     return;
 }
 
@@ -258,9 +271,11 @@ Omniframe::Control
         # $self->setup; ## <-- this does all of the following code block:
 
         $self->setup_mojo_logging;
-        $self->plugin('RequestBase');
-        $self->sass->build;
         $self->setup_access_log;
+        $self->setup_request_base;
+        $self->setup_samesite;
+        $self->setup_csrf;
+        $self->setup_sass_build;
         $self->setup_templating;
         $self->setup_static_paths;
         $self->setup_config;
@@ -269,7 +284,7 @@ Omniframe::Control
         $self->setup_sockets;
         $self->setup_document;
         $self->setup_devdocs;
-        $self->preload_controllers;
+        $self->setup_preload_controllers;
 
         $self->routes->any( '/*null' => { null => undef } => sub ($c) {
             $c->render( text => __PACKAGE__ . '::startup() -- ' . scalar(localtime) );
@@ -283,17 +298,14 @@ Omniframe::Control
 This class is a base class for application project controller base classes. It's
 it not meant to be used directly as-is, although it can be. As the super-class,
 it provides to the application project controller a series of methods for
-web application enviornment setup.
+web application environment setup.
 
 =head1 ATTRIBUTES
 
 =head2 sass
 
 This attribute will on first access be set with an instantiated object of
-L<Omniframe::Class::Sass>. The following 2 lines are equivalent:
-
-        Omniframe::Class::Sass->new->build;
-        $self->sass->build;
+L<Omniframe::Class::Sass>.
 
 =head1 METHODS
 
@@ -313,9 +325,11 @@ This method is a simple wrapper around other setup methods.
 The above line is equivalent to the following block:
 
     $self->setup_mojo_logging;
-    $self->plugin('RequestBase');
-    $self->sass->build;
     $self->setup_access_log;
+    $self->setup_request_base;
+    $self->setup_samesite;
+    $self->setup_csrf;
+    $self->setup_sass_build;
     $self->setup_templating;
     $self->setup_static_paths;
     $self->setup_config;
@@ -324,7 +338,7 @@ The above line is equivalent to the following block:
     $self->setup_sockets;
     $self->setup_document;
     $self->setup_devdocs;
-    $self->preload_controllers;
+    $self->setup_preload_controllers;
 
 The method optionally accepts input to explicitly specify the setup steps and/or
 skip certain setup steps. For example, the following is equivalent to calling
@@ -332,9 +346,11 @@ C<$self->setup>:
 
     $self->setup( run => [ qw(
         mojo_logging
-        request_base
-        sass_build
         access_log
+        request_base
+        samesite
+        csrf
+        sass_build
         templating
         static_paths
         config
@@ -354,16 +370,34 @@ The following will setup all steps the lilsted options:
 
     $self->setup( skip => [ qw( document devdocs ) ] );
 
+=head2 setup_mojo_logging
+
+This method connects L<Mojolicious> logging with the
+L<Omniframe::Role::Logging> role via L<MojoX::Log::Dispatch::Simple>.
+
 =head2 setup_access_log
 
 This method establishes an access log via L<Mojolicious::Plugin::AccessLog>
 using the C<mojolicious>, C<access_log> configuration key. See
 L</"CONFIGURATION"> below.
 
-=head2 setup_mojo_logging
+=head2 setup_request_base
 
-This method connects L<Mojolicious> logging with the
-L<Omniframe::Role::Logging> role via L<MojoX::Log::Dispatch::Simple>.
+Register L<Mojolicious::Plugin::RequestBase>.
+
+=head2 setup_samesite
+
+Set the C<samesite> value for session cookies using the C<mojolicious>,
+C<session>, C<samesite> configuration key. See L</"CONFIGURATION"> below.
+
+=head2 setup_csrf
+
+Register L<Mojolicious::Plugin::CSRF> using the C<mojolicious>, C<csrf>
+configuration key. See L</"CONFIGURATION"> below.
+
+=head2 setup_sass_build
+
+Using the C<sass> attribute's object, this will call C<build> off the object.
 
 =head2 setup_templating
 
@@ -415,7 +449,7 @@ L<Omniframe::Mojo::Document> and a call to its C<helper> method.
 This method will setup the "/devdocs" routes and functionality via a lazy use of
 L<Omniframe::Mojo::DevDocs> and a call to its C<setup> method.
 
-=head2 preload_controllers
+=head2 setup_preload_controllers
 
 This method will attempt to find all project controller subclasses and omniframe
 controller subclasses and load them using L<Mojo::Loader>.
@@ -439,6 +473,8 @@ application's configuration file. See L<Config::App>.
             cookie_name       : omniframe_session
             default_expiration: 31557600 # 365.25 days
             samesite          : Lax
+        csrf:
+            header: X-CSRF-Token
 
 Note however that in the application's configuration file, secrets should be
 found (although not directly if the YAML will be made public).
@@ -450,6 +486,8 @@ found (although not directly if the YAML will be made public).
 
 =head1 WITH ROLES
 
+L<Omniframe::Class::Sass>, L<Omniframe::Mojo::DevDocs>,
+L<Omniframe::Mojo::Document>, L<Omniframe::Mojo::Socket>,
 L<Omniframe::Role::Logging>, L<Omniframe::Role::Template>.
 
 =head1 INHERITANCE

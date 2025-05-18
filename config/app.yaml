@@ -70,6 +70,8 @@ default:
                 - config/assets
                 - lib
                 - templates
+        csrf:
+            header: X-CSRF-Token
     email:
         from  : Example <example@example.com>
         active: 1
