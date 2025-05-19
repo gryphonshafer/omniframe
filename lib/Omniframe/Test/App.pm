@@ -6,7 +6,7 @@ use Test2::MojoX;
 use Omniframe;
 use Omniframe::Control;
 
-exact->export( qw{ setup stuff username email mojo url teardown } );
+exact->export( qw{ setup stuff username email mojo url csrf teardown } );
 
 my $stuff = {};
 
@@ -51,6 +51,12 @@ sub mojo {
 
 sub url (@url_parts) {
     return mojo->app->url_for(@url_parts)->to_string;
+}
+
+sub csrf {
+    mojo->ua->get('/');
+    my $c = mojo->app->build_controller->tx( mojo->ua->get('/') );
+    return [ mojo->app->csrf->token_name => $c->session( mojo->app->csrf->token_name ) ];
 }
 
 sub teardown {
@@ -125,6 +131,22 @@ This function is an alias for:
 
 This function requires a path or URL that will be processed via the
 application's C<url_for> method and returned as a string.
+
+=head2 csrf
+
+This function will "prepare" CSRF data in the current session (indirectly via
+L<Mojolicious::Plugin::CSRF>) and return an arrayref with the CSRF token name
+and CSRF token. This makes the following possible:
+
+    my $csrf = csrf;
+    mojo->post_ok(
+        '/user/login',
+        form => {
+            email  => $email,
+            passwd => $passwd,
+            @$csrf,
+        },
+    );
 
 =head2 teardown
 
