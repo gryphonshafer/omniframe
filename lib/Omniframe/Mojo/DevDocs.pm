@@ -82,7 +82,7 @@ sub setup ( $self, $app, $location ) {
 
             if ( $data->{extname} eq 'md' ) {
                 $data->{type}    = 'md';
-                $data->{content} = markdown( $file->slurp('UTF-8') );
+                $data->{content} = markdown( $file->slurp );
             }
             elsif ( $data->{extname} eq 'pm' or $data->{extname} eq 'pl' ) {
                 $data->{type} = 'pod';

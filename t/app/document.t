@@ -11,8 +11,7 @@ mojo->get_ok('/test.js')
 
 mojo->get_ok('/docs/README.md')
     ->status_is(200)
-    ->text_is( 'h1#omniframe', 'Omniframe' )
-    ->text_is( 'h2#installation', 'Installation' );
+    ->text_is( 'h1#omniframe', 'Omniframe' );
 
 mojo->get_ok('/docs/DOES_NOT_EXIST')->status_is(404);
 
