@@ -7,6 +7,7 @@
         page.charset      = ( NOT page.no_defaults ) ? 'utf-8' : '',
         page.robots       = ( NOT page.no_defaults ) ? 'index, follow' : '',
         page.viewport     = ( NOT page.no_defaults ) ? 1 : '',
+        page.meta         = [],
         page.favicon      = ( NOT page.no_defaults ) ? '/favicon.ico' : '',
         page.font_awesome = 0,
         page.css          = ( NOT page.no_defaults ) ? ['/build/app.css'] : [],
@@ -80,6 +81,12 @@
 
         [% IF page.viewport %]
             <meta name="viewport" content="width=device-width, initial-scale=[% page.viewport %]">
+        [% END %]
+
+        [% IF page.meta AND page.meta.size %]
+            [% FOR meta IN page.meta %]
+                <meta name="[% meta.name %]" content="[% meta.content %]">
+            [% END %]
         [% END %]
 
         [% IF page.favicon %]
