@@ -123,7 +123,7 @@ sub docs_nav_helper ($self) {
             $type =~ s/x$// if ( length $type == 4 );
 
             my $name = pop @path;
-            $name = decode( 'UTF-8', $name ) // $name;
+            ( $name = decode( 'UTF-8', $name ) // $name ) =~ s/^\d+\s+//;
             my $title = $name;
 
             if ( $type eq 'md' ) {
@@ -260,6 +260,10 @@ the base/root page.
 
 What will be returned is a data structure of the documents directory suitable
 for use in a navigation menu.
+
+Files and directories preceded with an underscore will be ignored. And if files
+or directories are prefixed with a number followed by an underscore, these will
+be used for sorting purposes but removed for titles.
 
 =head1 WITH ROLE
 
