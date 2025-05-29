@@ -39,7 +39,7 @@ sub document_helper ($self) {
             return;
         }
 
-        my ($type) = lc($file) =~ /\.([^\.\/]+)$/;
+        my ($type) = lc($pathfile) =~ /\.([^\.\/]+)$/;
         $type ||= '';
 
         my $asset = Mojo::Asset::File->new( path => $pathfile );
@@ -154,6 +154,7 @@ sub docs_nav_helper ($self) {
                 }
             }
 
+            $href =~ s|/index\.md$||;
             if ( $name eq 'Index' ) {
                 $parent->[-1]{href}  = '/' . $href;
                 $parent->[-1]{title} = $title;
