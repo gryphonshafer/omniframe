@@ -159,10 +159,8 @@
                                 ( file.name.size > 1 ) ? file.name.0 : '';
                             IF last_group != group;
                                 IF last_group.length > 0;
-                                    '</li></ul>';
+                                    '<li>' _ group _ '<ul>';
                                 END;
-                                '<li>' _ group _ '<ul>';
-                                last_group = group;
                             END;
                         %]
                         <li>
@@ -184,6 +182,14 @@
                                 END;
                             %]</a>
                         </li>
+                        [%
+                            IF last_group != group;
+                                IF last_group.length > 0;
+                                    '</ul></li>';
+                                END;
+                                last_group = group;
+                            END;
+                        %]
                     [% END %]
                 </ul>
             [% END %]

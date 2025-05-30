@@ -1,4 +1,4 @@
-requires 'App::Dest', '1.34';
+requires 'App::Dest', '1.35';
 requires 'Auth::GoogleAuth', '1.07';
 requires 'Crypt::CBC', '3.04';
 requires 'Cwd', '3.75';
@@ -24,6 +24,7 @@ requires 'Linux::Inotify2', '2.3';
 requires 'Log::Dispatch', '2.71';
 requires 'Log::Dispatch::Email::Mailer', '1.13';
 requires 'MIME::Base64', '3.16';
+requires 'Module::CPANfile', '1.1004';
 requires 'MojoX::ConfigAppStart', '1.04';
 requires 'MojoX::Log::Dispatch::Simple', '1.14';
 requires 'Mojolicious', '9.40';
@@ -56,7 +57,7 @@ on test => sub {
     requires 'ExtUtils::Manifest', '1.75';
     requires 'Pod::Coverage::TrustPod', '0.100006';
     requires 'Test2::MojoX', '0.07';
-    requires 'Test2::V0', '1.302213';
+    requires 'Test2::V0', '1.302214';
     requires 'Test::EOL', '2.02';
     requires 'Test::Mojibake', '1.3';
     requires 'Test::NoTabs', '2.02';

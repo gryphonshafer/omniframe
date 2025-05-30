@@ -1,6 +1,7 @@
 package Omniframe::Mojo::DevDocs;
 
 use exact -conf, 'Omniframe';
+use Module::CPANfile;
 use Mojo::DOM;
 use Mojo::File 'path';
 use Mojo::Util 'url_unescape';
@@ -69,6 +70,41 @@ sub setup ( $self, $app, $location ) {
                 }
                 @$root_dirs
             ];
+
+            my $cpan_libs = {
+                map { $_ => 1 }
+                map {
+                    my $cpanfile = Module::CPANfile->load($_);
+                    map {
+                        my $feature = $_;
+                        map {
+                            my $type = $feature->{$_};
+                            map {
+                                keys %{ $type->{$_} };
+                            } keys %$type;
+                        } keys %$feature;
+                    }
+                    $cpanfile->prereqs->as_string_hash,
+                    map { $_->prereqs->as_string_hash } $cpanfile->features;
+                }
+                grep { -r $_ }
+                map { $_->{path}->child('cpanfile') }
+                @$root_dirs
+            };
+            $cpan_libs = [ sort keys %$cpan_libs ];
+            push( @{ $data->{trees} }, +{
+                name  => 'CPAN',
+                files => [
+                    map {
+                        +{
+                            name => $_,
+                            type => 'lib',
+                            url  => 'https://metacpan.org/pod/' . $_,
+                        };
+                    }
+                    @$cpan_libs
+                ],
+            } ) if (@$cpan_libs);
         }
         else {
             my ( $project, $path ) = $c->stash('pathinfo') =~ m|^/?([^/]+)/(.+)|;
