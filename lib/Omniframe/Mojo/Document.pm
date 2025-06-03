@@ -88,6 +88,7 @@ sub docs_nav_helper ($self) {
         $home_title        = 'Home Page',
     ) {
         my $docs_dir = conf->get( qw( config_app root_dir ) ) . '/' . $relative_docs_dir;
+        return [] unless ( -r $docs_dir );;
 
         my @files;
         find(
@@ -172,7 +173,7 @@ sub docs_nav_helper ($self) {
             }
         }
 
-        push( @$docs_nav, @{ delete $docs_nav->[0]{nodes} } );
+        push( @$docs_nav, @{ delete $docs_nav->[0]{nodes} } ) if ( $docs_nav->[0]{nodes} );
 
         $docs_nav->[0]{name}  = delete $docs_nav->[0]{folder};
         $docs_nav->[0]{href}  = '/';
