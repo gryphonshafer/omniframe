@@ -51,13 +51,15 @@ sub document_helper ($self) {
             $name =~ s|/_|/|g;
             $name =~ s/$file_filter// if ($file_filter);
 
-            $c->stash( title => join( ' / ',
+            my $title = join( ' / ',
                 map {
                     ucfirst( join( ' ', map {
                         ( /^(?:a|an|the|and|but|or|for|nor|on|at|to|from|by)$/i ) ? $_ : ucfirst
                     } split('_') ) )
                 } split( '/', $name )
-            ) );
+            );
+            $title = $1 if ( $title eq 'Index' and $type eq 'md' and $payload =~ /^\s*(?:#\s)+([^\r\n]+)/ );
+            $c->stash( title => $title );
 
             $payload = $payload_process->( $payload, $type ) if ( ref $payload_process eq 'CODE' );
 
