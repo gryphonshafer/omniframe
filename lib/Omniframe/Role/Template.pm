@@ -3,6 +3,7 @@ package Omniframe::Role::Template;
 use exact -role, -conf;
 use Mojo::File 'path';
 use Mojo::JSON 'to_json';
+use Omniframe::Util::Crypt 'urand';
 
 BEGIN {
     local $SIG{__WARN__} = sub {};
@@ -54,6 +55,7 @@ sub tt_settings ( $self, $type = 'web' ) {
             VARIABLES => {
                 version => $self->tt_version,
                 rand    => sub { return int( rand( $_[0] // 2 ) + ( $_[1] // 0 ) ) },
+                urand   => sub { return int( urand( $_[0] // 2 ) + ( $_[1] // 0 ) ) },
                 pick    => sub {
                     return ( map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ rand, $_ ] } @_ )[0];
                 },
