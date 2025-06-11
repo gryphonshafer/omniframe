@@ -29,7 +29,7 @@ requires 'MojoX::ConfigAppStart', '1.04';
 requires 'MojoX::Log::Dispatch::Simple', '1.14';
 requires 'Mojolicious', '9.40';
 requires 'Mojolicious::Plugin::AccessLog', '0.010001';
-requires 'Mojolicious::Plugin::CSRF', '1.02';
+requires 'Mojolicious::Plugin::CSRF', '1.03';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '1.13';
 requires 'POSIX';
