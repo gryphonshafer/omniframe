@@ -1,9 +1,10 @@
 #!/usr/bin/env perl
 use exact -cli, -conf;
+
+use Crypt::PRNG 'rand';
 use File::Copy 'cp';
 use File::Copy::Recursive 'dircopy';
 use Mojo::File 'path';
-use Omniframe::Util::Crypt 'urand';
 use YAML::XS 'DumpFile';
 
 my $opt = options( qw{ name|n=s dir|d=s } );
@@ -48,14 +49,14 @@ DumpFile( $proj_dir . '/config/app.yaml', {
         mojo_app_lib => "$opt->{name}::Control",
         mojolicious  => {
             secrets => [
-                substr( join( '', map { crypt( urand() * 10**15, urand() * 10**15 ) } 0 .. 2 ), 0, 32 ),
+                substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 32 ),
             ],
             session => {
                 cookie_name => lc( $opt->{name} ) . '_session',
             },
         },
         bcrypt => {
-            salt => substr( join( '', map { crypt( urand() * 10**15, urand() * 10**15 ) } 0 .. 2 ), 0, 16 ),
+            salt => substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 16 ),
         },
     },
     optional_include => 'local/config.yaml',
@@ -67,11 +68,11 @@ DumpFile( $proj_dir . '/local/config.yaml', {
     default    => {
         mojolicious  => {
             secrets => [
-                substr( join( '', map { crypt( urand() * 10**15, urand() * 10**15 ) } 0 .. 2 ), 0, 32 ),
+                substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 32 ),
             ],
         },
         bcrypt => {
-            salt => substr( join( '', map { crypt( urand() * 10**15, urand() * 10**15 ) } 0 .. 2 ), 0, 16 ),
+            salt => substr( join( '', map { crypt( rand() * 10**15, rand() * 10**15 ) } 0 .. 2 ), 0, 16 ),
         },
     },
 } );
