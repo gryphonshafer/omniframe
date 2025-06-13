@@ -2,10 +2,9 @@ package Omniframe::Util::Crypt;
 
 use exact -conf;
 use Crypt::CBC;
-use Crypt::URandom;
 use MIME::Base64 qw( encode_base64 decode_base64 );
 
-exact->exportable( qw( encrypt decrypt urand ) );
+exact->exportable( qw( encrypt decrypt ) );
 
 my $conf   = conf->get('crypt');
 my $cipher = Crypt::CBC->new( map {
@@ -20,12 +19,6 @@ sub decrypt ($input) {
     return $cipher->decrypt( decode_base64($input) );
 }
 
-sub urand ($max) {
-    $max = 1 unless defined $max;
-    $max = abs($max);
-    return unpack( 'Q>', Crypt::URandom::urandom(8) ) / ( 2 ** 64 ) * $max;
-}
-
 1;
 
 =head1 NAME
@@ -35,14 +28,12 @@ Omniframe::Util::Crypt
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Crypt qw( encrypt decrypt urand );
+    use Omniframe::Util::Crypt qw( encrypt decrypt );
 
     my $payload = 'Some scalar data payload...';
 
     my $encrypted_text = encrypt($payload);
     my $decrypted_data = decrypt($encrypted_text);
-
-    my $rand = urand( 10 - 1 ) + 1;
 
 =head1 DESCRIPTION
 
@@ -64,11 +55,6 @@ This method expects a scalar input value generated from C<encrypt> and will
 return the decrypted/original data.
 
     my $decrypted_data = decrypt($encrypted_text);
-
-=head2 urand
-
-This method is a functional replacement of the core C<rand> but using
-L<Crypt::URandom> for randomness.
 
 =head1 CONFIGURATION
 
