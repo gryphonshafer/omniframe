@@ -182,6 +182,15 @@ sub setup_config ($self) {
     $self->sessions->cookie_name( conf->get( qw( mojolicious session cookie_name ) ) );
     $self->sessions->default_expiration( conf->get( qw( mojolicious session default_expiration ) ) );
 
+    if ( conf->get( qw( mojolicious session encrypted ) ) ) {
+        if ( $self->sessions->can('encrypted') ) {
+            $self->sessions->encrypted(1);
+        }
+        else {
+            $self->log->warn('Unable to set Mojolicious::Sessions encrypted');
+        }
+    }
+
     $self->info('Setup config');
     return;
 }
