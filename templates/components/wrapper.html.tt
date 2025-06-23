@@ -119,7 +119,7 @@
                 [% link_seen.$file = ( link_seen.$file || 0 ) + 1 %]
             [% END %]
             [% IF loop.last %]
-                [% page.js.unshift('/js/util/import_links.js') %]
+                [% page.js.defer.unshift('/js/util/import_links.js') %]
             [% END %]
         [% END %]
 
