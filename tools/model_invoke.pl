@@ -3,10 +3,11 @@ use Cwd 'cwd';
 use FindBin;
 BEGIN { $FindBin::Bin = cwd(); }
 
-use exact -cli, -conf;
 use Data::Printer;
+use exact -cli, -conf;
 use Mojo::JSON 'to_json';
 use Mojo::Util 'camelize';
+use Mojo::Util 'decode';
 use YAML::XS 'Dump';
 
 my $opt = options(

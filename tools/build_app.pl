@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 use exact -cli, -conf;
+
+use Crypt::PRNG 'rand';
 use File::Copy 'cp';
 use File::Copy::Recursive 'dircopy';
 use Mojo::File 'path';

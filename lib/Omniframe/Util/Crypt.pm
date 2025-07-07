@@ -23,7 +23,7 @@ sub decrypt ($input) {
 
 =head1 NAME
 
-Omniframe::Util::Bcrypt
+Omniframe::Util::Crypt
 
 =head1 SYNOPSIS
 

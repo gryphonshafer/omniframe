@@ -1,6 +1,7 @@
 package Omniframe::Role::Template;
 
 use exact -role, -conf;
+use Crypt::PRNG 'rand';
 use Mojo::File 'path';
 use Mojo::JSON 'to_json';
 

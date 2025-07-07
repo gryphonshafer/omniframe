@@ -51,13 +51,15 @@ sub document_helper ($self) {
             $name =~ s|/_|/|g;
             $name =~ s/$file_filter// if ($file_filter);
 
-            $c->stash( title => join( ' / ',
+            my $title = join( ' / ',
                 map {
                     ucfirst( join( ' ', map {
                         ( /^(?:a|an|the|and|but|or|for|nor|on|at|to|from|by)$/i ) ? $_ : ucfirst
                     } split('_') ) )
                 } split( '/', $name )
-            ) );
+            );
+            $title = $1 if ( $title eq 'Index' and $type eq 'md' and $payload =~ /^\s*(?:#\s)+([^\r\n]+)/ );
+            $c->stash( title => $title );
 
             $payload = $payload_process->( $payload, $type ) if ( ref $payload_process eq 'CODE' );
 
@@ -86,6 +88,7 @@ sub docs_nav_helper ($self) {
         $home_title        = 'Home Page',
     ) {
         my $docs_dir = conf->get( qw( config_app root_dir ) ) . '/' . $relative_docs_dir;
+        return [] unless ( -r $docs_dir );;
 
         my @files;
         find(
@@ -170,7 +173,7 @@ sub docs_nav_helper ($self) {
             }
         }
 
-        push( @$docs_nav, @{ delete $docs_nav->[0]{nodes} } );
+        push( @$docs_nav, @{ delete $docs_nav->[0]{nodes} } ) if ( $docs_nav->[0]{nodes} );
 
         $docs_nav->[0]{name}  = delete $docs_nav->[0]{folder};
         $docs_nav->[0]{href}  = '/';
