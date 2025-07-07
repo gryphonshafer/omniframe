@@ -28,7 +28,7 @@ requires 'MIME::Base64', '3.16';
 requires 'Module::CPANfile', '1.1004';
 requires 'MojoX::ConfigAppStart', '1.05';
 requires 'MojoX::Log::Dispatch::Simple', '1.15';
-requires 'Mojolicious', '9.40';
+requires 'Mojolicious', '9.41';
 requires 'Mojolicious::Plugin::AccessLog', '0.010001';
 requires 'Mojolicious::Plugin::CSRF', '1.05';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
