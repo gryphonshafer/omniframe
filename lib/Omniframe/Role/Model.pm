@@ -135,7 +135,7 @@ sub every ( $self, $search = {}, $meta = {} ) {
             data               => $data,
             saved_data => $_,
         );
-    } @{ $self->dq->get( $self->name )->where( $self->_setup_search( $search, $meta ) )->run->all({}) };
+    } @{ $self->dq->get( $self->name, undef, $self->_setup_search($search), $meta )->run->all({}) };
 
     return (wantarray) ? @objects : \@objects;
 }
