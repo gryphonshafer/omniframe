@@ -6,7 +6,7 @@ BEGIN { $FindBin::Bin = cwd(); }
 use exact -cli, -conf;
 use DDP;
 use Mojo::File 'path';
-use Mojo::Util 'decode';
+use Mojo::Util qw( encode decode );
 use Mojo::JSON qw( to_json from_json );
 use YAML::XS qw( Load Dump );
 use Omniframe;
