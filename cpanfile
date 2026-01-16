@@ -24,6 +24,7 @@ requires 'JavaScript::QuickJS', '0.21';
 requires 'Linux::Inotify2', '2.3';
 requires 'Log::Dispatch', '2.71';
 requires 'Log::Dispatch::Email::Mailer', '1.14';
+requires 'Log::Dispatch::FileShared', '1.02';
 requires 'MIME::Base64', '3.16';
 requires 'Module::CPANfile', '1.1004';
 requires 'MojoX::ConfigAppStart', '1.05';

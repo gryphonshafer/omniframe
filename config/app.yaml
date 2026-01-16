@@ -16,6 +16,7 @@ default:
         pragmas:
             encoding          : UTF-8
             foreign_keys      : ON
+            journal_mode      : WAL
             recursive_triggers: ON
             temp_store        : MEMORY
     logging:

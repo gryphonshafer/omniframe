@@ -1,7 +1,9 @@
 package Omniframe::Role::Logging;
 
 use exact -role, -conf;
+use Encode 'encode_utf8';
 use Log::Dispatch;
+use Log::Dispatch::FileShared;
 use Mojo::File 'path';
 use Omniframe::Class::Time;
 use Omniframe::Util::Output 'dp';
@@ -106,15 +108,15 @@ class_has log_dispatch => sub ($self) {
                 stderr    => 1,
             ],
             [
-                'File',
+                'FileShared',
                 name      => 'log_file',
                 min_level => _highest_level( $self->log_level, 'debug' ),
                 newline   => 1,
-                callbacks => [ \&_log_cb_label, \&_log_cb_time, \&_log_cb_color ],
-                mode      => 'append',
+                callbacks => [ \&_log_cb_utf8, \&_log_cb_label, \&_log_cb_time, \&_log_cb_color ],
+                mode      => '>>',
                 autoflush => 1,
                 filename  => $self->log_file,
-                binmode   => ':encoding(UTF-8)',
+                flock     => 1,
             ],
             [
                 'Email::Mailer',
@@ -147,6 +149,11 @@ sub crit      ( $self, @params ) { return $self->log_dispatch->crit     ( dp( \@
 sub alert     ( $self, @params ) { return $self->log_dispatch->alert    ( dp( \@params ) ) }
 sub emergency ( $self, @params ) { return $self->log_dispatch->emergency( dp( \@params ) ) }
 sub emerg     ( $self, @params ) { return $self->log_dispatch->emerg    ( dp( \@params ) ) }
+
+sub _log_cb_utf8 (%msg) {
+    $msg{message} = encode_utf8( $msg{message} );
+    return $msg{message};
+}
 
 sub _log_cb_time (%msg) {
     return $time->set->format('log') . ' ' . ( ( defined $msg{message} ) ? $msg{message} : '>undef<' );

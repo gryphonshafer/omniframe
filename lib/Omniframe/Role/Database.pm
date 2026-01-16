@@ -7,163 +7,161 @@ use DBIx::Query;
 use File::Glob ':bsd_glob';
 use Mojo::File 'path';
 use Omniframe::Class::Time;
-use YAML::XS qw( Load Dump );
+use Omniframe::Util::Data 'deepcopy';
 
-my $time    = Omniframe::Class::Time->new;
-my $globals = {
-    default_shard => undef,
-    dq_shards     => undef,
-    dq_logs       => {},
-};
+my $root_dir  = conf->get( qw( config_app root_dir ) );
+my $conf      = _dq_conf();
 
-sub _global_accessor ( $key, $value ) {
-    $globals->{$key} = ( ref $value eq 'SCALAR' and not defined $$value ) ? undef : $value if ($value);
-    return $globals->{$key};
+if ( my @to_be_created_db_files = grep { not -f $_ } map { $_->{file} } values %{ $conf->{shards} } ) {
+    path($_)->dirname->make_path for (@to_be_created_db_files);
+
+    my $cwd = cwd;
+    chdir $root_dir;
+
+    try {
+        App::Dest->init;
+        App::Dest->update;
+    }
+    catch ($e) {}
+
+    chdir $cwd;
 }
 
-sub default_shard ( $self, $data = undef ) { _global_accessor( 'default_shard', $data ) }
-sub dq_shards     ( $self, $data = undef ) { _global_accessor( 'dq_shards',     $data ) }
-sub dq_logs       ( $self, $data = undef ) { _global_accessor( 'dq_logs',       $data ) }
+my $pid       = $$;
+my $omniframe = conf->get('omniframe');
+my $time      = Omniframe::Class::Time->new;
+my $shards    = _dq_shards();
 
-sub dq ( $self, $shard = undef ) {
-    my $return_shard = sub {
-        $shard //= $self->default_shard;
-        croak('Database shard not specified and default shard not set') if ( not defined $shard );
-        croak('Database shard requested not defined') unless ( $self->dq_shards->{$shard} );
-        return $self->dq_shards->{$shard};
-    };
-    return $return_shard->() if ( ref $self->dq_shards eq 'HASH' );
+sub _dq_conf {
+    my $this_conf = deepcopy conf->get('database');
 
-    my $omniframe = conf->get('omniframe');
-    my $conf_full = conf->get('database');
-    my $root_dir  = conf->get( qw( config_app root_dir ) );
-
-    my @shards;
-    if ( $conf_full->{shards} ) {
-        @shards = map {
-            $self->default_shard($_) if ( $conf_full->{shards}{$_}{default_shard} );
-
-            my $shard_conf = Load( Dump( {
-                %$conf_full,
-                %{ $conf_full->{shards}{$_} },
-                shard => $_,
-            } ) );
-
-            delete $shard_conf->{shards};
-
-            $shard_conf;
-        } keys %{ $conf_full->{shards} };
+    unless ( $this_conf->{shards} ) {
+        $this_conf = {
+            default_shard => 'default_shard',
+            shards        => { default_shard => $this_conf },
+        };
     }
     else {
-        $self->default_shard('default_shard');
-        @shards = { %$conf_full, shard => 'default_shard' };
-    }
-
-    $_->{path} = $root_dir . '/' . $_->{file} for (@shards);
-
-    if ( my @to_be_created_db_files = grep { not -f $_ } map { $_->{path} } @shards ) {
-        path($_)->dirname->make_path for (@to_be_created_db_files);
-
-        my $cwd = cwd;
-        chdir $root_dir;
-
-        try {
-            App::Dest->init;
-            App::Dest->update;
-        }
-        catch ($e) {}
-
-        chdir $cwd;
-    }
-
-    $self->dq_shards({
-        map {
-            my $conf = $_;
-
-            my $dq = DBIx::Query->connect(
-                'dbi:SQLite:dbname=' . $conf->{path},
-                undef,
-                undef,
-                $conf->{settings},
-            );
-
-            if ( $conf->{extensions} and $conf->{extensions}->@* ) {
-                $dq->sqlite_enable_load_extension(1);
-                for my $extension ( $conf->{extensions}->@* ) {
-                    my ($library) = grep { -f $_ } map { bsd_glob( $_ . '.{so,dll}' ) } grep { defined } (
-                        ($omniframe) ? $omniframe . '/' . $root_dir . '/' . $extension : undef,
-                        $root_dir . '/' . $extension,
-                        '/usr/lib/sqlite3/' . $extension,
-                    );
-
-                    try {
-                        $dq->sqlite_load_extension( $library // '' );
-                    }
-                    catch ($e) {
-                        die join( ' ',
-                            'Failure of SQLite to load',
-                            '"' . $extension . '"',
-                            '--',
-                            ( $library // '>>undef<<' ),
-                            '--',
-                            $e,
-                        ) . "\n";
-                    }
+        my $shards_conf = delete $this_conf->{shards};
+        for my $shard_name ( keys %$shards_conf ) {
+            $shards_conf->{$shard_name}{file} //= $this_conf->{file} if ( $this_conf->{file} );
+            for my $type ( qw( pragmas settings ) ) {
+                if ( $this_conf->{$type} ) {
+                    $shards_conf->{$shard_name}{$type}{$_} //= $this_conf->{$type}{$_}
+                        for ( grep { $this_conf->{$type}{$_} } keys %{ $this_conf->{$type} } );
                 }
             }
+            $shards_conf->{$shard_name}{$_} //= $this_conf->{$_}
+                for ( grep { $this_conf->{$_} } qw( log extensions ) );
+        }
+        $this_conf = { shards => $shards_conf };
+        ( $this_conf->{default_shard} ) = grep { delete $shards_conf->{$_}{default_shard} } keys %$shards_conf;
+        ( $this_conf->{default_shard} ) = sort keys %$shards_conf unless ( $this_conf->{default_shard} );
+    }
 
-            $dq->do("PRAGMA $_->[0] = $_->[1]")
-                for ( map { [ $_, $dq->quote( $conf->{pragmas}{$_} ) ] } keys %{ $conf->{pragmas} } );
+    for my $shard ( values %{ $this_conf->{shards} } ) {
+        $shard->{file} = $root_dir . '/' . $shard->{file};
+        for my $log ( keys %{ $shard->{log} // {} } ) {
+            $shard->{log}{$log} = $root_dir . '/' . $shard->{log}{$log};
+        }
+    }
 
-            if ( $conf->{log} ) {
-                $self->dq_logs->{ $conf->{shard} } = { map {
-                    my $log_file = $root_dir . '/' . $conf->{log}{$_};
-                    open( my $fh, '>>', $log_file )
-                        or croak( 'failed to open SQL log file for appending: ' . $log_file );
-                    $fh->autoflush(1);
-                    $_ => $fh;
-                } keys %{ $conf->{log} } };
+    return $this_conf;
+}
 
-                $dq->sqlite_profile( sub ( $sql, $elapsed_time ) {
-                    my $time = ($self) ? $time->set->format('sqlite') : time;
+sub _dq_shards {
+    $pid = $$;
 
-                    my $write = (
-                        $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
-                            ANALYZE
-                            EXPLAIN
-                            PRAGMA
-                            REINDEX
-                            RELEASE
-                            SAVEPOINT
-                            SELECT
-                            VACUUM
-                        )
-                    ) ? 1 : 0;
+    return { map {
+        my $shard_name = $_;
+        my $shard_conf = $conf->{shards}{$shard_name};
 
-                    my $log_fhs = $self->dq_logs->{ $conf->{shard} };
-                    if (
-                        $log_fhs->{all} or
-                        ( $log_fhs->{write} and $write ) or
-                        ( $log_fhs->{read} and not $write )
-                    ) {
-                        my $this_sql = $sql;
-                        $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
-                        my $message = '-- ' . $time . "\n" . '-- ' . $elapsed_time . "\n" . $this_sql . "\n\n";
+        my $dq = DBIx::Query->connect_uncached(
+            'dbi:SQLite:dbname=' . $shard_conf->{file},
+            undef,
+            undef,
+            $shard_conf->{settings},
+        );
 
-                        print { $log_fhs->{all}   } $message if ( $log_fhs->{all}                  );
-                        print { $log_fhs->{write} } $message if ( $log_fhs->{write} and $write     );
-                        print { $log_fhs->{read}  } $message if ( $log_fhs->{read}  and not $write );
-                    }
+        if ( $shard_conf->{extensions} and @{ $shard_conf->{extensions} // [] } ) {
+            $dq->sqlite_enable_load_extension(1);
+            for my $extension ( @{ $shard_conf->{extensions} } ) {
+                my ($library) = grep { -f $_ } map { bsd_glob( $_ . '.{so,dll}' ) } grep { defined } (
+                    ($omniframe) ? $omniframe . '/' . $root_dir . '/' . $extension : undef,
+                    $root_dir . '/' . $extension,
+                    '/usr/lib/sqlite3/' . $extension,
+                );
 
-                    return 1;
-                } );
+                try {
+                    $dq->sqlite_load_extension( $library // '' );
+                }
+                catch ($e) {
+                    die join( ' ',
+                        'Failure of SQLite to load',
+                        '"' . $extension . '"',
+                        '--',
+                        ( $library // '>>undef<<' ),
+                        '--',
+                        $e,
+                    ) . "\n";
+                }
             }
+        }
 
-            $conf->{shard} => $dq;
-        } @shards
-    });
+        $dq->do("PRAGMA $_->[0] = $_->[1]")
+            for ( map { [ $_, $dq->quote( $shard_conf->{pragmas}{$_} ) ] } keys %{ $shard_conf->{pragmas} } );
 
-    return $return_shard->();
+        if ( $shard_conf->{log} ) {
+            my $dq_log_fhs = { map {
+                open( my $fh, '>>', $shard_conf->{log}{$_} )
+                    or croak( 'failed to open SQL log file for appending: ' . $shard_conf->{log}{$_} );
+                $fh->autoflush(1);
+                $_ => $fh;
+            } keys %{ $shard_conf->{log} } };
+
+            $dq->sqlite_profile( sub ( $sql, $elapsed_time ) {
+                my $write = (
+                    $sql =~ /^\s*(\w+)/ and not grep { lc($1) eq lc($_) } qw(
+                        ANALYZE
+                        EXPLAIN
+                        PRAGMA
+                        REINDEX
+                        RELEASE
+                        SAVEPOINT
+                        SELECT
+                        VACUUM
+                    )
+                ) ? 1 : 0;
+
+                if (
+                    $dq_log_fhs->{all} or
+                    ( $dq_log_fhs->{write} and $write ) or
+                    ( $dq_log_fhs->{read} and not $write )
+                ) {
+                    my $this_sql = $sql;
+                    $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
+
+                    my $message =
+                        '-- ' . $time->set->format('sqlite') . "\n" .
+                        '-- ' . $elapsed_time . "\n" .
+                        $this_sql . "\n\n";
+
+                    print { $dq_log_fhs->{all}   } $message if ( $dq_log_fhs->{all}                  );
+                    print { $dq_log_fhs->{write} } $message if ( $dq_log_fhs->{write} and $write     );
+                    print { $dq_log_fhs->{read}  } $message if ( $dq_log_fhs->{read}  and not $write );
+                }
+
+                return 1;
+            } );
+        }
+
+        $shard_name => $dq;
+    } keys %{ $conf->{shards} } };
+}
+
+sub dq ( $self, $shard = $conf->{default_shard} ) {
+    $shards = _dq_shards() if ( not $shards or $pid != $$ );
+    return $shards->{$shard};
 }
 
 1;
@@ -219,31 +217,6 @@ nothing happens.
 
 Finally, using the L<DBIx::Query> C<connect> method, the database object is
 instantiated, and then specific SQLite pragmas are set.
-
-=head1 GLOBAL ATTRIBUTES
-
-=head2 default_shard
-
-This attribute represents the default "shard" (which SQLite database) to return
-the singleton of if not specified in the C<dq> call.
-
-If not set explicitly and there's only a single database without a shard name,
-the C<default_shard> value will be set to "default_shard", which will be the
-name automatically given to the single database.
-
-=head2 dq_shards
-
-This contains a hashref with keys of the names of each database "shard" and the
-values being the associated L<DBIx::Query> object.
-
-=head2 dq_logs
-
-This contains a hashref with possible keys of "read", "write", and/or "all".
-The values of any keys will be filehandles to the read, write, or all SQL log
-files.
-
-The values are generated automatically based on the configuration. See
-L</"CONFIGURATION"> below.
 
 =head1 CONFIGURATION
 
