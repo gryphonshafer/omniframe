@@ -159,7 +159,8 @@ sub _dq_shards {
     } keys %{ $conf->{shards} } };
 }
 
-sub dq ( $self, $shard = $conf->{default_shard} ) {
+sub dq ( $self, $shard = undef ) {
+    $shard //= $conf->{default_shard};
     $shards = _dq_shards() if ( not $shards or $pid != $$ );
     return $shards->{$shard};
 }
