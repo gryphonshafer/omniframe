@@ -4,10 +4,13 @@ use exact -conf, 'Omniframe', 'Mojolicious';
 use HTML::Packer;
 use Mojo::File 'path';
 use Mojo::Loader qw( find_modules load_class );
+use Mojo::Log;
 use MojoX::Log::Dispatch::Simple;
 use Omniframe::Class::Sass;
 use Omniframe::Class::Time;
 use Omniframe::Util::Output 'dp';
+use POSIX 'strftime';
+use Time::HiRes qw( gettimeofday tv_interval );
 
 with qw( Omniframe::Role::Logging Omniframe::Role::Template );
 
@@ -53,6 +56,7 @@ sub setup ( $self, %params ) {
     my @setups = qw(
         mojo_logging
         access_log
+        performance_log
         request_base
         samesite
         csrf
@@ -112,6 +116,57 @@ sub setup_access_log ($self) {
     $self->log->level($log_level);
 
     $self->info('Setup access log');
+    return;
+}
+
+sub setup_performance_log ($self) {
+    return unless ( my $performance_log_file = conf->get( qw( mojolicious performance_log ) ) );
+
+    my $performance_log = Mojo::Log->new(
+        path  => join( '/', conf->get( qw( config_app root_dir ) ), $performance_log_file ),
+        level => 'info',
+    );
+
+    my $workers;
+    $performance_log->format( sub ( $time, $level, $performance ) {
+        $workers //= ( $self->app->mode eq 'development' ) ? 1 : $self->config->{hypnotoad}{workers};
+        return sprintf(
+            '%s (%0.5f) %s %d wall=%0.5f cpu=%0.2f [%s] %s %s',
+            strftime( '%F %T %z', localtime($time) ),
+            $time,
+            $self->mode,
+            $workers,
+            $performance->@{ qw(
+                elapsed_wall
+                elapsed_cpu
+                route
+                method
+                path_query
+            ) },
+        ) . "\n";
+    } );
+
+    $self->hook( around_action => sub ( $next, $c, $action, $last ) {
+        $c->stash( 'omniframe.performance' => {
+            start_wall => [gettimeofday],
+            start_cpu  => scalar times(),
+            method     => $c->req->method,
+            path_query => $c->req->url->path_query,
+            route      => $c->match->endpoint->to_string,
+        } );
+
+        return $next->();
+    } );
+
+    $self->hook( after_render => sub ( $c, $output_ref, $format ) {
+        return unless ( my $performance = $c->stash('omniframe.performance') );
+
+        $performance->{elapsed_wall} = tv_interval( $performance->{start_wall} );
+        $performance->{elapsed_cpu}  = times() - $performance->{start_cpu};
+
+        $performance_log->info($performance);
+    } );
+
     return;
 }
 
@@ -281,6 +336,7 @@ Omniframe::Control
 
         $self->setup_mojo_logging;
         $self->setup_access_log;
+        $self->setup_performance_log;
         $self->setup_request_base;
         $self->setup_samesite;
         $self->setup_csrf;
@@ -335,6 +391,7 @@ The above line is equivalent to the following block:
 
     $self->setup_mojo_logging;
     $self->setup_access_log;
+    $self->setup_performance_log;
     $self->setup_request_base;
     $self->setup_samesite;
     $self->setup_csrf;
@@ -356,6 +413,7 @@ C<$self->setup>:
     $self->setup( run => [ qw(
         mojo_logging
         access_log
+        performance_log
         request_base
         samesite
         csrf
@@ -389,6 +447,11 @@ L<Omniframe::Role::Logging> role via L<MojoX::Log::Dispatch::Simple>.
 This method establishes an access log via L<Mojolicious::Plugin::AccessLog>
 using the C<mojolicious>, C<access_log> configuration key. See
 L</"CONFIGURATION"> below.
+
+=head2 setup_performance_log
+
+This method establishes a performance log using the C<mojolicious>,
+C<performance_log> configuration key. See L</"CONFIGURATION"> below.
 
 =head2 setup_request_base
 
@@ -470,6 +533,7 @@ application's configuration file. See L<Config::App>.
 
     mojolicious:
         access_log: local/access.log
+        performance_log: local/performance.log
         static_paths:
             - static
         config:

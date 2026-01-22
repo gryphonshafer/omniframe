@@ -3,7 +3,7 @@ use exact -conf;
 use Omniframe::Control;
 
 my $mock = mock 'Omniframe::Control' => (
-    override => [ qw( setup_access_log debug info notice warning warn ) ],
+    override => [ qw( setup_access_log setup_performance_log debug info notice warning warn ) ],
 );
 
 my $obj;
@@ -17,6 +17,7 @@ can_ok( $obj, qw(
     setup
     setup_mojo_logging
     setup_access_log
+    setup_performance_log
     setup_request_base
     setup_samesite
     setup_csrf

@@ -50,6 +50,7 @@ default:
         exe       : local/externals/dart_sass/sass
     mojolicious:
         access_log: local/access.log
+        performance_log: local/performance.log
         static_paths:
             - static
         config:
