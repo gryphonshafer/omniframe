@@ -58,6 +58,8 @@ default:
                 pid_file: local/hypnotoad.pid
                 listen  :
                     - http://*:8080
+                heartbeat_timeout: 30
+                graceful_timeout : 45
         session:
             cookie_name       : omniframe_session
             default_expiration: 31557600 # 365.25 days
