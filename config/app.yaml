@@ -49,7 +49,7 @@ default:
         compile_to: static/build/app.css
         exe       : local/externals/dart_sass/sass
     mojolicious:
-        access_log: local/access.log
+        access_log     : local/access.log
         performance_log: local/performance.log
         static_paths:
             - static
