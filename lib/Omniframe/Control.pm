@@ -75,6 +75,17 @@ sub setup ( $self, %params ) {
     my $run = { map { $_ => 1 } ( ref $params{run} eq 'ARRAY' ) ? @{ $params{run} } : @setups };
     delete $run->{$_} for ( @{ $params{skip} // [] } );
     $self->$_ for ( map { 'setup_' . $_ } grep { $run->{$_} } @setups );
+
+    if ( conf->get('database' ) ) {
+        require Omniframe;
+        my $manager_pid = $$;
+        $self->hook( before_server_start => sub {
+            Mojo::IOLoop->next_tick( sub {
+                Omniframe->with_roles('+Database')->new->dq_setup unless ( $$ == $manager_pid );
+            } );
+        } );
+    }
+
     return;
 }
 

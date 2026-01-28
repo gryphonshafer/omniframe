@@ -4,73 +4,36 @@ use exact -role, -conf;
 use App::Dest;
 use Cwd 'cwd';
 use DBIx::Query;
+use Fcntl ':flock';
 use File::Glob ':bsd_glob';
 use Mojo::File 'path';
 use Omniframe::Class::Time;
 use Omniframe::Util::Data 'deepcopy';
 
-my $root_dir  = conf->get( qw( config_app root_dir ) );
-my $conf      = _dq_conf();
+my ( $conf, $shards );
 
-if ( my @to_be_created_db_files = grep { not -f $_ } map { $_->{file} } values %{ $conf->{shards} } ) {
-    path($_)->dirname->make_path for (@to_be_created_db_files);
-
-    my $cwd = cwd;
-    chdir $root_dir;
-
-    try {
-        App::Dest->init;
-        App::Dest->update;
-    }
-    catch ($e) {}
-
-    chdir $cwd;
+sub dq ( $self, $shard = undef ) {
+    dq_setup() unless ( exists $shards->{$$} );
+    return $shards->{$$}{ $shard // $conf->{default_shard} };
 }
 
-my $pid       = $$;
-my $omniframe = conf->get('omniframe');
-my $time      = Omniframe::Class::Time->new;
-my $shards    = _dq_shards();
-
-sub _dq_conf {
-    my $this_conf = deepcopy conf->get('database');
-
-    unless ( $this_conf->{shards} ) {
-        $this_conf = {
-            default_shard => 'default_shard',
-            shards        => { default_shard => $this_conf },
-        };
-    }
-    else {
-        my $shards_conf = delete $this_conf->{shards};
-        for my $shard_name ( keys %$shards_conf ) {
-            $shards_conf->{$shard_name}{file} //= $this_conf->{file} if ( $this_conf->{file} );
-            for my $type ( qw( pragmas settings ) ) {
-                if ( $this_conf->{$type} ) {
-                    $shards_conf->{$shard_name}{$type}{$_} //= $this_conf->{$type}{$_}
-                        for ( grep { $this_conf->{$type}{$_} } keys %{ $this_conf->{$type} } );
-                }
-            }
-            $shards_conf->{$shard_name}{$_} //= $this_conf->{$_}
-                for ( grep { $this_conf->{$_} } qw( log extensions ) );
-        }
-        $this_conf = { shards => $shards_conf };
-        ( $this_conf->{default_shard} ) = grep { delete $shards_conf->{$_}{default_shard} } keys %$shards_conf;
-        ( $this_conf->{default_shard} ) = sort keys %$shards_conf unless ( $this_conf->{default_shard} );
+sub dq_setup {
+    for my $pid ( keys %{ $shards // {} } ) {
+        $shards->{$pid}{InactiveDestroy} = 1;
+        delete $shards->{$pid};
     }
 
-    for my $shard ( values %{ $this_conf->{shards} } ) {
-        $shard->{file} = $root_dir . '/' . $shard->{file};
-        for my $log ( keys %{ $shard->{log} // {} } ) {
-            $shard->{log}{$log} = $root_dir . '/' . $shard->{log}{$log};
-        }
+    if ( not $conf ) {
+        $conf = _conf();
+        _init();
     }
 
-    return $this_conf;
+    $shards->{$$} = _shards();
+    return;
 }
 
-sub _dq_shards {
-    $pid = $$;
+sub _shards {
+    my $time = ( grep { $_->{log} } values %{ $conf->{shards} } ) ? Omniframe::Class::Time->new : undef;
 
     return { map {
         my $shard_name = $_;
@@ -87,8 +50,10 @@ sub _dq_shards {
             $dq->sqlite_enable_load_extension(1);
             for my $extension ( @{ $shard_conf->{extensions} } ) {
                 my ($library) = grep { -f $_ } map { bsd_glob( $_ . '.{so,dll}' ) } grep { defined } (
-                    ($omniframe) ? $omniframe . '/' . $root_dir . '/' . $extension : undef,
-                    $root_dir . '/' . $extension,
+                    ( $conf->{omniframe} )
+                        ? $conf->{omniframe} . '/' . $$conf->{root_dir} . '/' . $extension
+                        : undef,
+                    $$conf->{root_dir} . '/' . $extension,
                     '/usr/lib/sqlite3/' . $extension,
                 );
 
@@ -139,16 +104,35 @@ sub _dq_shards {
                     ( $dq_log_fhs->{read} and not $write )
                 ) {
                     my $this_sql = $sql;
-                    $this_sql =~ s/(\s*)$/;$1/ms unless ( $this_sql =~ /;\s*$/ms );
+
+                    $this_sql =~ s/\r\n/\n/g;
+                    $this_sql =~ s/(^\n+|\s+$)//mg;
+                    $this_sql .= ';' unless ( $this_sql =~ /;$/ );
+
+                    my @parts = split( /\n/, $this_sql );
+                    my ($min) = sort { $a <=> $b } map { length $_ } map { /^(\s*)/ } @parts;
+                    $this_sql = join( "\n", map { substr( $_, $min ) } @parts );
 
                     my $message =
                         '-- ' . $time->set->format('sqlite') . "\n" .
                         '-- ' . $elapsed_time . "\n" .
                         $this_sql . "\n\n";
 
-                    print { $dq_log_fhs->{all}   } $message if ( $dq_log_fhs->{all}                  );
-                    print { $dq_log_fhs->{write} } $message if ( $dq_log_fhs->{write} and $write     );
-                    print { $dq_log_fhs->{read}  } $message if ( $dq_log_fhs->{read}  and not $write );
+                    if ( my $fh = $dq_log_fhs->{all} ) {
+                        flock( $fh, LOCK_EX );
+                        print $fh $message;
+                        flock( $fh, LOCK_UN );
+                    }
+                    if ( $write and my $fh = $dq_log_fhs->{write} ) {
+                        flock( $fh, LOCK_EX );
+                        print $fh $message;
+                        flock( $fh, LOCK_UN );
+                    }
+                    if ( not $write and my $fh = $dq_log_fhs->{read} ) {
+                        flock( $fh, LOCK_EX );
+                        print $fh $message;
+                        flock( $fh, LOCK_UN );
+                    }
                 }
 
                 return 1;
@@ -159,10 +143,64 @@ sub _dq_shards {
     } keys %{ $conf->{shards} } };
 }
 
-sub dq ( $self, $shard = undef ) {
-    $shard //= $conf->{default_shard};
-    $shards = _dq_shards() if ( not $shards or $pid != $$ );
-    return $shards->{$shard};
+sub _conf {
+    my $this_conf = deepcopy conf->get('database');
+
+    unless ( $this_conf->{shards} ) {
+        $this_conf = {
+            default_shard => 'default_shard',
+            shards        => { default_shard => $this_conf },
+        };
+    }
+    else {
+        my $shards_conf = delete $this_conf->{shards};
+        for my $shard_name ( keys %$shards_conf ) {
+            $shards_conf->{$shard_name}{file} //= $this_conf->{file} if ( $this_conf->{file} );
+            for my $type ( qw( pragmas settings ) ) {
+                if ( $this_conf->{$type} ) {
+                    $shards_conf->{$shard_name}{$type}{$_} //= $this_conf->{$type}{$_}
+                        for ( grep { $this_conf->{$type}{$_} } keys %{ $this_conf->{$type} } );
+                }
+            }
+            $shards_conf->{$shard_name}{$_} //= $this_conf->{$_}
+                for ( grep { $this_conf->{$_} } qw( log extensions ) );
+        }
+        $this_conf = { shards => $shards_conf };
+        ( $this_conf->{default_shard} ) = grep { delete $shards_conf->{$_}{default_shard} } keys %$shards_conf;
+        ( $this_conf->{default_shard} ) = sort keys %$shards_conf unless ( $this_conf->{default_shard} );
+    }
+
+    $this_conf->{root_dir}  = conf->get( qw( config_app root_dir ) );
+    $this_conf->{omniframe} = conf->get('omniframe');
+
+    for my $shard ( values %{ $this_conf->{shards} } ) {
+        $shard->{file} = $this_conf->{root_dir} . '/' . $shard->{file};
+        for my $log ( keys %{ $shard->{log} // {} } ) {
+            $shard->{log}{$log} = $this_conf->{root_dir} . '/' . $shard->{log}{$log};
+        }
+    }
+
+    return $this_conf;
+}
+
+sub _init {
+    if ( my @to_be_created_db_files = grep { not -f $_ } map { $_->{file} } values %{ $conf->{shards} } ) {
+        path($_)->dirname->make_path for (@to_be_created_db_files);
+
+        my $cwd = cwd;
+        chdir $conf->{root_dir};
+
+        try {
+            App::Dest->init;
+            App::Dest->update;
+        }
+        catch ($e) {}
+
+        chdir $cwd;
+
+        return 1;
+    }
+    return;
 }
 
 1;
@@ -205,10 +243,20 @@ objects connected to the application's SQLite database(s).
     $self->dq;             # return the default shard database singleton
     $self->dq('specific'); # return the "specific" shard database singleton
 
-When first accessed, a series of actions will take place that will create and
-save the singleton(s). On subsequent accesses, the singleton(s) is/are returned.
+If not previously called in the current process, C<dq_setup> gets called
+automatically.
 
-First, database configuration is established. See L</"CONFIGURATION"> below.
+=head2 dq_setup
+
+This method will setup database handles/shards. It's called automatically by
+C<dq> if it hadn't already been called for the current process.
+
+This method will "drop" all database handles this role manages (if any exist).
+In this context, "drop" means the method will first set C<InactiveDestroy> on
+the handle, then remove the reference to the handle.
+(See L<DBI> for additional information about C<InactiveDestroy>.)
+
+Then a database configuration is established. See L</"CONFIGURATION"> below.
 
 Next, the directory for the database is created if it doesn't already exist.
 
@@ -217,7 +265,7 @@ there is a C<dest.watch> file in the project's root directory. If not, then
 nothing happens.
 
 Finally, using the L<DBIx::Query> C<connect> method, the database object is
-instantiated, and then specific SQLite pragmas are set.
+instantiated, and then specific pragmas are set.
 
 =head1 CONFIGURATION
 

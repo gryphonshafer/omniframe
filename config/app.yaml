@@ -18,6 +18,7 @@ default:
             foreign_keys      : ON
             journal_mode      : WAL
             recursive_triggers: ON
+            synchronous       : NORMAL
             temp_store        : MEMORY
     logging:
         log_file: local/app.log
