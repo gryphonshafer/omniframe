@@ -163,7 +163,7 @@ sub parse ( $self, $text ) {
             : undef;
         $parts->{second} = int( $parts->{second} ) if ( $parts->{second} );
         $parts->{nanosecond} = $1 if ( not $parts->{nanosecond} and $text =~ /(\.\d+)/ );
-        $parts->{nanosecond} *= 1_000_000_000 if ( $parts->{nanosecond} );
+        $parts->{nanosecond} = int( $parts->{nanosecond} * 1_000_000_000 ) if ( $parts->{nanosecond} );
 
         delete $parts->{offset};
         $parts->{locale} //= $self->locale;
