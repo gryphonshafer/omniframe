@@ -105,7 +105,12 @@ sub save ( $self, $data = undef ) {
             } or croak deat $@;
         }
 
-        $self->load( $self->id ) unless ( $self->active and not $self->data->{active} );
+        $self->load( $self->id ) unless (
+            $self->active and (
+                exists $data->{active} and not $data->{active} or
+                not $self->data->{active}
+            )
+        );
     }
 
     return $self;
@@ -131,8 +136,8 @@ sub every ( $self, $search = {}, $meta = {} ) {
         $data = $self->thaw($data) if ( $self->can('thaw') );
 
         $self->new(
-            id                 => $data->{ $self->id_name },
-            data               => $data,
+            id         => $data->{ $self->id_name },
+            data       => $data,
             saved_data => $_,
         );
     } @{ $self->dq->get( $self->name, undef, $self->_setup_search($search), $meta )->run->all({}) };
