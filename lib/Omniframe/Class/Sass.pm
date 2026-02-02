@@ -35,7 +35,8 @@ has scss_src => sub ($self) {
         map { "\@use '$_';" }
         map {
             my ($scss_file) = $self->exists( join( '/', $root_dir, $_ ) );
-            ($scss_file) //= $self->exists( join( '/', $root_dir, $omniframe, $_ ) ) if ($omniframe);
+            ($scss_file) = $self->exists( join( '/', $root_dir, $omniframe, $_ ) )
+                if ( not defined $scss_file and $omniframe );
             croak( 'Unable to locate SCSS file: ' . $scss_file ) unless ($scss_file);
             ( $scss_file = path($scss_file)->basename ) =~ s/\.[^.]+$//;
             $scss_file;
