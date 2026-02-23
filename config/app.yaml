@@ -16,9 +16,9 @@ default:
         pragmas:
             encoding          : UTF-8
             foreign_keys      : ON
-            journal_mode      : WAL
+            journal_mode      : DELETE
             recursive_triggers: ON
-            synchronous       : NORMAL
+            synchronous       : FULL
             temp_store        : MEMORY
     logging:
         log_file: local/app.log
