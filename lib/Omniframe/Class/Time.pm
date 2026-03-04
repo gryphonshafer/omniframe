@@ -112,6 +112,11 @@ my $usian_zones = {
 sub parse ( $self, $text ) {
     $text =~ s/\r?\n/ /g;
 
+    if ( $text =~ /^[\d\.\s]+$/ ) {
+        $text =~ s/\s+//g;
+        return $self->set($text);
+    }
+
     my $time_zone;
     $time_zone = $1 while ( $text =~ s/
         \b(
