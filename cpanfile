@@ -34,7 +34,7 @@ requires 'Mojolicious::Plugin::AccessLog', '0.010001';
 requires 'Mojolicious::Plugin::CSRF', '1.05';
 requires 'Mojolicious::Plugin::RequestBase', '0.3';
 requires 'Mojolicious::Plugin::ToolkitRenderer', '1.14';
-requires 'POSIX', '2.23';
+requires 'POSIX';
 requires 'Pod::Simple::HTML', '3.48';
 requires 'Proc::ProcessTable', '0.637';
 requires 'SQL::Abstract::Complete', '1.11';
