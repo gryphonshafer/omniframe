@@ -9,7 +9,7 @@ window.omniframe.cookies = ( () => {
             if ( typeof days !== 'undefined' ) {
                 if ( parseInt(days) == days ) {
                     var date = new Date();
-                    date.setTime( date.getTime() + ( days * 24 * 60 * 60 * 1000 ) );
+                    date.setDate( date.getDate() + days );
                     expires = '; expires=' + date.toUTCString();
                 }
                 else {
