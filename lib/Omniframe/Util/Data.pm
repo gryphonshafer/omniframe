@@ -1,11 +1,13 @@
 package Omniframe::Util::Data;
 
 use exact -conf;
+use Clone 'clone';
 use Mojo::JSON 'from_json';
 use Mojo::File 'path';
-use YAML::XS qw( LoadFile Load Dump );
+use Scalar::Util qw( refaddr reftype );
+use YAML::XS 'LoadFile';
 
-exact->exportable( qw( dataload deepcopy node_descend ) );
+exact->exportable( qw( dataload deepcopy expand_shared_refs node_descend ) );
 
 sub dataload ($file) {
     my $path = path( conf->get( qw( config_app root_dir ) ) . '/' . $file );
@@ -18,8 +20,27 @@ sub dataload ($file) {
 
 sub deepcopy (@items) {
     return unless (@items);
-    my @results = map { Load( Dump($_) ) } @items;
+    my @results = map { clone($_) } @items;
     return ( @results == 1 ) ? $results[0] : ( wantarray ) ? @results : \@results;
+}
+
+sub expand_shared_refs ( $data, $seen = {} ) {
+    return $data unless ref $data;
+
+    my $addr = refaddr($data);
+    return clone($data) if ( $seen->{$addr} );
+
+    $seen->{$addr} = 1;
+
+    my $type = reftype($data);
+    if ( $type eq 'HASH' ) {
+        $data->{$_} = expand_shared_refs( $data->{$_}, $seen ) for ( keys %$data );
+    }
+    elsif ( $type eq 'ARRAY' ) {
+        $data->[$_] = expand_shared_refs( $data->[$_], $seen ) for ( 0 .. $#$data );
+    }
+
+    return $data;
 }
 
 sub node_descend ( $top_node, @hooks ) {
@@ -69,11 +90,14 @@ Omniframe::Util::Data
 =head1 SYNOPSIS
 
     use exact;
-    use Omniframe::Util::Data qw( dataload deepcopy node_descend );
+    use Omniframe::Util::Data qw(
+        dataload deepcopy expand_shared_refs node_descend
+    );
 
     my $decoded_data = dataload('relative/path/data.yaml');
 
     my $deep_copy   = deepcopy($decoded_data);
+    my $sans_refs   = expand_shared_refs($decoded_data);
     my $deep_copies = deepcopy( $decoded_data, $decoded_data );
     my @deep_copies = deepcopy( $decoded_data, $decoded_data );
 
@@ -105,6 +129,14 @@ array or arrayref to be returned.
 
     my $deep_copies = deepcopy( $decoded_data, $decoded_data );
     my @deep_copies = deepcopy( $decoded_data, $decoded_data );
+
+=head2 expand_shared_refs
+
+This method descends a nested data structure to look for internal references to
+other portions of the data structure. When it finds any, it replaces them with
+cloned data.
+
+    my $sans_refs = expand_shared_refs($decoded_data);
 
 =head2 node_descend
 

@@ -1,5 +1,6 @@
 requires 'App::Dest', '1.36';
 requires 'Auth::GoogleAuth', '1.09';
+requires 'Clone', '0.50';
 requires 'Crypt::CBC', '3.07';
 requires 'Crypt::PRNG', '0.087';
 requires 'Cwd', '3.75';

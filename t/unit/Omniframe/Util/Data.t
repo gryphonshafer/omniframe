@@ -1,8 +1,8 @@
 use Test2::V0;
 use exact -conf;
-use Omniframe::Util::Data qw( dataload deepcopy node_descend );
+use Omniframe::Util::Data qw( dataload deepcopy expand_shared_refs node_descend );
 
-imported_ok( qw( dataload deepcopy node_descend ) );
+imported_ok( qw( dataload deepcopy expand_shared_refs node_descend ) );
 
 ref_ok( dataload('config/app.yaml'), 'HASH', 'YAML data decoded' );
 
@@ -28,6 +28,29 @@ ok( lives { @deepcopy = deepcopy( $data_0, $data_1 ) }, 'deepcopy to array'  ) o
 
 is ( $deepcopy,  $data_copy, 'deepcopy to scalar data check' );
 is ( \@deepcopy, $data_copy, 'deepcopy to array data check'  );
+
+my $data_with_ref = {
+    alpha => {
+        thx    => 1138,
+        answer => 42,
+    },
+};
+$data_with_ref->{beta} = $data_with_ref->{alpha};
+
+is (
+    expand_shared_refs($data_with_ref),
+    {
+        alpha => {
+            thx    => 1138,
+            answer => 42,
+        },
+        beta => {
+            thx    => 1138,
+            answer => 42,
+        },
+    },
+    'expand_shared_refs',
+);
 
 is (
     node_descend(
