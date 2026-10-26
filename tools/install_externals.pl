@@ -39,20 +39,16 @@ if ( my $dart = $ext_yaml->{dart_sass} ) {
         ( $machine =~ /ia/i          ) ? 'ia'  :
         undef;
 
-    die "Unable to determin OS and/or chipset\n" unless ( $os and $chip );
+    die "Unable to determine OS and/or chipset\n" unless ( $os and $chip );
 
     $chip .= 64 if ( $machine =~ /64/ );
     my $file = $os . '-' . $chip . ( ( $os eq 'windows' ) ? '.zip' : '.tar.gz' );
 
     my $tag = $ua
-        ->get('https://github.com/sass/dart-sass/releases/latest')
+        ->get('https://api.github.com/repos/sass/dart-sass/releases/latest')
         ->result
-        ->dom
-        ->find('a')
-        ->map( sub { $_->attr('href') } )
-        ->grep(qr|/sass/dart-sass/releases/tag/|)
-        ->map( sub { m|/sass/dart-sass/releases/tag/([\d\.]+)| } )
-        ->first;
+        ->json
+        ->{tag_name};
 
     my $save_to = $dest->child("dart-sass-$tag-$file");
     $ua
@@ -338,26 +334,17 @@ if ( my $font_awesome = $ext_yaml->{font_awesome} ) {
 
     my $save_to = $dest->child('download.zip');
 
-    $ua->get(
-        'https://github.com/' .
-        $ua->get(
-            'https://github.com/FortAwesome/Font-Awesome/releases/expanded_assets/' . $ua
-                ->get('https://github.com/FortAwesome/Font-Awesome/releases/latest')
-                ->result
-                ->dom
-                ->find('a')
-                ->map( sub { $_->attr('href') } )
-                ->grep(qr|/FortAwesome/Font-Awesome/releases/tag/|)
-                ->map( sub { m|/FortAwesome/Font-Awesome/releases/tag/([\d\.]+)| } )
-                ->first,
-        )
+    my ($font_awesome_download_url) =
+        grep { /\-web\.zip$/ }
+        map { $_->{browser_download_url} }
+        $ua
+            ->get('https://api.github.com/repos/FortAwesome/Font-Awesome/releases/latest')
             ->result
-            ->dom
-            ->find('a')
-            ->map( sub { $_->attr('href') } )
-            ->grep(qr|\bfontawesome\-free\-[\d\.]+\-web\.zip$|)
-            ->first
-    )->result->save_to( $save_to->to_string );
+            ->json
+            ->{assets}
+            ->@*;
+
+    $ua->get($font_awesome_download_url)->result->save_to( $save_to->to_string );
 
     for my $part ( $font_awesome->{parts}->@* ) {
         my $target = $save_to->dirname->child($part)->dirname;
